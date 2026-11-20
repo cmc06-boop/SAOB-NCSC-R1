@@ -110,7 +110,7 @@ class _DashboardPageState extends State<DashboardPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       title,
-                      const SizedBox(height: 1),
+                      const SizedBox(height: 8),
                       subtitle,
                       const SizedBox(height: 16),
                       filters,
@@ -330,11 +330,11 @@ class _DashboardPageState extends State<DashboardPage> {
                                         '${money(e.$2.value)} (${rate(e.$2.value, t.allotment)})',
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
-                                            textAlign: TextAlign.right,
-                                            style: const TextStyle(
-                                              fontSize: 14,
-                                              color: muted,
-                                            ),
+                                        textAlign: TextAlign.right,
+                                        style: const TextStyle(
+                                          fontSize: 14,
+                                          color: muted,
+                                        ),
                                       ),
                                     ),
                                   ],
