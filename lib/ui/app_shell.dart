@@ -50,203 +50,259 @@ class _AppShellState extends State<AppShell> {
       body: LayoutBuilder(
         builder: (context, c) {
           final expanded = c.maxWidth >= 1060;
-          return Row(
+          final sideWidth = expanded ? 236.0 : 82.0;
+          return Stack(
+            fit: StackFit.expand,
             children: [
-              Container(
-                width: expanded ? 226 : 82,
-                color: navy,
-                child: SafeArea(
-                  child: Column(
-                    children: [
-                      Padding(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: expanded ? 20 : 12,
-                          vertical: 24,
-                        ),
-                        child: Row(
-                          children: [
-                            Image.asset(
-                              'assets/ncsc-logo-transparent.png',
-                              width: 48,
-                              height: 48,
-                            ),
-                            if (expanded) ...[
-                              const SizedBox(width: 12),
-                              const Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      'NCSC-R1',
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 20,
-                                        fontWeight: FontWeight.w800,
-                                      ),
-                                    ),
-                                    Text(
-                                      'Budget and Finance',
-                                      style: TextStyle(
-                                        color: Color(0xffaabedf),
-                                        fontSize: 11,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ],
-                        ),
-                      ),
-                      Container(height: 1, color: Colors.white12),
-                      const SizedBox(height: 20),
-                      Expanded(
-                        child: ListView(
-                          children: [
-                            for (final m in visible)
-                              Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 10,
-                                  vertical: 4,
-                                ),
-                                child: Tooltip(
-                                  message: expanded ? '' : m.$2,
-                                  child: Material(
-                                    color: selected == m.$1
-                                        ? blue
-                                        : Colors.transparent,
-                                    borderRadius: BorderRadius.circular(10),
-                                    child: InkWell(
-                                      borderRadius: BorderRadius.circular(10),
-                                      onTap: () =>
-                                          setState(() => selected = m.$1),
-                                      child: Container(
-                                        decoration: BoxDecoration(
-                                          border: selected == m.$1
-                                              ? const Border(
-                                                  left: BorderSide(
-                                                    color: red,
-                                                    width: 3,
-                                                  ),
-                                                )
-                                              : null,
-                                        ),
-                                        padding: EdgeInsets.symmetric(
-                                          horizontal: expanded ? 14 : 13,
-                                          vertical: 18,
-                                        ),
-                                        child: Row(
-                                          children: [
-                                            Icon(
-                                              m.$3,
-                                              color: Colors.white,
-                                              size: 21,
-                                            ),
-                                            if (expanded) ...[
-                                              const SizedBox(width: 12),
-                                              Expanded(
-                                                child: Text(
-                                                  m.$2,
-                                                  style: TextStyle(
-                                                    color: Colors.white,
-                                                    fontSize: 13,
-                                                    fontWeight: selected == m.$1
-                                                        ? FontWeight.w700
-                                                        : FontWeight.w500,
-                                                  ),
-                                                ),
-                                              ),
-                                            ],
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                          ],
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.all(12),
-                        child: TextButton(
-                          onPressed: logout,
+              Padding(
+                padding: EdgeInsets.only(left: sideWidth),
+                child: IndexedStack(
+                  index: visible.indexWhere((m) => m.$1 == selected),
+                  children: [
+                    for (final m in visible)
+                      KeyedSubtree(key: ValueKey(m.$1), child: widgets[m.$1]!),
+                  ],
+                ),
+              ),
+              Positioned(
+                left: 0,
+                top: 0,
+                bottom: 0,
+                width: sideWidth,
+                child: Container(
+                  width: sideWidth,
+                  clipBehavior: Clip.antiAlias,
+                  decoration: const BoxDecoration(
+                    borderRadius: BorderRadius.horizontal(
+                      right: Radius.circular(28),
+                    ),
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [Color(0xff0c2a78), navy, Color(0xff04143c)],
+                    ),
+                  ),
+                  child: SafeArea(
+                    child: Column(
+                      children: [
+                        Padding(
+                          padding: EdgeInsets.fromLTRB(
+                            expanded ? 16 : 12,
+                            20,
+                            expanded ? 16 : 12,
+                            16,
+                          ),
                           child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              const Icon(
-                                Icons.logout,
-                                size: 20,
-                                color: Colors.white,
+                              Container(
+                                width: 45,
+                                height: 45,
+                                alignment: Alignment.center,
+                                decoration: const BoxDecoration(
+                                  color: Colors.white,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Image.asset(
+                                  'assets/ncsc-logo-transparent.png',
+                                  width: 40,
+                                  height: 40,
+                                ),
                               ),
                               if (expanded) ...[
                                 const SizedBox(width: 12),
-                                const Text(
-                                  'Logout',
-                                  style: TextStyle(color: Colors.white),
+                                const Expanded(
+                                  child: Text(
+                                    'National Commission of Senior Citizens Region I',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w700,
+                                      height: 1.25,
+                                    ),
+                                  ),
                                 ),
                               ],
                             ],
                           ),
                         ),
-                      ),
-                      const SizedBox(height: 12),
-                    ],
-                  ),
-                ),
-              ),
-              Expanded(
-                child: Column(
-                  children: [
-                    Container(
-                      height: 62,
-                      padding: const EdgeInsets.symmetric(horizontal: 26),
-                      color: Colors.white,
-                      child: Row(
-                        children: [
-                          const Expanded(
-                            child: Text(
-                              'Statement of Allotments, Obligations, and Balances',
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                                color: navy,
+                        Container(
+                          height: 1,
+                          margin: const EdgeInsets.symmetric(horizontal: 16),
+                          color: Colors.white12,
+                        ),
+                        const SizedBox(height: 14),
+                        Expanded(
+                          child: ListView(
+                            padding: const EdgeInsets.symmetric(horizontal: 10),
+                            children: [
+                              for (final m in visible)
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 3,
+                                  ),
+                                  child: Tooltip(
+                                    message: expanded ? '' : m.$2,
+                                    child: Material(
+                                      color: selected == m.$1
+                                          ? Colors.white.withValues(alpha: 0.14)
+                                          : Colors.transparent,
+                                      borderRadius: BorderRadius.circular(12),
+                                      child: InkWell(
+                                        borderRadius: BorderRadius.circular(12),
+                                        hoverColor: Colors.white.withValues(
+                                          alpha: 0.08,
+                                        ),
+                                        onTap: () =>
+                                            setState(() => selected = m.$1),
+                                        child: Padding(
+                                          padding: EdgeInsets.symmetric(
+                                            horizontal: expanded ? 12 : 0,
+                                            vertical: 13,
+                                          ),
+                                          child: Row(
+                                            mainAxisAlignment: expanded
+                                                ? MainAxisAlignment.start
+                                                : MainAxisAlignment.center,
+                                            children: [
+                                              Container(
+                                                width: 3,
+                                                height: 18,
+                                                decoration: BoxDecoration(
+                                                  color: selected == m.$1
+                                                      ? red
+                                                      : Colors.transparent,
+                                                  borderRadius:
+                                                      BorderRadius.circular(3),
+                                                ),
+                                              ),
+                                              SizedBox(
+                                                width: expanded ? 10 : 0,
+                                              ),
+                                              Icon(
+                                                m.$3,
+                                                color: Colors.white,
+                                                size: 21,
+                                              ),
+                                              if (expanded) ...[
+                                                const SizedBox(width: 12),
+                                                Expanded(
+                                                  child: Text(
+                                                    m.$2,
+                                                    style: TextStyle(
+                                                      color: Colors.white,
+                                                      fontSize: 13,
+                                                      fontWeight:
+                                                          selected == m.$1
+                                                          ? FontWeight.w700
+                                                          : FontWeight.w500,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+                          child: Row(
+                            mainAxisAlignment: expanded
+                                ? MainAxisAlignment.start
+                                : MainAxisAlignment.center,
+                            children: [
+                              CircleAvatar(
+                                radius: 14,
+                                backgroundColor: Colors.white,
+                                child: Text(
+                                  user.name.trim().isEmpty
+                                      ? '?'
+                                      : user.name.trim()[0].toUpperCase(),
+                                  style: const TextStyle(
+                                    color: navy,
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                              ),
+                              if (expanded) ...[
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        user.name,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      ),
+                                      Text(
+                                        user.role,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: const TextStyle(
+                                          color: Color(0xffc5d4ef),
+                                          fontSize: 10,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(12, 0, 12, 16),
+                          child: Material(
+                            color: Colors.white.withValues(alpha: 0.08),
+                            borderRadius: BorderRadius.circular(12),
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(12),
+                              onTap: logout,
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 12,
+                                ),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    const Icon(
+                                      Icons.logout,
+                                      size: 18,
+                                      color: Colors.white,
+                                    ),
+                                    if (expanded) ...[
+                                      const SizedBox(width: 10),
+                                      const Text(
+                                        'Logout',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ],
+                                  ],
+                                ),
                               ),
                             ),
                           ),
-                          const SizedBox(width: 16),
-                          const Icon(
-                            Icons.account_circle_outlined,
-                            color: blue,
-                            size: 26,
-                          ),
-                          const SizedBox(width: 9),
-                          Text(
-                            user.name,
-                            style: const TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
-                    const Divider(),
-                    Expanded(
-                      child: IndexedStack(
-                        index: visible.indexWhere((m) => m.$1 == selected),
-                        children: [
-                          for (final m in visible)
-                            KeyedSubtree(
-                              key: ValueKey(m.$1),
-                              child: widgets[m.$1]!,
-                            ),
-                        ],
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
               ),
             ],

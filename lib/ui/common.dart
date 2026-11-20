@@ -12,23 +12,61 @@ class PageFrame extends StatelessWidget {
     required this.title,
     required this.subtitle,
     required this.children,
+    this.accent = true,
+    this.besideSubtitle,
+    this.expand = false,
   });
   final String title, subtitle;
   final List<Widget> children;
+  final bool accent;
+  final Widget? besideSubtitle;
+  final bool expand;
   @override
-  Widget build(BuildContext context) => SingleChildScrollView(
-    padding: const EdgeInsets.all(26),
-    child: Column(
+  Widget build(BuildContext context) {
+    final column = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(title, style: Theme.of(context).textTheme.headlineMedium),
-        const SizedBox(height: 5),
-        Text(subtitle, style: const TextStyle(color: muted)),
-        const SizedBox(height: 24),
+        if (accent) ...[
+          const SizedBox(height: 8),
+          Container(
+            width: 42,
+            height: 4,
+            decoration: BoxDecoration(
+              color: red,
+              borderRadius: BorderRadius.circular(4),
+            ),
+          ),
+          const SizedBox(height: 10),
+        ] else
+          const SizedBox(height: 6),
+        if (besideSubtitle == null)
+          Text(subtitle, style: const TextStyle(color: muted, height: 1.35))
+        else
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Expanded(
+                child: Text(
+                  subtitle,
+                  style: const TextStyle(color: muted, height: 1.35),
+                ),
+              ),
+              const SizedBox(width: 16),
+              besideSubtitle!,
+            ],
+          ),
+        SizedBox(height: besideSubtitle == null ? 22 : 14),
         ...children,
       ],
-    ),
-  );
+    );
+    if (expand)
+      return Padding(padding: const EdgeInsets.all(26), child: column);
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(26),
+      child: column,
+    );
+  }
 }
 
 class Panel extends StatelessWidget {
@@ -37,11 +75,13 @@ class Panel extends StatelessWidget {
   final double padding;
   @override
   Widget build(BuildContext context) => Container(
+    clipBehavior: Clip.antiAlias,
     padding: EdgeInsets.all(padding),
     decoration: BoxDecoration(
       color: Colors.white,
       borderRadius: BorderRadius.circular(16),
       border: Border.all(color: line),
+      boxShadow: cardShadow,
     ),
     child: child,
   );
@@ -55,12 +95,16 @@ class SelectField<T> extends StatelessWidget {
     required this.items,
     required this.onChanged,
     this.width = 180,
+    this.dense = false,
+    this.boxKey,
   });
   final String label;
   final T value;
   final List<(T, String)> items;
   final ValueChanged<T>? onChanged;
   final double width;
+  final bool dense;
+  final Key? boxKey;
   @override
   Widget build(BuildContext context) => SizedBox(
     width: width,
@@ -68,21 +112,20 @@ class SelectField<T> extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-            color: muted,
-          ),
-        ),
-        const SizedBox(height: 7),
+        FieldLabel(label),
+        SizedBox(height: dense ? 4 : 7),
         InputDecorator(
-          decoration: const InputDecoration(
-            contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 3),
+          key: boxKey,
+          decoration: InputDecoration(
+            isDense: dense,
+            contentPadding: EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: dense ? 12 : 3,
+            ),
           ),
           child: DropdownButtonHideUnderline(
             child: DropdownButton<T>(
+              isDense: dense,
               isExpanded: true,
               value: items.any((e) => e.$1 == value) ? value : null,
               style: const TextStyle(
@@ -118,6 +161,32 @@ class SelectField<T> extends StatelessWidget {
   );
 }
 
+class FieldLabel extends StatelessWidget {
+  const FieldLabel(this.label, {super.key});
+  final String label;
+  @override
+  Widget build(BuildContext context) {
+    const style = TextStyle(
+      fontSize: 12,
+      fontWeight: FontWeight.w600,
+      color: muted,
+    );
+    if (!label.endsWith(' *')) return Text(label, style: style);
+    return Text.rich(
+      TextSpan(
+        style: style,
+        children: [
+          TextSpan(text: label.substring(0, label.length - 1)),
+          const TextSpan(
+            text: '*',
+            style: TextStyle(color: red, fontWeight: FontWeight.w700),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class SearchBox extends StatelessWidget {
   const SearchBox({
     super.key,
@@ -149,8 +218,20 @@ class EmptyState extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 48),
       child: Column(
         children: [
-          const Icon(Icons.folder_open_outlined, size: 42, color: muted),
-          const SizedBox(height: 12),
+          Container(
+            width: 64,
+            height: 64,
+            decoration: BoxDecoration(
+              color: const Color(0xffe8eef8),
+              borderRadius: BorderRadius.circular(18),
+            ),
+            child: const Icon(
+              Icons.folder_open_outlined,
+              size: 30,
+              color: blue,
+            ),
+          ),
+          const SizedBox(height: 14),
           Text(text, style: Theme.of(context).textTheme.titleMedium),
           if (detail.isNotEmpty)
             Padding(
@@ -182,11 +263,15 @@ class WideTable extends StatefulWidget {
     required this.rows,
     this.numeric = const {},
     this.empty = 'No records found.',
+    this.selected = const {},
+    this.onSelect,
   });
   final List<String> columns;
   final List<List<Widget>> rows;
   final Set<int> numeric;
   final String empty;
+  final Set<int> selected;
+  final ValueChanged<int>? onSelect;
   @override
   State<WideTable> createState() => _WideTableState();
 }
@@ -217,6 +302,7 @@ class _WideTableState extends State<WideTable> {
             child: ConstrainedBox(
               constraints: BoxConstraints(minWidth: c.maxWidth),
               child: DataTable(
+                showCheckboxColumn: false,
                 columns: [
                   for (var i = 0; i < widget.columns.length; i++)
                     DataColumn(
@@ -225,8 +311,14 @@ class _WideTableState extends State<WideTable> {
                     ),
                 ],
                 rows: [
-                  for (final row in widget.rows)
-                    DataRow(cells: row.map(DataCell.new).toList()),
+                  for (var i = 0; i < widget.rows.length; i++)
+                    DataRow(
+                      selected: widget.selected.contains(i),
+                      onSelectChanged: widget.onSelect == null
+                          ? null
+                          : (_) => widget.onSelect!(i),
+                      cells: widget.rows[i].map(DataCell.new).toList(),
+                    ),
                 ],
               ),
             ),
@@ -237,65 +329,291 @@ class _WideTableState extends State<WideTable> {
   }
 }
 
-class BudgetTable extends StatelessWidget {
+class BudgetTable extends StatefulWidget {
   const BudgetTable({
     super.key,
     required this.records,
-    this.onEdit,
-    this.onDelete,
+    this.startIndex = 0,
+    this.selectedId,
+    this.onSelect,
+    this.total,
+    this.totalLabel = '',
   });
   final List<BudgetRecord> records;
-  final ValueChanged<BudgetRecord>? onEdit, onDelete;
+  final int startIndex;
+  final int? selectedId;
+  final ValueChanged<BudgetRecord>? onSelect;
+  final Totals? total;
+  final String totalLabel;
   @override
-  Widget build(BuildContext context) => WideTable(
-    columns: [
-      'Program',
-      'Fund',
-      'UACS Code',
-      'Expense (UACS Name)',
-      'Allotment',
-      'Obligation',
-      'Obligation Rate',
-      'Balance',
-      'Disbursement',
-      'Disbursement Rate',
-      'Remarks',
-      if (onEdit != null) 'Actions',
-    ],
-    numeric: const {4, 5, 6, 7, 8, 9},
-    rows: [
-      for (final r in records)
-        [
-          tableText(r.program),
-          tableText(r.fund),
-          tableText(displayCode(r.code)),
-          tableText(r.name, width: 250),
-          Text(money(r.allotment)),
-          Text(money(r.obligation)),
-          Text(rate(r.obligation, r.allotment)),
-          Text(money(r.balance)),
-          Text(money(r.disbursement)),
-          Text(rate(r.disbursement, r.obligation)),
-          tableText(r.remarks),
-          if (onEdit != null)
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                IconButton(
-                  tooltip: 'Edit record',
-                  onPressed: () => onEdit!(r),
-                  icon: const Icon(Icons.edit_outlined, size: 18),
-                ),
-                IconButton(
-                  tooltip: 'Delete record',
-                  onPressed: () => onDelete!(r),
-                  icon: const Icon(Icons.delete_outline, color: red, size: 18),
-                ),
-              ],
+  State<BudgetTable> createState() => _BudgetTableState();
+}
+
+class _BudgetTableState extends State<BudgetTable> {
+  final _scroll = ScrollController();
+  final _horizontal = ScrollController();
+  @override
+  void dispose() {
+    _scroll.dispose();
+    _horizontal.dispose();
+    super.dispose();
+  }
+
+  static const _border = BorderSide(color: Color(0xffd5e1f2));
+  static const _minWidth = 1560.0;
+  static final _columns = <int, TableColumnWidth>{
+    0: const FixedColumnWidth(48),
+    1: _column(120, 13),
+    2: _column(200, 22),
+    3: _column(128, 12),
+    4: _column(128, 12),
+    5: _column(132, 12),
+    6: _column(128, 12),
+    7: _column(136, 13),
+    8: _column(150, 14),
+    9: _column(320, 26),
+  };
+  static TableColumnWidth _column(double min, double flex) =>
+      MaxColumnWidth(FixedColumnWidth(min), FlexColumnWidth(flex));
+
+  TableRow _row(List<Widget> cells, Color color, [VoidCallback? onTap]) =>
+      TableRow(
+        decoration: BoxDecoration(color: color),
+        children: [
+          for (final cell in cells)
+            TableCell(
+              verticalAlignment: TableCellVerticalAlignment.middle,
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: onTap,
+                child: cell,
+              ),
             ),
         ],
-    ],
-  );
+      );
+
+  @override
+  Widget build(BuildContext context) {
+    final records = widget.records;
+    final total = widget.total;
+    const header = TextStyle(
+      fontSize: 13,
+      fontWeight: FontWeight.w700,
+      color: navy,
+    );
+    const body = TextStyle(fontSize: 13, color: ink);
+    const amount = TextStyle(
+      fontSize: 13,
+      fontWeight: FontWeight.w600,
+      color: ink,
+    );
+    const totalStyle = TextStyle(
+      fontSize: 13,
+      fontWeight: FontWeight.w800,
+      color: navy,
+    );
+    final headerTable = Table(
+      border: const TableBorder(verticalInside: _border, bottom: _border),
+      columnWidths: _columns,
+      defaultVerticalAlignment: TableCellVerticalAlignment.middle,
+      children: [
+        _row([
+          _BudgetCell('#', style: header),
+          _BudgetCell('UACS Code', style: header),
+          _BudgetCell('Expense (UACS Name)', style: header),
+          _BudgetCell('Allotment', align: TextAlign.right, style: header),
+          _BudgetCell('Obligation', align: TextAlign.right, style: header),
+          _BudgetCell('Obligation Rate', align: TextAlign.right, style: header),
+          _BudgetCell('Balance', align: TextAlign.right, style: header),
+          _BudgetCell('Disbursement', align: TextAlign.right, style: header),
+          _BudgetCell(
+            'Disbursement Rate',
+            align: TextAlign.right,
+            style: header,
+          ),
+          _BudgetCell('Remarks', style: header),
+        ], const Color(0xffeef3fb)),
+      ],
+    );
+    final bodyTable = Table(
+      border: const TableBorder(
+        horizontalInside: _border,
+        verticalInside: _border,
+      ),
+      columnWidths: _columns,
+      defaultVerticalAlignment: TableCellVerticalAlignment.middle,
+      children: [
+        if (records.isEmpty)
+          _row([
+            for (var i = 0; i < 10; i++)
+              i == 2
+                  ? const _BudgetCell(
+                      'No records found.',
+                      style: TextStyle(fontSize: 13, color: muted),
+                    )
+                  : const _BudgetCell(''),
+          ], Colors.white),
+        for (final (i, r) in records.indexed)
+          _row(
+            [
+              _BudgetCell(
+                '${widget.startIndex + i + 1}',
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: blue,
+                ),
+              ),
+              _BudgetCell(displayCode(r.code), style: body, tip: true),
+              _BudgetCell(r.name, style: body, tip: true),
+              _BudgetCell(
+                money(r.allotment),
+                align: TextAlign.right,
+                style: amount,
+              ),
+              _BudgetCell(
+                money(r.obligation),
+                align: TextAlign.right,
+                style: amount,
+              ),
+              _BudgetCell(
+                rate(r.obligation, r.allotment),
+                align: TextAlign.right,
+                style: body,
+              ),
+              _BudgetCell(
+                money(r.balance),
+                align: TextAlign.right,
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w800,
+                  color: navy,
+                ),
+              ),
+              _BudgetCell(
+                money(r.disbursement),
+                align: TextAlign.right,
+                style: amount,
+              ),
+              _BudgetCell(
+                rate(r.disbursement, r.obligation),
+                align: TextAlign.right,
+                style: body,
+              ),
+              _BudgetCell(r.remarks, style: body, tip: true),
+            ],
+            r.id == widget.selectedId
+                ? const Color(0xffe4edfb)
+                : i.isOdd
+                ? const Color(0xfff7f9fc)
+                : Colors.white,
+            widget.onSelect == null ? null : () => widget.onSelect!(r),
+          ),
+        if (total != null)
+          _row([
+            const _BudgetCell(''),
+            const _BudgetCell(''),
+            _BudgetCell(
+              'Program Total (${widget.totalLabel})',
+              style: totalStyle,
+              tip: true,
+            ),
+            _BudgetCell(
+              money(total.allotment),
+              align: TextAlign.right,
+              style: totalStyle,
+            ),
+            _BudgetCell(
+              money(total.obligation),
+              align: TextAlign.right,
+              style: totalStyle,
+            ),
+            _BudgetCell(
+              rate(total.obligation, total.allotment),
+              align: TextAlign.right,
+              style: totalStyle,
+            ),
+            _BudgetCell(
+              money(total.balance),
+              align: TextAlign.right,
+              style: totalStyle,
+            ),
+            _BudgetCell(
+              money(total.disbursement),
+              align: TextAlign.right,
+              style: totalStyle,
+            ),
+            _BudgetCell(
+              rate(total.disbursement, total.obligation),
+              align: TextAlign.right,
+              style: totalStyle,
+            ),
+            const _BudgetCell(''),
+          ], const Color(0xffe7eefc)),
+      ],
+    );
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = math.max(constraints.maxWidth, _minWidth);
+        return Scrollbar(
+          controller: _scroll,
+          thumbVisibility: true,
+          notificationPredicate: (n) => n.metrics.axis == Axis.vertical,
+          child: Scrollbar(
+            controller: _horizontal,
+            thumbVisibility: width > constraints.maxWidth + 1,
+            notificationPredicate: (n) => n.metrics.axis == Axis.horizontal,
+            child: SingleChildScrollView(
+              controller: _horizontal,
+              scrollDirection: Axis.horizontal,
+              child: SizedBox(
+                width: width,
+                child: Column(
+                  children: [
+                    headerTable,
+                    Expanded(
+                      child: SingleChildScrollView(
+                        controller: _scroll,
+                        child: bodyTable,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _BudgetCell extends StatelessWidget {
+  const _BudgetCell(
+    this.text, {
+    this.align = TextAlign.left,
+    this.style,
+    this.tip = false,
+  });
+  final String text;
+  final TextAlign align;
+  final TextStyle? style;
+  final bool tip;
+  @override
+  Widget build(BuildContext context) {
+    final label = Text(text, textAlign: align, softWrap: true, style: style);
+    return Padding(
+      padding: EdgeInsets.only(
+        left: align == TextAlign.right ? 8 : 12,
+        right: align == TextAlign.right ? 12 : 8,
+        top: 8,
+        bottom: 8,
+      ),
+      child: tip && text.isNotEmpty
+          ? Tooltip(message: text, child: label)
+          : label,
+    );
+  }
 }
 
 class Pager extends StatelessWidget {

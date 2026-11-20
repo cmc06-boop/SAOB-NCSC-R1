@@ -5,8 +5,11 @@ const blue = Color(0xff245cb6);
 const red = Color(0xffd42035);
 const ink = Color(0xff132951);
 const muted = Color(0xff596d8d);
-const background = Color(0xfff2f5fc);
+const background = Color(0xfff3f6fb);
 const line = Color(0xffdce4f3);
+const cardShadow = [
+  BoxShadow(color: Color(0x12061c52), blurRadius: 22, offset: Offset(0, 8)),
+];
 
 ThemeData appTheme() => ThemeData(
   useMaterial3: true,
@@ -83,6 +86,15 @@ ThemeData appTheme() => ThemeData(
     dataRowMaxHeight: 68,
   ),
   dividerTheme: const DividerThemeData(color: line, space: 1),
+  dialogTheme: DialogThemeData(
+    backgroundColor: Colors.white,
+    surfaceTintColor: Colors.transparent,
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+  ),
+  snackBarTheme: SnackBarThemeData(
+    behavior: SnackBarBehavior.floating,
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+  ),
 );
 
 /// Change these values, then save and Hot Reload to adjust the login card.

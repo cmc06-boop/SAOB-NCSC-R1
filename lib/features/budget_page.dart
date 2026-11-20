@@ -1,5 +1,3 @@
-import 'dart:math' as math;
-
 import 'package:material_ui/material_ui.dart';
 
 import '../core/format.dart';
@@ -7,6 +5,36 @@ import '../data/finance_store.dart';
 import '../data/models.dart';
 import '../ui/common.dart';
 import '../ui/theme.dart';
+
+ButtonStyle _outlineAction(Color color, Color hover) => ButtonStyle(
+  foregroundColor: WidgetStatePropertyAll(color),
+  iconColor: WidgetStatePropertyAll(color),
+  backgroundColor: WidgetStateProperty.resolveWith((states) {
+    final active =
+        states.contains(WidgetState.hovered) ||
+        states.contains(WidgetState.pressed) ||
+        states.contains(WidgetState.focused);
+    if (states.contains(WidgetState.disabled) || !active) return Colors.white;
+    return hover;
+  }),
+  overlayColor: WidgetStateProperty.resolveWith((states) {
+    if (states.contains(WidgetState.disabled)) return Colors.transparent;
+    if (states.contains(WidgetState.pressed)) {
+      return color.withValues(alpha: 0.16);
+    }
+    if (states.contains(WidgetState.hovered)) {
+      return color.withValues(alpha: 0.1);
+    }
+    return Colors.transparent;
+  }),
+  side: WidgetStatePropertyAll(BorderSide(color: color, width: 1.4)),
+  padding: const WidgetStatePropertyAll(
+    EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+  ),
+  shape: WidgetStatePropertyAll(
+    RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+  ),
+);
 
 class BudgetPage extends StatefulWidget {
   const BudgetPage({super.key, required this.store});
@@ -16,11 +44,23 @@ class BudgetPage extends StatefulWidget {
 }
 
 class _BudgetPageState extends State<BudgetPage> {
-  int year = manilaNow().year, page = 1;
+  final _actionsKey = GlobalKey();
+  int year = manilaNow().year;
   String program = '', fund = 'CURRENT', query = '';
+  int? selectedId;
+  double _searchWidth = 320;
+  void _matchSearchWidth() {
+    final box = _actionsKey.currentContext?.findRenderObject() as RenderBox?;
+    if (box == null || !box.hasSize) return;
+    final width = box.size.width;
+    if ((_searchWidth - width).abs() > 0.5) {
+      setState(() => _searchWidth = width);
+    }
+  }
+
   void change(VoidCallback fn) => setState(() {
     fn();
-    page = 1;
+    selectedId = null;
   });
   Future<void> edit([BudgetRecord? record]) async {
     await showDialog<void>(
@@ -45,7 +85,10 @@ class _BudgetPageState extends State<BudgetPage> {
     }
     try {
       widget.store.deleteRecord(record.id!);
-      if (mounted) showMessage(context, 'Record deleted.');
+      if (mounted) {
+        setState(() => selectedId = null);
+        showMessage(context, 'Record deleted.');
+      }
     } catch (e) {
       if (mounted) showMessage(context, friendlyError(e), error: true);
     }
@@ -64,89 +107,182 @@ class _BudgetPageState extends State<BudgetPage> {
           query: query,
         ),
         t = Totals(rows);
-    page = page.clamp(1, math.max(1, (rows.length / 12).ceil()));
-    final start = (page - 1) * 12;
+    BudgetRecord? selected;
+    for (final row in rows) {
+      if (row.id == selectedId) selected = row;
+    }
+    final chosen = selected;
+    final filters = Wrap(
+      spacing: 18,
+      runSpacing: 12,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [
+        _InlineChoice(
+          label: 'Fiscal Year',
+          value: year,
+          width: 108,
+          items: [for (final y in widget.store.years) (y, '$y')],
+          onChanged: (v) => change(() => year = v),
+        ),
+        _InlineChoice(
+          label: 'Program',
+          value: program,
+          width: 132,
+          items: [
+            ('', 'All Programs'),
+            for (final p in widget.store.programs) (p.code, p.code),
+          ],
+          onChanged: (v) => change(() => program = v),
+        ),
+        _InlineChoice(
+          label: 'Fund',
+          value: fund,
+          width: 132,
+          items: const [('CURRENT', 'Current'), ('CONTINUING', 'Continuing')],
+          onChanged: (v) => change(() => fund = v),
+        ),
+      ],
+    );
+    final searchField = TextField(
+      onChanged: (v) => change(() => query = v),
+      style: const TextStyle(fontSize: 14),
+      decoration: const InputDecoration(
+        hintText: 'Search UACS Code or Expense...',
+        prefixIcon: Icon(Icons.search, size: 20),
+        isDense: true,
+        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+      ),
+    );
+    final actions = Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        FilledButton.icon(
+          style: FilledButton.styleFrom(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          ),
+          onPressed: () => edit(),
+          icon: const Icon(Icons.add, size: 18),
+          label: const Text('Add Record'),
+        ),
+        const SizedBox(width: 8),
+        OutlinedButton.icon(
+          style: _outlineAction(blue, const Color(0xffe8f0fc)),
+          onPressed: chosen == null ? null : () => edit(chosen),
+          icon: const Icon(Icons.edit_outlined, size: 18),
+          label: const Text('Edit'),
+        ),
+        const SizedBox(width: 8),
+        OutlinedButton.icon(
+          style: _outlineAction(red, const Color(0xffffe8eb)),
+          onPressed: chosen == null ? null : () => remove(chosen),
+          icon: const Icon(Icons.delete_outline, size: 18),
+          label: const Text('Delete'),
+        ),
+      ],
+    );
+    WidgetsBinding.instance.addPostFrameCallback((_) => _matchSearchWidth());
     return PageFrame(
       title: 'Budget Utilization',
-      subtitle: 'Manage allotments, obligations, disbursements, and balances.',
+      subtitle:
+          'Manage allotment, obligation, and disbursement records per program.',
+      accent: false,
+      besideSubtitle: SizedBox(width: _searchWidth, child: searchField),
+      expand: true,
       children: [
-        Wrap(
-          spacing: 14,
-          runSpacing: 14,
-          crossAxisAlignment: WrapCrossAlignment.end,
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            SelectField(
-              label: 'Fiscal Year',
-              value: year,
-              width: 130,
-              items: [for (final y in widget.store.years) (y, '$y')],
-              onChanged: (v) => change(() => year = v),
-            ),
-            SelectField(
-              label: 'Program',
-              value: program,
-              items: [
-                ('', 'All Programs'),
-                for (final p in widget.store.programs) (p.code, p.code),
-              ],
-              onChanged: (v) => change(() => program = v),
-            ),
-            SelectField(
-              label: 'Fund Source',
-              value: fund,
-              items: const [
-                ('CURRENT', 'Current'),
-                ('CONTINUING', 'Continuing'),
-              ],
-              onChanged: (v) => change(() => fund = v),
-            ),
-            SearchBox(onChanged: (v) => change(() => query = v)),
-            FilledButton.icon(
-              onPressed: () => edit(),
-              icon: const Icon(Icons.add, size: 18),
-              label: const Text('Add Record'),
-            ),
+            Expanded(child: filters),
+            const SizedBox(width: 16),
+            KeyedSubtree(key: _actionsKey, child: actions),
           ],
         ),
-        const SizedBox(height: 20),
-        Panel(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Wrap(
-                spacing: 24,
-                runSpacing: 10,
-                children: [
-                  Text('Allotment  ${money(t.allotment)}'),
-                  Text('Obligation  ${money(t.obligation)}'),
-                  Text('Disbursement  ${money(t.disbursement)}'),
-                  Text(
-                    'Balance  ${money(t.balance)}',
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w700,
-                      color: blue,
-                    ),
-                  ),
-                ],
+        const SizedBox(height: 18),
+        Expanded(
+          child: Panel(
+            padding: 0,
+            child: BudgetTable(
+              records: rows,
+              selectedId: selected?.id,
+              total: t,
+              totalLabel: program.isEmpty ? 'All Programs' : program,
+              onSelect: (record) => setState(
+                () => selectedId = selectedId == record.id ? null : record.id,
               ),
-              const SizedBox(height: 18),
-              BudgetTable(
-                records: rows.skip(start).take(12).toList(),
-                onEdit: edit,
-                onDelete: remove,
-              ),
-              Pager(
-                page: page,
-                count: rows.length,
-                pageSize: 12,
-                onChanged: (v) => setState(() => page = v),
-              ),
-            ],
+            ),
           ),
         ),
       ],
     );
   }
+}
+
+class _InlineChoice<T> extends StatelessWidget {
+  const _InlineChoice({
+    required this.label,
+    required this.value,
+    required this.items,
+    required this.onChanged,
+    required this.width,
+  });
+  final String label;
+  final T value;
+  final List<(T, String)> items;
+  final ValueChanged<T> onChanged;
+  final double width;
+  @override
+  Widget build(BuildContext context) => Row(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      Text(
+        '$label:',
+        style: const TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.w700,
+          color: ink,
+        ),
+      ),
+      const SizedBox(width: 8),
+      SizedBox(
+        width: width,
+        child: InputDecorator(
+          decoration: const InputDecoration(
+            filled: true,
+            fillColor: Colors.white,
+            isDense: true,
+            contentPadding: EdgeInsets.fromLTRB(12, 10, 0, 10),
+          ),
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<T>(
+              isExpanded: true,
+              isDense: true,
+              value: items.any((e) => e.$1 == value) ? value : null,
+              style: const TextStyle(
+                fontFamily: 'Segoe UI',
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+                color: ink,
+              ),
+              items: [
+                for (final e in items)
+                  DropdownMenuItem<T>(
+                    value: e.$1,
+                    child: Text(
+                      e.$2,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+              ],
+              onChanged: (v) {
+                if (v != null) onChanged(v);
+              },
+            ),
+          ),
+        ),
+      ),
+    ],
+  );
 }
 
 class RecordEditor extends StatefulWidget {
@@ -176,6 +312,14 @@ class _RecordEditorState extends State<RecordEditor> {
       disbursement,
       remarks;
   String? error;
+  final _dropdownKey = GlobalKey();
+  double? _inputHeight;
+  void _matchInputHeight() {
+    final height = _dropdownKey.currentContext?.size?.height;
+    if (!mounted || height == null || height == _inputHeight) return;
+    setState(() => _inputHeight = height);
+  }
+
   @override
   void initState() {
     super.initState();
@@ -269,117 +413,175 @@ class _RecordEditorState extends State<RecordEditor> {
     TextEditingController c, {
     bool amount = false,
     Widget? suffix,
-    int lines = 1,
-  }) => TextField(
-    controller: c,
-    maxLines: lines,
-    onChanged: amount ? (_) => setState(() {}) : null,
-    keyboardType: amount
-        ? const TextInputType.numberWithOptions(decimal: true)
-        : TextInputType.text,
-    decoration: InputDecoration(labelText: label, suffixIcon: suffix),
-  );
+    bool expand = false,
+  }) {
+    final box = _inputHeight;
+    final input = TextField(
+      controller: c,
+      expands: expand,
+      minLines: expand ? null : 1,
+      maxLines: expand ? null : 1,
+      textAlignVertical: expand
+          ? TextAlignVertical.top
+          : TextAlignVertical.center,
+      onChanged: amount ? (_) => setState(() {}) : null,
+      keyboardType: amount
+          ? const TextInputType.numberWithOptions(decimal: true)
+          : TextInputType.text,
+      decoration: InputDecoration(
+        isDense: true,
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 12,
+          vertical: 12,
+        ),
+        prefixText: amount ? '₱  ' : null,
+        prefixStyle: const TextStyle(color: muted, fontWeight: FontWeight.w600),
+        suffixIcon: suffix,
+        suffixIconConstraints: const BoxConstraints(
+          minWidth: 32,
+          minHeight: 32,
+        ),
+      ),
+    );
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        FieldLabel(label),
+        const SizedBox(height: 4),
+        if (expand)
+          Expanded(child: input)
+        else
+          SizedBox(height: box, child: input),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    WidgetsBinding.instance.addPostFrameCallback((_) => _matchInputHeight());
     final a = parseCents(allotment.text) ?? 0,
         o = parseCents(obligation.text) ?? 0,
         d = parseCents(disbursement.text) ?? 0;
     final programs = widget.store.programs
         .where((p) => p.active || p.code == widget.record?.program)
         .toList();
-    return AlertDialog(
-      title: Text(
-        widget.record == null ? 'Add Budget Record' : 'Edit Budget Record',
-      ),
-      content: SizedBox(
-        width: 820,
+    const gap = SizedBox(height: 14);
+    Widget columnFields(List<Widget> children) => Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        for (var i = 0; i < children.length; i++) ...[
+          if (i > 0) gap,
+          children[i],
+        ],
+      ],
+    );
+    Widget metric(String label, String value) => Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: const TextStyle(fontSize: 13, color: ink)),
+        const SizedBox(height: 3),
+        Text(
+          value,
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w800,
+            color: ink,
+          ),
+        ),
+      ],
+    );
+    return Dialog(
+      alignment: const Alignment(0.45, 0),
+      insetPadding: const EdgeInsets.symmetric(horizontal: 40, vertical: 32),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 760),
         child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(18, 14, 18, 8),
           child: Column(
             mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Wrap(
-                spacing: 14,
-                runSpacing: 14,
-                children: [
+              Text(
+                widget.record == null
+                    ? 'Add Budget Record'
+                    : 'Edit Budget Record',
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+              const SizedBox(height: 16),
+              _AlignedRecordColumns(
+                identity: columnFields([
                   SelectField(
+                    boxKey: _dropdownKey,
                     label: 'Fiscal Year *',
                     value: year,
-                    width: 150,
+                    dense: true,
+                    width: double.infinity,
                     items: [for (final y in widget.store.years) (y, '$y')],
                     onChanged: (v) => setState(() => year = v),
                   ),
                   SelectField(
                     label: 'Program *',
                     value: program,
-                    width: 220,
+                    dense: true,
+                    width: double.infinity,
                     items: [for (final p in programs) (p.code, p.code)],
                     onChanged: (v) => setState(() => program = v),
                   ),
                   SelectField(
                     label: 'Fund Source *',
                     value: fund,
+                    dense: true,
+                    width: double.infinity,
                     items: const [
                       ('CURRENT', 'Current'),
                       ('CONTINUING', 'Continuing'),
                     ],
                     onChanged: (v) => setState(() => fund = v),
                   ),
-                ],
-              ),
-              const SizedBox(height: 22),
-              field(
-                'UACS Code *',
-                code,
-                suffix: IconButton(
-                  tooltip: 'Find UACS code',
-                  onPressed: lookup,
-                  icon: const Icon(Icons.search),
-                ),
-              ),
-              const SizedBox(height: 18),
-              field('Expense (UACS Name) *', name),
-              const SizedBox(height: 18),
-              LayoutBuilder(
-                builder: (context, c) => Wrap(
-                  spacing: 14,
-                  runSpacing: 18,
-                  children: [
-                    for (final f in [
-                      ('Allotment *', allotment),
-                      ('Obligation', obligation),
-                      ('Disbursement', disbursement),
-                    ])
-                      SizedBox(
-                        width: c.maxWidth >= 650
-                            ? (c.maxWidth - 28) / 3
-                            : c.maxWidth,
-                        child: field(f.$1, f.$2, amount: true),
-                      ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 18),
-              field('Remarks', remarks, lines: 3),
-              const SizedBox(height: 18),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: background,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Wrap(
-                  spacing: 22,
-                  runSpacing: 10,
-                  children: [
-                    Text(
-                      'Balance: ${money(a - o)}',
-                      style: const TextStyle(fontWeight: FontWeight.w700),
+                  field(
+                    'UACS Code *',
+                    code,
+                    suffix: IconButton(
+                      tooltip: 'Find UACS code',
+                      onPressed: lookup,
+                      visualDensity: VisualDensity.compact,
+                      icon: const Icon(Icons.search, size: 18),
                     ),
-                    Text('Obligation Rate: ${rate(o, a)}'),
-                    Text('Disbursement Rate: ${rate(d, o)}'),
-                  ],
+                  ),
+                  field('Expense (UACS Name) *', name),
+                ]),
+                amounts: columnFields([
+                  field('Allotment *', allotment, amount: true),
+                  field('Obligation', obligation, amount: true),
+                  field('Disbursement', disbursement, amount: true),
+                ]),
+                remarks: field('Remarks', remarks, expand: true),
+                calculated: Container(
+                  padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xffe7f0fb),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Calculated Values\n(Automatic)',
+                        style: TextStyle(
+                          fontSize: 15,
+                          height: 1.2,
+                          fontWeight: FontWeight.w700,
+                          color: blue,
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+                      metric('Obligation Rate', rate(o, a)),
+                      const SizedBox(height: 12),
+                      metric('Balance', money(a - o)),
+                      const SizedBox(height: 12),
+                      metric('Disbursement Rate', rate(d, o)),
+                    ],
+                  ),
                 ),
               ),
               if (error != null)
@@ -387,18 +589,96 @@ class _RecordEditorState extends State<RecordEditor> {
                   padding: const EdgeInsets.only(top: 14),
                   child: Text(error!, style: const TextStyle(color: red)),
                 ),
+              const SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text('Cancel'),
+                  ),
+                  const SizedBox(width: 8),
+                  FilledButton(
+                    style: FilledButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 10,
+                      ),
+                      visualDensity: VisualDensity.compact,
+                    ),
+                    onPressed: program.isEmpty ? null : save,
+                    child: const Text('Save Record'),
+                  ),
+                ],
+              ),
             ],
           ),
         ),
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel'),
+    );
+  }
+}
+
+class _AlignedRecordColumns extends StatefulWidget {
+  const _AlignedRecordColumns({
+    required this.identity,
+    required this.amounts,
+    required this.remarks,
+    required this.calculated,
+  });
+  final Widget identity, amounts, remarks, calculated;
+  @override
+  State<_AlignedRecordColumns> createState() => _AlignedRecordColumnsState();
+}
+
+class _AlignedRecordColumnsState extends State<_AlignedRecordColumns> {
+  final _identityKey = GlobalKey();
+  final _amountsKey = GlobalKey();
+  double? _identityHeight, _amountsHeight;
+
+  void _sync() {
+    if (!mounted) return;
+    final identity = _identityKey.currentContext?.size?.height;
+    final amounts = _amountsKey.currentContext?.size?.height;
+    if (identity == null || amounts == null) return;
+    if ((_identityHeight ?? -1) == identity &&
+        (_amountsHeight ?? -1) == amounts) {
+      return;
+    }
+    setState(() {
+      _identityHeight = identity;
+      _amountsHeight = amounts;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    WidgetsBinding.instance.addPostFrameCallback((_) => _sync());
+    final identityHeight = _identityHeight;
+    final amountsHeight = _amountsHeight;
+    final remarksHeight = identityHeight == null || amountsHeight == null
+        ? 88.0
+        : (identityHeight - amountsHeight - 14).clamp(1.0, double.infinity);
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: KeyedSubtree(key: _identityKey, child: widget.identity),
         ),
-        FilledButton(
-          onPressed: program.isEmpty ? null : save,
-          child: const Text('Save Record'),
+        const SizedBox(width: 16),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              KeyedSubtree(key: _amountsKey, child: widget.amounts),
+              const SizedBox(height: 14),
+              SizedBox(height: remarksHeight, child: widget.remarks),
+            ],
+          ),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: SizedBox(height: identityHeight, child: widget.calculated),
         ),
       ],
     );

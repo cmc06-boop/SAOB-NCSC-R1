@@ -96,130 +96,162 @@ class _LoginPageState extends State<LoginPage> {
     final setup = widget.store.needsAccount;
     return Container(
       width: LoginLayout.cardWidth,
-      padding: const EdgeInsets.all(LoginLayout.cardPadding),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.97),
         borderRadius: BorderRadius.circular(LoginLayout.cardRadius),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x24061c52),
-            blurRadius: 26,
-            offset: Offset(0, 8),
+            color: Color(0x2e061c52),
+            blurRadius: 32,
+            offset: Offset(0, 14),
           ),
         ],
       ),
-      child: AutofillGroup(
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(LoginLayout.cardRadius),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Row(
-              children: [
-                Expanded(child: Divider()),
-                SizedBox(width: 22),
-                CircleAvatar(
-                  radius: 34,
-                  backgroundColor: Color(0xffe2e9fa),
-                  child: Icon(Icons.person, size: 44, color: navy),
-                ),
-                SizedBox(width: 22),
-                Expanded(child: Divider()),
-              ],
-            ),
-            const SizedBox(height: 14),
-            Text(
-              setup ? 'Set Up Account' : 'System Login',
-              style: const TextStyle(
-                fontSize: 30,
-                fontWeight: FontWeight.w800,
-                color: navy,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              setup
-                  ? 'Create the account for this computer'
-                  : 'Access your account to continue',
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 14, color: muted),
-            ),
-            const SizedBox(height: 20),
-            if (setup) ...[
-              _field('Full name', Icons.badge_outlined, _name),
-              const SizedBox(height: 12),
-            ],
-            _field('Username', Icons.person, _username),
-            const SizedBox(height: 12),
-            _field('Password', Icons.lock, _password, password: true),
-            if (setup) ...[
-              const SizedBox(height: 12),
-              _field(
-                'Confirm password',
-                Icons.lock_outline,
-                _confirmation,
-                password: true,
-              ),
-            ],
-            if (_error != null)
-              Padding(
-                padding: const EdgeInsets.only(top: 12),
-                child: Text(
-                  _error!,
-                  style: const TextStyle(color: red, fontSize: 12),
-                ),
-              ),
-            const SizedBox(height: 14),
-            SizedBox(
+            const SizedBox(
+              height: 5,
               width: double.infinity,
-              height: 48,
-              child: FilledButton.icon(
-                style: FilledButton.styleFrom(
-                  backgroundColor: navy,
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                ),
-                onPressed: _busy ? null : _submit,
-                icon: _busy
-                    ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.login, size: 22),
-                label: Text(
-                  setup ? 'Create Account' : 'Login',
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                  ),
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(colors: [navy, blue, red]),
                 ),
               ),
             ),
-            if (!setup) ...[
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  const Expanded(child: Divider()),
-                  TextButton(
-                    onPressed: () => showDialog<void>(
-                      context: context,
-                      builder: (ctx) => AlertDialog(
-                        title: const Text('Account access'),
-                        content: const Text(
-                          'Accounts are stored on this computer. Contact the person maintaining this application for help recovering account access.',
-                        ),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Navigator.pop(ctx),
-                            child: const Text('Close'),
+            Padding(
+              padding: const EdgeInsets.all(LoginLayout.cardPadding),
+              child: AutofillGroup(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Row(
+                      children: [
+                        Expanded(child: Divider()),
+                        SizedBox(width: 22),
+                        DecoratedBox(
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.fromBorderSide(
+                              BorderSide(color: Color(0xffd5e1f5), width: 3),
+                            ),
                           ),
-                        ],
+                          child: Padding(
+                            padding: EdgeInsets.all(3),
+                            child: CircleAvatar(
+                              radius: 32,
+                              backgroundColor: Color(0xffe2e9fa),
+                              child: Icon(Icons.person, size: 40, color: navy),
+                            ),
+                          ),
+                        ),
+                        SizedBox(width: 22),
+                        Expanded(child: Divider()),
+                      ],
+                    ),
+                    const SizedBox(height: 14),
+                    Text(
+                      setup ? 'Set Up Account' : 'System Login',
+                      style: const TextStyle(
+                        fontSize: 30,
+                        fontWeight: FontWeight.w800,
+                        color: navy,
                       ),
                     ),
-                    child: const Text('Forgot Password?'),
-                  ),
-                  const Expanded(child: Divider()),
-                ],
+                    const SizedBox(height: 8),
+                    Text(
+                      setup
+                          ? 'Create the account for this computer'
+                          : 'Access your account to continue',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(fontSize: 14, color: muted),
+                    ),
+                    const SizedBox(height: 20),
+                    if (setup) ...[
+                      _field('Full name', Icons.badge_outlined, _name),
+                      const SizedBox(height: 12),
+                    ],
+                    _field('Username', Icons.person, _username),
+                    const SizedBox(height: 12),
+                    _field('Password', Icons.lock, _password, password: true),
+                    if (setup) ...[
+                      const SizedBox(height: 12),
+                      _field(
+                        'Confirm password',
+                        Icons.lock_outline,
+                        _confirmation,
+                        password: true,
+                      ),
+                    ],
+                    if (_error != null)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 12),
+                        child: Text(
+                          _error!,
+                          style: const TextStyle(color: red, fontSize: 12),
+                        ),
+                      ),
+                    const SizedBox(height: 14),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 48,
+                      child: FilledButton.icon(
+                        style: FilledButton.styleFrom(
+                          backgroundColor: navy,
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                        ),
+                        onPressed: _busy ? null : _submit,
+                        icon: _busy
+                            ? const SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : const Icon(Icons.login, size: 22),
+                        label: Text(
+                          setup ? 'Create Account' : 'Login',
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ),
+                    if (!setup) ...[
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          const Expanded(child: Divider()),
+                          TextButton(
+                            onPressed: () => showDialog<void>(
+                              context: context,
+                              builder: (ctx) => AlertDialog(
+                                title: const Text('Account access'),
+                                content: const Text(
+                                  'Accounts are stored on this computer. Contact the person maintaining this application for help recovering account access.',
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(ctx),
+                                    child: const Text('Close'),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            child: const Text('Forgot Password?'),
+                          ),
+                          const Expanded(child: Divider()),
+                        ],
+                      ),
+                    ],
+                  ],
+                ),
               ),
-            ],
+            ),
           ],
         ),
       ),
