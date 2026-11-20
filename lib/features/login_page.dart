@@ -1,0 +1,359 @@
+import 'package:material_ui/material_ui.dart';
+
+import '../core/format.dart';
+import '../data/finance_store.dart';
+import '../ui/common.dart';
+import '../ui/login_backdrop.dart';
+import '../ui/theme.dart';
+
+class LoginPage extends StatefulWidget {
+  const LoginPage({super.key, required this.store});
+  final FinanceStore store;
+  @override
+  State<LoginPage> createState() => _LoginPageState();
+}
+
+class _LoginPageState extends State<LoginPage> {
+  final _username = TextEditingController(),
+      _password = TextEditingController(),
+      _name = TextEditingController(),
+      _confirmation = TextEditingController();
+  bool _showPassword = false, _busy = false;
+  String? _error;
+  @override
+  void dispose() {
+    for (final c in [_username, _password, _name, _confirmation]) {
+      c.dispose();
+    }
+    super.dispose();
+  }
+
+  Future<void> _submit() async {
+    if (_busy) return;
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+    try {
+      if (widget.store.needsAccount) {
+        if (_password.text != _confirmation.text) {
+          throw const FinanceError('The passwords do not match.');
+        }
+        await widget.store.createOwner(
+          _name.text,
+          _username.text,
+          _password.text,
+        );
+      } else {
+        await widget.store.signIn(_username.text, _password.text);
+      }
+      _password.clear();
+      _confirmation.clear();
+    } catch (e) {
+      if (mounted) setState(() => _error = friendlyError(e));
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Widget _field(
+    String label,
+    IconData icon,
+    TextEditingController controller, {
+    bool password = false,
+  }) => SizedBox(
+    height: LoginLayout.fieldHeight,
+    child: TextField(
+      key: ValueKey(label),
+      controller: controller,
+      enabled: !_busy,
+      obscureText: password && !_showPassword,
+      autofillHints: label == 'Username'
+          ? const [AutofillHints.username]
+          : null,
+      onSubmitted: (_) => _submit(),
+      decoration: InputDecoration(
+        hintText: label,
+        prefixIcon: Icon(icon, size: 20, color: navy),
+        suffixIcon: password
+            ? IconButton(
+                tooltip: _showPassword ? 'Hide password' : 'Show password',
+                onPressed: () => setState(() => _showPassword = !_showPassword),
+                icon: Icon(
+                  _showPassword
+                      ? Icons.visibility_outlined
+                      : Icons.visibility_off_outlined,
+                  size: 20,
+                  color: navy,
+                ),
+              )
+            : null,
+      ),
+    ),
+  );
+
+  Widget _card() {
+    final setup = widget.store.needsAccount;
+    return Container(
+      width: LoginLayout.cardWidth,
+      padding: const EdgeInsets.all(LoginLayout.cardPadding),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.97),
+        borderRadius: BorderRadius.circular(LoginLayout.cardRadius),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x24061c52),
+            blurRadius: 26,
+            offset: Offset(0, 8),
+          ),
+        ],
+      ),
+      child: AutofillGroup(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Row(
+              children: [
+                Expanded(child: Divider()),
+                SizedBox(width: 22),
+                CircleAvatar(
+                  radius: 34,
+                  backgroundColor: Color(0xffe2e9fa),
+                  child: Icon(Icons.person, size: 44, color: navy),
+                ),
+                SizedBox(width: 22),
+                Expanded(child: Divider()),
+              ],
+            ),
+            const SizedBox(height: 14),
+            Text(
+              setup ? 'Set Up Account' : 'System Login',
+              style: const TextStyle(
+                fontSize: 30,
+                fontWeight: FontWeight.w800,
+                color: navy,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              setup
+                  ? 'Create the account for this computer'
+                  : 'Access your account to continue',
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 14, color: muted),
+            ),
+            const SizedBox(height: 20),
+            if (setup) ...[
+              _field('Full name', Icons.badge_outlined, _name),
+              const SizedBox(height: 12),
+            ],
+            _field('Username', Icons.person, _username),
+            const SizedBox(height: 12),
+            _field('Password', Icons.lock, _password, password: true),
+            if (setup) ...[
+              const SizedBox(height: 12),
+              _field(
+                'Confirm password',
+                Icons.lock_outline,
+                _confirmation,
+                password: true,
+              ),
+            ],
+            if (_error != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 12),
+                child: Text(
+                  _error!,
+                  style: const TextStyle(color: red, fontSize: 12),
+                ),
+              ),
+            const SizedBox(height: 14),
+            SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: FilledButton.icon(
+                style: FilledButton.styleFrom(
+                  backgroundColor: navy,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                ),
+                onPressed: _busy ? null : _submit,
+                icon: _busy
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.login, size: 22),
+                label: Text(
+                  setup ? 'Create Account' : 'Login',
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ),
+            if (!setup) ...[
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  const Expanded(child: Divider()),
+                  TextButton(
+                    onPressed: () => showDialog<void>(
+                      context: context,
+                      builder: (ctx) => AlertDialog(
+                        title: const Text('Account access'),
+                        content: const Text(
+                          'Accounts are stored on this computer. Contact the person maintaining this application for help recovering account access.',
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(ctx),
+                            child: const Text('Close'),
+                          ),
+                        ],
+                      ),
+                    ),
+                    child: const Text('Forgot Password?'),
+                  ),
+                  const Expanded(child: Divider()),
+                ],
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _brand({bool compact = false}) => LayoutBuilder(
+    builder: (context, c) {
+      final small = c.maxWidth < 490;
+      return Row(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Image.asset(
+            'assets/ncsc-logo-transparent.png',
+            width: compact
+                ? 76
+                : small
+                ? 118
+                : 160,
+            semanticLabel: 'National Commission of Senior Citizens logo',
+          ),
+          Container(
+            width: 2,
+            height: compact ? 85 : 172,
+            color: navy,
+            margin: const EdgeInsets.symmetric(horizontal: 18),
+          ),
+          Expanded(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    'NCSC-R1',
+                    style: TextStyle(
+                      color: navy,
+                      fontSize: compact
+                          ? 36
+                          : small
+                          ? 46
+                          : 62,
+                      fontWeight: FontWeight.w800,
+                      height: 1.1,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  productTitle,
+                  style: TextStyle(
+                    color: navy,
+                    fontSize: compact
+                        ? 16
+                        : small
+                        ? 19
+                        : 24,
+                    fontWeight: FontWeight.w600,
+                    height: 1.25,
+                  ),
+                ),
+                const SizedBox(height: 14),
+                Container(
+                  width: 130,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: red,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      );
+    },
+  );
+
+  @override
+  Widget build(BuildContext context) => Scaffold(
+    body: Stack(
+      children: [
+        const Positioned.fill(child: LoginBackdrop()),
+        Positioned.fill(
+          child: LayoutBuilder(
+            builder: (context, c) {
+              if (c.maxWidth < 1040) {
+                return SingleChildScrollView(
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(minHeight: c.maxHeight),
+                    child: Padding(
+                      padding: const EdgeInsets.all(28),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          ConstrainedBox(
+                            constraints: const BoxConstraints(maxWidth: 460),
+                            child: _brand(compact: true),
+                          ),
+                          const SizedBox(height: 26),
+                          _card(),
+                          const SizedBox(height: 26),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              }
+              return Row(
+                children: [
+                  Expanded(
+                    child: Padding(
+                      padding: EdgeInsets.only(
+                        left: c.maxWidth * 0.22,
+                        right: 28,
+                      ),
+                      child: _brand(),
+                    ),
+                  ),
+                  SingleChildScrollView(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 24),
+                      child: _card(),
+                    ),
+                  ),
+                  SizedBox(width: c.maxWidth * 0.055),
+                ],
+              );
+            },
+          ),
+        ),
+      ],
+    ),
+  );
+}

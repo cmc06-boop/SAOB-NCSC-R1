@@ -1,0 +1,38 @@
+name: ncsc_region1_finance
+description: Offline NCSC Region I Statement of Allotments, Obligations, and Balances.
+publish_to: none
+version: 0.1.0+1
+
+environment:
+  sdk: '>=3.14.0 <4.0.0'
+  flutter: '>=3.50.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  material_ui: ^1.1.0
+  archive: ^3.6.1
+  cryptography: ^2.7.0
+  excel: ^4.0.6
+  file_selector: ^1.1.0
+  intl: ^0.20.2
+  path: ^1.9.1
+  pdf: ^3.11.3
+  printing: ^5.14.2
+  sqlite3: ^3.9.1
+  xml: ^6.5.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/login-reference-background.png
+    - assets/login-senior.png
+    - assets/ncsc-logo-transparent.png
+    - assets/ncsc-logo.png
+    - assets/fonts/DejaVuSans.ttf
+    - assets/fonts/DejaVuSans-Bold.ttf
