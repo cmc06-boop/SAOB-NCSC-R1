@@ -1,5 +1,3 @@
-import 'dart:math' as math;
-
 import 'package:material_ui/material_ui.dart';
 
 import '../core/format.dart';
@@ -18,7 +16,6 @@ class SettingsPage extends StatefulWidget {
 class _SettingsPageState extends State<SettingsPage> {
   bool refs = false;
   String query = '';
-  int page = 1;
   Future<void> editProgram([Program? program]) async {
     await showDialog<void>(
       context: context,
@@ -30,22 +27,19 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
-  Future<void> editReference([DbRow? row]) async {
-    await showDialog<void>(
-      context: context,
-      builder: (ctx) => ReferenceEditor(
-        store: widget.store,
-        reference: row,
-        isProgram: false,
-      ),
-    );
-  }
-
-  void toggle(Program p, bool active) {
+  Future<void> removeProgram(Program program) async {
+    if (!await confirm(
+      context,
+      'Delete program?',
+      'Remove ${program.code} · ${program.name}?',
+    )) {
+      return;
+    }
     try {
-      widget.store.saveProgram(p.code, p.name, active, original: p.code);
+      widget.store.deleteProgram(program.code);
+      if (mounted) showMessage(context, 'Program deleted.');
     } catch (e) {
-      showMessage(context, friendlyError(e), error: true);
+      if (mounted) showMessage(context, friendlyError(e), error: true);
     }
   }
 
@@ -53,134 +47,333 @@ class _SettingsPageState extends State<SettingsPage> {
   Widget build(BuildContext context) {
     final programs = widget.store.programs,
         referenceRows = widget.store.references(query);
-    page = page.clamp(1, math.max(1, (referenceRows.length / 15).ceil()));
-    return PageFrame(
-      title: 'Settings',
-      subtitle: 'Manage programs and UACS reference data.',
-      children: [
-        SegmentedButton<bool>(
-          segments: const [
-            ButtonSegment(
-              value: false,
-              label: Text('Programs'),
-              icon: Icon(Icons.category_outlined),
-            ),
-            ButtonSegment(
-              value: true,
-              label: Text('UACS Reference'),
-              icon: Icon(Icons.menu_book_outlined),
-            ),
-          ],
-          selected: {refs},
-          onSelectionChanged: (v) => setState(() {
-            refs = v.first;
-            page = 1;
-          }),
+    const title = Text(
+      'Settings',
+      style: TextStyle(
+        fontSize: 28,
+        fontWeight: FontWeight.w700,
+        color: ink,
+        height: 1,
+      ),
+    );
+    const subtitle = Text(
+      'Manage programs and UACS reference data.',
+      style: TextStyle(fontSize: 14, color: muted, height: 1.35),
+    );
+    final sections = SegmentedButton<bool>(
+      segments: const [
+        ButtonSegment(
+          value: false,
+          label: Text('Programs'),
+          icon: Icon(Icons.category_outlined),
         ),
-        const SizedBox(height: 20),
-        Panel(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Wrap(
-                spacing: 20,
-                runSpacing: 14,
-                crossAxisAlignment: WrapCrossAlignment.center,
+        ButtonSegment(
+          value: true,
+          label: Text('UACS Reference'),
+          icon: Icon(Icons.menu_book_outlined),
+        ),
+      ],
+      selected: {refs},
+      onSelectionChanged: (v) => setState(() => refs = v.first),
+    );
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(28, 30, 28, 28),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          title,
+          const SizedBox(height: 8),
+          subtitle,
+          const SizedBox(height: 4),
+          Align(alignment: Alignment.centerRight, child: sections),
+          const SizedBox(height: 22),
+          Expanded(
+            child: Panel(
+              padding: 0,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Text(
-                    refs ? 'UACS Reference' : 'Program Management',
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w700,
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+                    child: Row(
+                      children: [
+                        Icon(
+                          refs
+                              ? Icons.menu_book_outlined
+                              : Icons.category_outlined,
+                          color: blue,
+                          size: 20,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          refs ? 'UACS Reference' : 'Program Management',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const Spacer(),
+                        if (refs)
+                          SizedBox(
+                            width: 320,
+                            height: 40,
+                            child: TextField(
+                              onChanged: (v) => setState(() => query = v),
+                              style: const TextStyle(fontSize: 14, color: ink),
+                              decoration: const InputDecoration(
+                                hintText: 'Search UACS Code or Expense…',
+                                isDense: true,
+                                contentPadding: EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 8,
+                                ),
+                                prefixIcon: Icon(Icons.search, size: 18),
+                                prefixIconConstraints: BoxConstraints(
+                                  minWidth: 40,
+                                  minHeight: 36,
+                                ),
+                              ),
+                            ),
+                          )
+                        else
+                          FilledButton.icon(
+                            onPressed: () => editProgram(),
+                            icon: const Icon(Icons.add, size: 18),
+                            label: const Text('Add Program'),
+                          ),
+                      ],
                     ),
                   ),
-                  FilledButton.icon(
-                    onPressed: refs
-                        ? () => editReference()
-                        : () => editProgram(),
-                    icon: const Icon(Icons.add, size: 18),
-                    label: Text(refs ? 'Add UACS Code' : 'Add Program'),
-                  ),
-                  if (refs)
-                    SearchBox(
-                      onChanged: (v) => setState(() {
-                        query = v;
-                        page = 1;
-                      }),
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                      child: refs
+                          ? _SettingsTable(
+                              key: const ValueKey('uacs'),
+                              columns: const [
+                                'UACS Code',
+                                'Expense (UACS Name)',
+                              ],
+                              widths: const {
+                                0: FixedColumnWidth(140),
+                                1: FlexColumnWidth(),
+                              },
+                              rows: [
+                                for (final r in referenceRows)
+                                  [
+                                    Text(
+                                      displayCode(r['code'] as String),
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                    Text('${r['name']}'),
+                                  ],
+                              ],
+                            )
+                          : _SettingsTable(
+                              key: const ValueKey('programs'),
+                              columns: const [
+                                'Code',
+                                'Program Name',
+                                'Actions',
+                              ],
+                              widths: const {
+                                0: FixedColumnWidth(140),
+                                1: FlexColumnWidth(),
+                                2: FixedColumnWidth(96),
+                              },
+                              rows: [
+                                for (final p in programs)
+                                  [
+                                    Text(
+                                      p.code,
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                    Text(p.name),
+                                    Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        _boxedIcon(
+                                          tooltip: 'Edit',
+                                          color: blue,
+                                          icon: Icons.edit_outlined,
+                                          onPressed: () => editProgram(p),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        _boxedIcon(
+                                          tooltip: 'Delete',
+                                          color: red,
+                                          icon: Icons.delete_outline,
+                                          onPressed: () => removeProgram(p),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                              ],
+                            ),
                     ),
+                  ),
                 ],
               ),
-              const SizedBox(height: 12),
-              Text(
-                refs
-                    ? 'Maintain the UACS codes and expense names used in budget records.'
-                    : 'Active programs are available for new records. Deactivated programs keep their existing records and remain visible in reports.',
-                style: const TextStyle(fontSize: 13, color: muted),
-              ),
-              const SizedBox(height: 18),
-              if (refs) ...[
-                WideTable(
-                  columns: const [
-                    'UACS Code',
-                    'Expense (UACS Name)',
-                    'Actions',
-                  ],
-                  rows: [
-                    for (final r
-                        in referenceRows.skip((page - 1) * 15).take(15))
-                      [
-                        Text(displayCode(r['code'] as String)),
-                        tableText(r['name'], width: 520),
-                        TextButton.icon(
-                          onPressed: () => editReference(r),
-                          icon: const Icon(Icons.edit_outlined, size: 16),
-                          label: const Text('Edit'),
-                        ),
-                      ],
-                  ],
-                ),
-                Pager(
-                  page: page,
-                  count: referenceRows.length,
-                  pageSize: 15,
-                  onChanged: (v) => setState(() => page = v),
-                ),
-              ] else
-                WideTable(
-                  columns: const ['Code', 'Program Name', 'Status', 'Actions'],
-                  rows: [
-                    for (final p in programs)
-                      [
-                        Text(
-                          p.code,
-                          style: const TextStyle(fontWeight: FontWeight.w700),
-                        ),
-                        tableText(p.name, width: 400),
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Switch(
-                              value: p.active,
-                              onChanged: (v) => toggle(p, v),
-                            ),
-                            const SizedBox(width: 8),
-                            Text(p.active ? 'Active' : 'Inactive'),
-                          ],
-                        ),
-                        TextButton.icon(
-                          onPressed: () => editProgram(p),
-                          icon: const Icon(Icons.edit_outlined, size: 16),
-                          label: const Text('Edit'),
-                        ),
-                      ],
-                  ],
-                ),
-            ],
+            ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+Widget _boxedIcon({
+  required String tooltip,
+  required Color color,
+  required IconData icon,
+  required VoidCallback onPressed,
+}) => Tooltip(
+  message: tooltip,
+  child: Material(
+    color: Colors.white,
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(6),
+      side: BorderSide(color: color),
+    ),
+    child: InkWell(
+      onTap: onPressed,
+      borderRadius: BorderRadius.circular(6),
+      child: SizedBox(
+        width: 34,
+        height: 34,
+        child: Icon(icon, size: 18, color: color),
+      ),
+    ),
+  ),
+);
+
+class _SettingsTable extends StatelessWidget {
+  const _SettingsTable({
+    super.key,
+    required this.columns,
+    required this.widths,
+    required this.rows,
+  });
+  final List<String> columns;
+  final Map<int, TableColumnWidth> widths;
+  final List<List<Widget>> rows;
+
+  static const _border = BorderSide(color: Color(0xffd5e1f2));
+  static const _header = TextStyle(
+    fontSize: 13,
+    fontWeight: FontWeight.w700,
+    color: navy,
+  );
+  static const _body = TextStyle(fontSize: 13, color: ink);
+  static const _number = TextStyle(
+    fontSize: 13,
+    fontWeight: FontWeight.w600,
+    color: blue,
+  );
+
+  Map<int, TableColumnWidth> get _widths => {
+    0: const FixedColumnWidth(48),
+    for (final e in widths.entries) e.key + 1: e.value,
+  };
+
+  Widget _text(String text, {TextStyle style = _body}) => Padding(
+    padding: const EdgeInsets.fromLTRB(12, 8, 8, 8),
+    child: Text(text, style: style),
+  );
+
+  Widget _padded(Widget child) => Padding(
+    padding: const EdgeInsets.fromLTRB(12, 8, 8, 8),
+    child: DefaultTextStyle(style: _body, child: child),
+  );
+
+  TableRow _row(List<Widget> cells, Color color) => TableRow(
+    decoration: BoxDecoration(color: color),
+    children: [
+      for (final cell in cells)
+        TableCell(
+          verticalAlignment: TableCellVerticalAlignment.middle,
+          child: cell,
         ),
+    ],
+  );
+
+  @override
+  Widget build(BuildContext context) {
+    final headerTable = Table(
+      border: const TableBorder(verticalInside: _border, bottom: _border),
+      columnWidths: _widths,
+      defaultVerticalAlignment: TableCellVerticalAlignment.middle,
+      children: [
+        _row([
+          _text('#', style: _header),
+          for (final name in columns) _text(name, style: _header),
+        ], const Color(0xffeef3fb)),
+      ],
+    );
+    final bodyTable = Table(
+      border: const TableBorder(
+        horizontalInside: _border,
+        verticalInside: _border,
+      ),
+      columnWidths: _widths,
+      defaultVerticalAlignment: TableCellVerticalAlignment.middle,
+      children: [
+        if (rows.isEmpty)
+          _row([
+            _text(''),
+            _text(
+              'No records found.',
+              style: const TextStyle(fontSize: 13, color: muted),
+            ),
+            for (var i = 1; i < columns.length; i++) _text(''),
+          ], Colors.white)
+        else
+          for (var i = 0; i < rows.length; i++)
+            _row([
+              _text('${i + 1}', style: _number),
+              for (final cell in rows[i]) _padded(cell),
+            ], i.isOdd ? const Color(0xfff7f9fc) : Colors.white),
+      ],
+    );
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        headerTable,
+        Expanded(child: _SettingsScroller(child: bodyTable)),
       ],
     );
   }
+}
+
+class _SettingsScroller extends StatefulWidget {
+  const _SettingsScroller({required this.child});
+  final Widget child;
+  @override
+  State<_SettingsScroller> createState() => _SettingsScrollerState();
+}
+
+class _SettingsScrollerState extends State<_SettingsScroller> {
+  final _scroll = ScrollController();
+
+  @override
+  void dispose() {
+    _scroll.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => Scrollbar(
+    controller: _scroll,
+    thumbVisibility: true,
+    child: SingleChildScrollView(
+      controller: _scroll,
+      child: widget.child,
+    ),
+  );
 }
 
 class ReferenceEditor extends StatefulWidget {

@@ -1,5 +1,7 @@
+import 'dart:convert';
 import 'dart:io';
 
+import 'package:archive/archive.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ncsc_region1_finance/core/format.dart';
 import 'package:ncsc_region1_finance/data/database.dart';
@@ -282,17 +284,48 @@ void main() {
     expect(sheets.last.error, contains('Summary'));
   });
   test('Excel export round-trips numeric amounts; report types have distinct columns', () {
-    final rows = [record()], d = reportData(reportTypes.first, rows);
+    final rows = [record()];
     final bytes = excelReport(
-      d,
+      rows,
       title: reportTypes.first,
       year: 2026,
       program: 'GAS',
     );
-    final parsed = parseWorkbook(bytes).first.lines.single;
-    expect(parsed.allotment, 100010);
-    expect(parsed.obligation, 25005);
-    expect(parsed.disbursement, 10001);
+    final parsed = parseWorkbook(bytes);
+    expect(parsed.map((s) => s.name), ['GAS-REG_CURRENT']);
+    expect(parsed.first.lines.single.allotment, 100010);
+    expect(parsed.first.lines.single.obligation, 25005);
+    expect(parsed.first.lines.single.disbursement, 10001);
+    expect(parsed.first.lines.single.code, '5020101000');
+    expect(parsed.first.lines.single.name, 'Office supplies');
+    final zip = ZipDecoder().decodeBytes(bytes);
+    String xml(String name) => utf8.decode(
+      zip.files.firstWhere((f) => f.name == name).content as List<int>,
+    );
+    final sheet = xml(
+      zip.files
+          .firstWhere(
+            (f) =>
+                f.name.startsWith('xl/worksheets/sheet') &&
+                f.name.endsWith('.xml'),
+          )
+          .name,
+    );
+    expect(sheet, contains('SUM(C4:C4)'));
+    expect(sheet, contains('IF(C4=0,0,D4/C4)'));
+    expect(sheet, contains('C4-D4'));
+    expect(sheet, contains('<f>C4-D4</f><v>750.05</v>'));
+    expect(xml('xl/sharedStrings.xml'), contains('REGION I'));
+    final all = excelReport(
+      [record(), record(code: '5020102000', program: 'ECA')],
+      title: reportTypes.first,
+      year: 2026,
+      program: '',
+    );
+    expect(
+      parseWorkbook(all).map((s) => s.name),
+      containsAll(['GAS-REG_CURRENT', 'ECA-REG_CURRENT', 'SUMMARY']),
+    );
     expect(
       reportData('Obligation Status Report', rows).headers,
       isNot(contains('Disbursement')),

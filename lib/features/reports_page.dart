@@ -4,7 +4,6 @@ import 'dart:math' as math;
 import 'package:file_selector/file_selector.dart';
 import 'package:intl/intl.dart' hide TextDirection;
 import 'package:material_ui/material_ui.dart';
-import 'package:printing/printing.dart';
 
 import '../core/format.dart';
 import '../data/finance_store.dart';
@@ -12,6 +11,7 @@ import '../data/models.dart';
 import '../data/report_io.dart';
 import '../ui/common.dart';
 import '../ui/theme.dart';
+import 'print_dialog.dart';
 
 class _HeaderFilter<T> extends StatelessWidget {
   const _HeaderFilter({
@@ -94,7 +94,7 @@ class ReportsPage extends StatefulWidget {
 class _ReportsPageState extends State<ReportsPage> {
   static const _reportType = 'Budget Utilization Report';
   int year = manilaNow().year;
-  String program = '', format = 'PDF';
+  String program = '';
   bool busy = false, preview = false;
   void change(VoidCallback fn) => setState(fn);
   void openPreview() {
@@ -120,15 +120,13 @@ class _ReportsPageState extends State<ReportsPage> {
       final data = reportData(selectedType, rows);
       var completed = false;
       if (fmt == 'Print') {
-        final bytes = await pdfReport(
-          data,
+        if (mounted) setState(() => busy = false);
+        completed = await showReportPrintDialog(
+          context,
+          data: data,
           title: selectedType,
           year: selectedYear,
           program: selectedProgram,
-        );
-        completed = await Printing.layoutPdf(
-          onLayout: (_) => bytes,
-          name: 'NCSC Region I · $selectedType',
         );
       } else {
         final extension = fmt == 'PDF' ? 'pdf' : 'xlsx';
@@ -148,17 +146,27 @@ class _ReportsPageState extends State<ReportsPage> {
                 program: selectedProgram,
               )
             : excelReport(
-                data,
+                rows,
                 title: selectedType,
                 year: selectedYear,
                 program: selectedProgram,
               );
+        if (bytes.isEmpty) {
+          throw const FinanceError('The report file could not be created.');
+        }
         final destination = location.path.toLowerCase().endsWith('.$extension')
             ? location.path
             : '${location.path}.$extension';
         await File(destination).writeAsBytes(bytes, flush: true);
         completed = true;
-        if (mounted) showMessage(context, 'Report saved to $destination');
+        if (mounted) {
+          showMessage(
+            context,
+            fmt == 'PDF'
+                ? 'PDF report saved to $destination'
+                : 'Excel report saved to $destination',
+          );
+        }
       }
       if (completed) {
         widget.store.logReport(
@@ -401,50 +409,6 @@ class _ReportsPageState extends State<ReportsPage> {
             ],
             onChanged: busy ? null : (v) => change(() => program = v),
           ),
-          const SizedBox(height: 16),
-          const Text(
-            'Report Format',
-            style: TextStyle(fontWeight: FontWeight.w700),
-          ),
-          const SizedBox(height: 6),
-          Row(
-            children: [
-              Radio<String>(
-                value: 'PDF',
-                groupValue: format,
-                onChanged: busy
-                    ? null
-                    : (v) {
-                        if (v != null) setState(() => format = v);
-                      },
-              ),
-              const Icon(Icons.picture_as_pdf_outlined, size: 18, color: red),
-              const SizedBox(width: 4),
-              const Text('PDF'),
-              Radio<String>(
-                value: 'Excel',
-                groupValue: format,
-                onChanged: busy
-                    ? null
-                    : (v) {
-                        if (v != null) setState(() => format = v);
-                      },
-              ),
-              const Icon(
-                Icons.grid_on_outlined,
-                size: 18,
-                color: Color(0xff15803d),
-              ),
-              const SizedBox(width: 4),
-              const Text('Excel'),
-            ],
-          ),
-          const Spacer(),
-          FilledButton.icon(
-            onPressed: busy ? null : openPreview,
-            icon: const Icon(Icons.description_outlined, size: 18),
-            label: Text(busy ? 'Generating…' : 'Generate Report'),
-          ),
         ],
       ),
     );
@@ -525,15 +489,12 @@ class _ReportsPageState extends State<ReportsPage> {
                         style: TextStyle(color: muted),
                       ),
                     )
-                  : SingleChildScrollView(
-                      primary: false,
-                      padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
-                      child: _ReportSheet(
-                        title: _reportType,
-                        year: year,
-                        programLabel: programLabel,
-                        table: _previewTable(records),
-                      ),
+                  : _ReportSheet(
+                      title: _reportType,
+                      year: year,
+                      programLabel: programLabel,
+                      table: _previewTable(records),
+                      totals: Totals(records),
                     ),
             ),
           ),
@@ -581,91 +542,280 @@ class _PreviewTable {
   final Set<int> numeric;
 }
 
-class _ReportSheet extends StatelessWidget {
+class _ReportSheet extends StatefulWidget {
   const _ReportSheet({
     required this.title,
     required this.year,
     required this.programLabel,
     required this.table,
+    required this.totals,
   });
   final String title, programLabel;
   final int year;
   final _PreviewTable table;
+  final Totals totals;
+
+  @override
+  State<_ReportSheet> createState() => _ReportSheetState();
+}
+
+class _ReportSheetState extends State<_ReportSheet> {
+  final _vertical = ScrollController();
+
+  @override
+  void dispose() {
+    _vertical.dispose();
+    super.dispose();
+  }
+
+  static const _border = BorderSide(color: Color(0xffd5e1f2));
+
+  double _textWidth(String text, TextStyle style) {
+    final painter = TextPainter(
+      text: TextSpan(text: text, style: style),
+      textDirection: TextDirection.ltr,
+      maxLines: 1,
+    )..layout();
+    return painter.width;
+  }
+
+  /// One font size for every cell. Amount columns stay one line; the expense
+  /// name uses whatever width is left and wraps so the full text stays visible.
+  (double, List<double>) _fit(double available, TextStyle base) {
+    const pad = 12.0;
+    final table = widget.table;
+    final totals = widget.totals;
+    final locked = <int, List<String>>{
+      0: ['#', for (final row in table.rows) row[0]],
+      1: [table.headers[1], for (final row in table.rows) row[1]],
+      3: [money(totals.allotment), for (final row in table.rows) row[3]],
+      4: [money(totals.obligation), for (final row in table.rows) row[4]],
+      5: [
+        rate(totals.obligation, totals.allotment),
+        for (final row in table.rows) row[5],
+      ],
+      6: [money(totals.balance), for (final row in table.rows) row[6]],
+      7: [money(totals.disbursement), for (final row in table.rows) row[7]],
+      8: [
+        rate(totals.disbursement, totals.obligation),
+        for (final row in table.rows) row[8],
+      ],
+    };
+    var size = 12.0;
+    var widths = List<double>.filled(9, 0);
+    for (var attempt = 0; attempt < 9; attempt++) {
+      final measure = base.copyWith(
+        fontSize: size,
+        fontWeight: FontWeight.w800,
+      );
+      widths = List<double>.filled(9, 0);
+      for (final entry in locked.entries) {
+        var maxWidth = 0.0;
+        for (final text in entry.value) {
+          maxWidth = math.max(maxWidth, _textWidth(text, measure));
+        }
+        widths[entry.key] = maxWidth + pad;
+      }
+      final used = widths.fold<double>(0, (sum, width) => sum + width);
+      final nameWidth = available - used;
+      if (nameWidth >= 150 || size <= 9) {
+        widths[2] = math.max(nameWidth, 0);
+        break;
+      }
+      size -= 0.5;
+    }
+    final used = widths.fold<double>(0, (sum, width) => sum + width) - widths[2];
+    widths[2] = math.max(0, available - used);
+    return (size, widths);
+  }
+
+  Widget _cell(
+    String text, {
+    required TextAlign align,
+    required TextStyle style,
+    required bool wrap,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
+      child: Text(
+        text,
+        textAlign: align,
+        softWrap: wrap,
+        maxLines: wrap ? null : 1,
+        style: style,
+      ),
+    );
+  }
+
+  TableRow _row(List<Widget> cells, Color color) => TableRow(
+    decoration: BoxDecoration(color: color),
+    children: [
+      for (final cell in cells)
+        TableCell(
+          verticalAlignment: TableCellVerticalAlignment.middle,
+          child: cell,
+        ),
+    ],
+  );
 
   @override
   Widget build(BuildContext context) {
-    Widget cell(String text, {bool header = false, bool right = false}) {
-      return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-        child: Text(
-          text,
-          textAlign: right ? TextAlign.right : TextAlign.left,
-          style: TextStyle(
-            fontSize: header ? 11 : 12,
-            fontWeight: header ? FontWeight.w700 : FontWeight.w500,
-            color: header ? navy : ink,
-          ),
-        ),
-      );
-    }
-
+    final table = widget.table;
+    final totals = widget.totals;
     return Column(
       children: [
-        Image.asset('assets/ncsc-logo-transparent.png', width: 64, height: 64),
-        const SizedBox(height: 8),
-        const Text(
-          'NATIONAL COMMISSION OF SENIOR CITIZENS',
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w800,
-            letterSpacing: 0.3,
-          ),
-        ),
-        const Text(
-          'REGION I',
-          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
-        ),
-        const SizedBox(height: 14),
-        Text(
-          title,
-          textAlign: TextAlign.center,
-          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
-        ),
-        const SizedBox(height: 6),
-        Text(
-          'Program: $programLabel  |  Fiscal Year: $year',
-          style: const TextStyle(color: muted),
-        ),
-        const SizedBox(height: 16),
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Table(
-            defaultColumnWidth: const IntrinsicColumnWidth(),
-            border: const TableBorder(
-              horizontalInside: BorderSide(color: line),
-              bottom: BorderSide(color: line),
-            ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+          child: Column(
             children: [
-              TableRow(
-                decoration: const BoxDecoration(color: Color(0xffe7f0fb)),
+              const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  for (var i = 0; i < table.headers.length; i++)
-                    cell(
-                      table.headers[i],
-                      header: true,
-                      right: table.numeric.contains(i),
+                  Image(
+                    image: AssetImage('assets/ncsc-logo-transparent.png'),
+                    width: 58,
+                    height: 58,
+                  ),
+                  SizedBox(width: 12),
+                  Flexible(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'NATIONAL COMMISSION OF SENIOR CITIZENS',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 0.2,
+                          ),
+                        ),
+                        Text(
+                          'REGION I',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
                     ),
+                  ),
                 ],
               ),
-              for (final row in table.rows)
-                TableRow(
+              const SizedBox(height: 10),
+              Text(
+                widget.title,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Program: ${widget.programLabel}  |  Fiscal Year: ${widget.year}',
+                style: const TextStyle(color: muted),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+        const Divider(height: 1, color: line),
+        const SizedBox(height: 8),
+        Expanded(
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final base = DefaultTextStyle.of(context).style;
+              final fit = _fit(math.max(0, constraints.maxWidth - 16), base);
+              final size = fit.$1;
+              final columns = <int, TableColumnWidth>{
+                for (var i = 0; i < fit.$2.length; i++)
+                  i: FixedColumnWidth(fit.$2[i]),
+              };
+              final headerStyle = base.copyWith(
+                fontSize: size,
+                fontWeight: FontWeight.w700,
+                color: navy,
+              );
+              final bodyStyle = base.copyWith(fontSize: size, color: ink);
+              final totalStyle = base.copyWith(
+                fontSize: size,
+                fontWeight: FontWeight.w800,
+                color: navy,
+              );
+              Widget dataCell(String text, int index, TextStyle style) =>
+                  _cell(
+                    text,
+                    align: table.numeric.contains(index)
+                        ? TextAlign.right
+                        : TextAlign.left,
+                    style: style,
+                    wrap: index == 2 || (index > 2 && text == table.headers[index]),
+                  );
+              final headerTable = Table(
+                border: const TableBorder(
+                  verticalInside: _border,
+                  bottom: _border,
+                ),
+                columnWidths: columns,
+                defaultVerticalAlignment: TableCellVerticalAlignment.middle,
+                children: [
+                  _row([
+                    for (var i = 0; i < table.headers.length; i++)
+                      dataCell(table.headers[i], i, headerStyle),
+                  ], const Color(0xffeef3fb)),
+                ],
+              );
+              final bodyTable = Table(
+                border: const TableBorder(
+                  horizontalInside: _border,
+                  verticalInside: _border,
+                  bottom: _border,
+                ),
+                columnWidths: columns,
+                defaultVerticalAlignment: TableCellVerticalAlignment.middle,
+                children: [
+                  for (var r = 0; r < table.rows.length; r++)
+                    _row([
+                      for (var i = 0; i < table.rows[r].length; i++)
+                        dataCell(table.rows[r][i], i, bodyStyle),
+                    ], r.isOdd ? const Color(0xfff7f9fc) : Colors.white),
+                  _row([
+                    dataCell('', 0, totalStyle),
+                    dataCell('', 1, totalStyle),
+                    dataCell('Total (${widget.programLabel})', 2, totalStyle),
+                    dataCell(money(totals.allotment), 3, totalStyle),
+                    dataCell(money(totals.obligation), 4, totalStyle),
+                    dataCell(
+                      rate(totals.obligation, totals.allotment),
+                      5,
+                      totalStyle,
+                    ),
+                    dataCell(money(totals.balance), 6, totalStyle),
+                    dataCell(money(totals.disbursement), 7, totalStyle),
+                    dataCell(
+                      rate(totals.disbursement, totals.obligation),
+                      8,
+                      totalStyle,
+                    ),
+                  ], const Color(0xffe7eefc)),
+                ],
+              );
+              return Scrollbar(
+                controller: _vertical,
+                thumbVisibility: true,
+                child: Column(
                   children: [
-                    for (var i = 0; i < row.length; i++)
-                      cell(row[i], right: table.numeric.contains(i)),
+                    headerTable,
+                    Expanded(
+                      child: SingleChildScrollView(
+                        controller: _vertical,
+                        child: bodyTable,
+                      ),
+                    ),
                   ],
                 ),
-            ],
+              );
+            },
           ),
         ),
       ],
@@ -1071,47 +1221,47 @@ class _HistoryCard extends StatelessWidget {
                     verticalInside: _border,
                     bottom: _border,
                   ),
-            columnWidths: _columns,
-            defaultVerticalAlignment: TableCellVerticalAlignment.middle,
-            children: [
-              _row([
-                _cell('#', style: _header),
-                _cell('Report Name', style: _header),
-                _cell('Fiscal Year', style: _header),
-                _cell('Date Generated', style: _header),
-              ], const Color(0xffeef3fb)),
-            ],
-          ),
-          Table(
-            border: const TableBorder(
-              horizontalInside: _border,
-              verticalInside: _border,
-            ),
-            columnWidths: _columns,
-            defaultVerticalAlignment: TableCellVerticalAlignment.middle,
-            children: [
-              if (history.isEmpty)
-                _row([
-                  _cell(''),
-                  _cell(
-                    'No reports generated yet.',
-                    style: const TextStyle(fontSize: 13, color: muted),
+                  columnWidths: _columns,
+                  defaultVerticalAlignment: TableCellVerticalAlignment.middle,
+                  children: [
+                    _row([
+                      _cell('#', style: _header),
+                      _cell('Report Name', style: _header),
+                      _cell('Fiscal Year', style: _header),
+                      _cell('Date Generated', style: _header),
+                    ], const Color(0xffeef3fb)),
+                  ],
+                ),
+                Table(
+                  border: const TableBorder(
+                    horizontalInside: _border,
+                    verticalInside: _border,
                   ),
-                  _cell(''),
-                  _cell(''),
-                ], Colors.white)
-              else
-                for (var i = 0; i < history.length; i++)
-                  _row([
-                    _cell('${i + 1}', number: true),
-                    _cell(
-                      '${history[i]['type']}${(history[i]['program'] as String).isEmpty ? '' : ' – ${history[i]['program']}'}',
-                    ),
-                    _cell('${history[i]['year']}'),
-                    _cell(dateLabel(history[i]['at'])),
-                  ], i.isOdd ? const Color(0xfff7f9fc) : Colors.white),
-            ],
-          ),
+                  columnWidths: _columns,
+                  defaultVerticalAlignment: TableCellVerticalAlignment.middle,
+                  children: [
+                    if (history.isEmpty)
+                      _row([
+                        _cell(''),
+                        _cell(
+                          'No reports generated yet.',
+                          style: const TextStyle(fontSize: 13, color: muted),
+                        ),
+                        _cell(''),
+                        _cell(''),
+                      ], Colors.white)
+                    else
+                      for (var i = 0; i < history.length; i++)
+                        _row([
+                          _cell('${i + 1}', number: true),
+                          _cell(
+                            '${history[i]['type']}${(history[i]['program'] as String).isEmpty ? '' : ' – ${history[i]['program']}'}',
+                          ),
+                          _cell('${history[i]['year']}'),
+                          _cell(dateLabel(history[i]['at'])),
+                        ], i.isOdd ? const Color(0xfff7f9fc) : Colors.white),
+                  ],
+                ),
               ],
             ),
           ),

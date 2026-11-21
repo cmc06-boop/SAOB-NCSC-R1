@@ -39,7 +39,7 @@ class PageFrame extends StatelessWidget {
           ),
           const SizedBox(height: 10),
         ] else
-          const SizedBox(height: 8),
+          const SizedBox(height: 1),
         if (besideSubtitle == null)
           Text(subtitle, style: const TextStyle(color: muted, height: 1.35))
         else

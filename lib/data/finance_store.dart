@@ -332,6 +332,33 @@ class FinanceStore extends ChangeNotifier {
     notifyListeners();
   }
 
+  void deleteProgram(String code) {
+    require('settings');
+    db.transaction(() {
+      if (db.rows('SELECT code FROM programs WHERE code=?', [code]).isEmpty) {
+        throw const FinanceError('This program no longer exists.');
+      }
+      if (db
+          .rows('SELECT id FROM budget_records WHERE program=? LIMIT 1', [
+            code,
+          ])
+          .isNotEmpty) {
+        throw const FinanceError(
+          'This program still has budget records and cannot be deleted.',
+        );
+      }
+      db.connection.execute('DELETE FROM programs WHERE code=?', [code]);
+      _audit(
+        'Deleted',
+        'Deleted program',
+        code,
+        year: manilaNow().year,
+        program: code,
+      );
+    });
+    notifyListeners();
+  }
+
   void saveReference(String code, String name, {String? original}) {
     require('settings');
     code = codeKey(code);
