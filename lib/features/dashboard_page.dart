@@ -31,7 +31,9 @@ class _DashboardPageState extends State<DashboardPage> {
   Widget build(BuildContext context) {
     if (program.isNotEmpty &&
         !widget.store.programs.any((p) => p.code == program)) {
-      program = '';
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) setState(() => program = '');
+      });
     }
     final all = widget.store.records(year, program: program);
     // One dropdown entry per budget line (program + UACS), so All Items

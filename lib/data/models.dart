@@ -54,10 +54,8 @@ class BudgetRecord {
     if ([allotment, obligation, disbursement].any((v) => v < 0)) {
       return 'Amounts cannot be negative.';
     }
-    if (obligation > allotment) return 'Obligation exceeds the allotment.';
-    if (disbursement > obligation) {
-      return 'Disbursement exceeds the obligation.';
-    }
+    // No allotment/obligation/disbursement cross-checks — SAOB Excel lines
+    // can have obligation or disbursement without allotment (and similar).
     return null;
   }
 

@@ -144,9 +144,12 @@ class FinanceStore extends ChangeNotifier {
   }) {
     _requireCurrentYear(record.year);
     if (fromImport) {
-      // Excel import keeps amounts/codes as-is; only reject unusable rows.
-      if (codeKey(record.code).isEmpty) {
-        throw const FinanceError('A budget line is missing a UACS code.');
+      // Excel import keeps amounts as-is; only accept real UACS budget lines.
+      final code = codeKey(record.code);
+      if (!RegExp(r'^\d{8,14}$').hasMatch(code)) {
+        throw const FinanceError(
+          'A budget line must have an 8–14 digit UACS code.',
+        );
       }
       if (record.name.trim().isEmpty) {
         throw const FinanceError('A budget line is missing an expense name.');
@@ -217,22 +220,28 @@ class FinanceStore extends ChangeNotifier {
         );
       }
       _write(record, id: record.id);
-      var detail = '${displayCode(codeKey(record.code))} · ${record.name}';
+      final identity =
+          '${displayCode(codeKey(record.code))} - ${record.name.trim()}';
+      var detail = identity;
       if (before != null) {
+        final changes = <String>[];
         for (final e in {
           'Allotment': [before.allotment, record.allotment],
           'Obligation': [before.obligation, record.obligation],
           'Disbursement': [before.disbursement, record.disbursement],
         }.entries) {
           if (e.value[0] != e.value[1]) {
-            detail +=
-                ' · ${e.key}: ${money(e.value[0])} → ${money(e.value[1])}';
+            changes.add(
+              '${e.key} from ${money(e.value[0])} to ${money(e.value[1])}',
+            );
           }
         }
+        // Updated: show from→to only; Added: code + name.
+        detail = changes.isEmpty ? identity : changes.join('; ');
       }
       _audit(
         record.id == null ? 'Added' : 'Updated',
-        record.id == null ? 'Added new record' : 'Updated record',
+        '',
         detail,
         year: record.year,
         program: record.program,
@@ -252,8 +261,8 @@ class FinanceStore extends ChangeNotifier {
       db.connection.execute('DELETE FROM budget_records WHERE id=?', [id]);
       _audit(
         'Deleted',
-        'Deleted record',
-        '${displayCode(record.code)} · ${record.name}',
+        '',
+        '${displayCode(record.code)} - ${record.name.trim()}',
         year: record.year,
         program: record.program,
       );
@@ -289,13 +298,7 @@ class FinanceStore extends ChangeNotifier {
           'INSERT INTO programs(code,name,active) VALUES (?,?,1)',
           [program, label.isEmpty ? programLabel(program) : label],
         );
-        _audit(
-          'Added',
-          'Added program from Excel worksheet',
-          '$program · ${label.isEmpty ? programLabel(program) : label}',
-          year: payload.first.year,
-          program: program,
-        );
+        // No per-program audit here — workbook import logs the Excel filename once.
       } else if (label.isNotEmpty) {
         db.connection.execute('UPDATE programs SET name=? WHERE code=?', [
           label,
@@ -325,18 +328,27 @@ class FinanceStore extends ChangeNotifier {
         _write(record, id: previous?.id);
         count++;
       }
-      if (count > 0) {
-        _audit(
-          'Imported',
-          'Imported records from Excel',
-          '$count records (${payload.first.program})',
-          year: payload.first.year,
-          program: payload.first.program,
-        );
-      }
+      // Workbook-level audit is written once by logWorkbookImport.
     });
     notifyListeners();
     return count;
+  }
+
+  /// One audit row for a whole Excel workbook — filename only in Details.
+  void logWorkbookImport({
+    required String filename,
+    required int year,
+  }) {
+    require('import');
+    final file = filename.trim().isEmpty ? 'workbook.xlsx' : filename.trim();
+    _audit(
+      'Imported',
+      '',
+      file,
+      year: year,
+      program: '',
+    );
+    notifyListeners();
   }
 
   void saveProgram(String code, String name, bool active, {String? original}) {
@@ -380,10 +392,11 @@ class FinanceStore extends ChangeNotifier {
           );
         }
       }
+      final label = programLabel(code, name);
       _audit(
-        'Updated',
-        'Updated program',
-        '$code · $name · ${active ? 'Active' : 'Inactive'}',
+        original == null ? 'Added' : 'Updated',
+        '',
+        active ? label : '$label (Inactive)',
         year: manilaNow().year,
         program: code,
       );
@@ -409,8 +422,8 @@ class FinanceStore extends ChangeNotifier {
       db.connection.execute('DELETE FROM programs WHERE code=?', [code]);
       _audit(
         'Deleted',
-        'Deleted program',
-        code,
+        '',
+        programLabel(code),
         year: manilaNow().year,
         program: code,
       );
@@ -446,9 +459,9 @@ class FinanceStore extends ChangeNotifier {
         );
       }
       _audit(
-        'Updated',
-        'Updated UACS reference',
-        '${displayCode(code)} · $name',
+        original == null ? 'Added' : 'Updated',
+        '',
+        '${displayCode(code)} - $name',
         year: manilaNow().year,
       );
     });
@@ -507,8 +520,8 @@ class FinanceStore extends ChangeNotifier {
       );
       _audit(
         'Generated',
-        'Generated report',
-        '$type · ${program.isEmpty ? 'All Programs' : program} ($format)',
+        '',
+        '$type ($format)',
         year: year,
         program: program,
       );

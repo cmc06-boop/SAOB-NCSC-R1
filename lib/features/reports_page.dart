@@ -203,7 +203,9 @@ class _ReportsPageState extends State<ReportsPage> {
   Widget build(BuildContext context) {
     if (program.isNotEmpty &&
         !widget.store.programs.any((p) => p.code == program)) {
-      program = '';
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) setState(() => program = '');
+      });
     }
     final records = widget.store.records(year, program: program);
     final totals = Totals(records);
@@ -558,10 +560,12 @@ class _ReportSheet extends StatefulWidget {
 
 class _ReportSheetState extends State<_ReportSheet> {
   final _vertical = ScrollController();
+  final _horizontal = ScrollController();
 
   @override
   void dispose() {
     _vertical.dispose();
+    _horizontal.dispose();
     super.dispose();
   }
 
@@ -576,53 +580,54 @@ class _ReportSheetState extends State<_ReportSheet> {
     return painter.width;
   }
 
-  /// One font size for every cell. Amount columns stay one line; the expense
-  /// name uses whatever width is left and wraps so the full text stays visible.
+  /// Size every column from its widest header/body/total cell. Extra space goes
+  /// to the expense name; if content is wider than the panel, scroll sideways.
   (double, List<double>) _fit(double available, TextStyle base) {
-    const pad = 12.0;
+    const pad = 16.0;
+    const size = 12.0;
+    const nameIndex = 2;
     final table = widget.table;
     final totals = widget.totals;
-    final locked = <int, List<String>>{
-      0: ['#', for (final row in table.rows) row[0]],
-      1: [table.headers[1], for (final row in table.rows) row[1]],
-      3: [money(totals.allotment), for (final row in table.rows) row[3]],
-      4: [money(totals.obligation), for (final row in table.rows) row[4]],
-      5: [
-        rate(totals.obligation, totals.allotment),
-        for (final row in table.rows) row[5],
-      ],
-      6: [money(totals.balance), for (final row in table.rows) row[6]],
-      7: [money(totals.disbursement), for (final row in table.rows) row[7]],
-      8: [
-        rate(totals.disbursement, totals.obligation),
-        for (final row in table.rows) row[8],
-      ],
-    };
-    var size = 12.0;
-    var widths = List<double>.filled(9, 0);
-    for (var attempt = 0; attempt < 9; attempt++) {
-      final measure = base.copyWith(
-        fontSize: size,
-        fontWeight: FontWeight.w800,
-      );
-      widths = List<double>.filled(9, 0);
-      for (final entry in locked.entries) {
-        var maxWidth = 0.0;
-        for (final text in entry.value) {
-          maxWidth = math.max(maxWidth, _textWidth(text, measure));
-        }
-        widths[entry.key] = maxWidth + pad;
-      }
-      final used = widths.fold<double>(0, (sum, width) => sum + width);
-      final nameWidth = available - used;
-      if (nameWidth >= 150 || size <= 9) {
-        widths[2] = math.max(nameWidth, 0);
-        break;
-      }
-      size -= 0.5;
+    final measure = base.copyWith(
+      fontSize: size,
+      fontWeight: FontWeight.w800,
+    );
+    final samples = <List<String>>[
+      for (var i = 0; i < table.headers.length; i++)
+        [
+          table.headers[i],
+          for (final row in table.rows) row[i],
+        ],
+    ];
+    if (samples.length > nameIndex) {
+      samples[nameIndex].add('Total (${widget.programLabel})');
     }
-    final used = widths.fold<double>(0, (sum, width) => sum + width) - widths[2];
-    widths[2] = math.max(0, available - used);
+    if (samples.length > 3) {
+      samples[3].add(money(totals.allotment));
+      samples[4].add(money(totals.obligation));
+      samples[5].add(rate(totals.obligation, totals.allotment));
+      samples[6].add(money(totals.balance));
+      samples[7].add(money(totals.disbursement));
+      samples[8].add(rate(totals.disbursement, totals.obligation));
+    }
+    final widths = <double>[
+      for (var i = 0; i < samples.length; i++)
+        () {
+          var maxWidth = 0.0;
+          for (final text in samples[i]) {
+            maxWidth = math.max(maxWidth, _textWidth(text, measure));
+          }
+          // Expense names may wrap; keep a readable column without crushing others.
+          if (i == nameIndex) {
+            return math.max(180.0, math.min(maxWidth + pad, 420.0));
+          }
+          return maxWidth + pad;
+        }(),
+    ];
+    final needed = widths.fold<double>(0, (sum, width) => sum + width);
+    if (needed < available && nameIndex < widths.length) {
+      widths[nameIndex] += available - needed;
+    }
     return (size, widths);
   }
 
@@ -633,7 +638,7 @@ class _ReportSheetState extends State<_ReportSheet> {
     required bool wrap,
   }) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
       child: Text(
         text,
         textAlign: align,
@@ -722,11 +727,17 @@ class _ReportSheetState extends State<_ReportSheet> {
           child: LayoutBuilder(
             builder: (context, constraints) {
               final base = DefaultTextStyle.of(context).style;
-              final fit = _fit(math.max(0, constraints.maxWidth - 16), base);
+              final available = math.max(0.0, constraints.maxWidth);
+              final fit = _fit(available, base);
               final size = fit.$1;
+              final colWidths = fit.$2;
+              final tableWidth = math.max(
+                available,
+                colWidths.fold<double>(0, (sum, width) => sum + width),
+              );
               final columns = <int, TableColumnWidth>{
-                for (var i = 0; i < fit.$2.length; i++)
-                  i: FixedColumnWidth(fit.$2[i]),
+                for (var i = 0; i < colWidths.length; i++)
+                  i: FixedColumnWidth(colWidths[i]),
               };
               final headerStyle = base.copyWith(
                 fontSize: size,
@@ -746,7 +757,7 @@ class _ReportSheetState extends State<_ReportSheet> {
                         ? TextAlign.right
                         : TextAlign.left,
                     style: style,
-                    wrap: index == 2 || (index > 2 && text == table.headers[index]),
+                    wrap: index == 2,
                   );
               final headerTable = Table(
                 border: const TableBorder(
@@ -797,19 +808,34 @@ class _ReportSheetState extends State<_ReportSheet> {
                   ], const Color(0xffe7eefc)),
                 ],
               );
+              final needsHorizontal = tableWidth > available + 1;
               return Scrollbar(
-                controller: _vertical,
-                thumbVisibility: true,
-                child: Column(
-                  children: [
-                    headerTable,
-                    Expanded(
-                      child: SingleChildScrollView(
-                        controller: _vertical,
-                        child: bodyTable,
+                controller: _horizontal,
+                thumbVisibility: needsHorizontal,
+                notificationPredicate: (n) => n.metrics.axis == Axis.horizontal,
+                child: SingleChildScrollView(
+                  controller: _horizontal,
+                  scrollDirection: Axis.horizontal,
+                  child: SizedBox(
+                    width: tableWidth,
+                    child: Scrollbar(
+                      controller: _vertical,
+                      thumbVisibility: true,
+                      notificationPredicate: (n) =>
+                          n.metrics.axis == Axis.vertical,
+                      child: Column(
+                        children: [
+                          headerTable,
+                          Expanded(
+                            child: SingleChildScrollView(
+                              controller: _vertical,
+                              child: bodyTable,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                  ],
+                  ),
                 ),
               );
             },

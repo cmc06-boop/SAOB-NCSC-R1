@@ -249,33 +249,39 @@ List<ImportSheet> parseWorkbook(Uint8List bytes) {
       continue;
     }
     final lines = <ImportLine>[];
+    final headerKeys = {
+      for (final aliases in _aliases.values) ...aliases.map(_key),
+    };
     for (final entry in cells.entries.where((e) => e.key > header)) {
       String value(String field) => entry.value[columns[field]] ?? '';
       var code = codeKey(value('code'));
-      final expense = value('name');
+      final expense = value('name').trim();
       if (code.isEmpty && expense.isEmpty) continue;
-      // Skip total rows only; keep every UACS line even when amounts are blank.
+      // Skip total / grand-total label rows.
       final totalLabel = RegExp(
-        r'^(sub\s*)?total\b',
+        r'^(sub\s*)?total\b|^grand\s*total\b',
         caseSensitive: false,
       );
-      if (totalLabel.hasMatch(expense.trim()) || totalLabel.hasMatch(code)) {
+      if (totalLabel.hasMatch(expense) || totalLabel.hasMatch(code)) {
         continue;
       }
-      if (code.isEmpty &&
-          [
-            'allotment',
-            'obligation',
-            'disbursement',
-          ].every((k) => value(k).isEmpty)) {
+      // Skip repeated header rows (e.g. "UACS Code" / "UACS Name").
+      if (headerKeys.contains(_key(code)) || headerKeys.contains(_key(expense))) {
         continue;
       }
+      // Excel may store codes as 5020101000.0
       if (RegExp(r'^\d+(\.0+|[Ee]\+?\d+)$').hasMatch(code)) {
         final n = num.tryParse(code);
         if (n != null && n.isFinite && n == n.round()) {
           code = n.toInt().toString();
         }
       }
+      // Real SAOB budget lines only: 8–14 digit UACS. Drops notes, ORS/PAD
+      // refs, "from/to/variance" tables, titles like ATOP / REGION I, etc.
+      if (!RegExp(r'^\d{8,14}$').hasMatch(code)) {
+        continue;
+      }
+      if (expense.isEmpty) continue;
       var error = '';
       int amount(String field) {
         final raw = value(field).trim();

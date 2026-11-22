@@ -364,21 +364,105 @@ class _BudgetTableState extends State<BudgetTable> {
   }
 
   static const _border = BorderSide(color: Color(0xffd5e1f2));
-  static const _minWidth = 1560.0;
-  static final _columns = <int, TableColumnWidth>{
-    0: const FixedColumnWidth(48),
-    1: _column(120, 13),
-    2: _column(200, 22),
-    3: _column(128, 12),
-    4: _column(128, 12),
-    5: _column(132, 12),
-    6: _column(128, 12),
-    7: _column(136, 13),
-    8: _column(150, 14),
-    9: _column(320, 26),
-  };
-  static TableColumnWidth _column(double min, double flex) =>
-      MaxColumnWidth(FixedColumnWidth(min), FlexColumnWidth(flex));
+  static const _pad = 24.0;
+
+  double _textWidth(String text, TextStyle style) {
+    final painter = TextPainter(
+      text: TextSpan(text: text, style: style),
+      textDirection: TextDirection.ltr,
+      maxLines: 1,
+    )..layout();
+    return painter.width;
+  }
+
+  /// Grow each column to fit the widest header/body/total cell on this page.
+  List<double> _measuredWidths(
+    List<BudgetRecord> records,
+    Totals? total,
+    TextStyle measure,
+  ) {
+    final samples = <List<String>>[
+      ['#', for (var i = 0; i < records.length; i++) '${widget.startIndex + i + 1}'],
+      [
+        'UACS Code',
+        for (final r in records) displayCode(r.code),
+      ],
+      [
+        'Expense (UACS Name)',
+        for (final r in records) r.name,
+        if (total != null) 'Program Total (${widget.totalLabel})',
+      ],
+      [
+        'Allotment',
+        for (final r in records) money(r.allotment),
+        if (total != null) money(total.allotment),
+      ],
+      [
+        'Obligation',
+        for (final r in records) money(r.obligation),
+        if (total != null) money(total.obligation),
+      ],
+      [
+        'Obligation Rate',
+        for (final r in records) rate(r.obligation, r.allotment),
+        if (total != null) rate(total.obligation, total.allotment),
+      ],
+      [
+        'Balance',
+        for (final r in records) money(r.balance),
+        if (total != null) money(total.balance),
+      ],
+      [
+        'Disbursement',
+        for (final r in records) money(r.disbursement),
+        if (total != null) money(total.disbursement),
+      ],
+      [
+        'Disbursement Rate',
+        for (final r in records) rate(r.disbursement, r.obligation),
+        if (total != null) rate(total.disbursement, total.obligation),
+      ],
+      [
+        'Remarks',
+        for (final r in records) r.remarks,
+      ],
+    ];
+    const mins = [
+      48.0,
+      110.0,
+      180.0,
+      120.0,
+      120.0,
+      130.0,
+      120.0,
+      130.0,
+      150.0,
+      160.0,
+    ];
+    const caps = [
+      56.0,
+      160.0,
+      420.0,
+      280.0,
+      280.0,
+      170.0,
+      280.0,
+      280.0,
+      180.0,
+      360.0,
+    ];
+    return [
+      for (var i = 0; i < samples.length; i++)
+        () {
+          var maxWidth = 0.0;
+          for (final text in samples[i]) {
+            if (text.isEmpty) continue;
+            maxWidth = math.max(maxWidth, _textWidth(text, measure));
+          }
+          return math.max(mins[i], math.min(maxWidth + _pad, caps[i]));
+        }(),
+    ];
+  }
 
   TableRow _row(List<Widget> cells, Color color, [VoidCallback? onTap]) =>
       TableRow(
@@ -416,149 +500,168 @@ class _BudgetTableState extends State<BudgetTable> {
       fontWeight: FontWeight.w800,
       color: navy,
     );
-    final headerTable = Table(
-      border: const TableBorder(verticalInside: _border, bottom: _border),
-      columnWidths: _columns,
-      defaultVerticalAlignment: TableCellVerticalAlignment.middle,
-      children: [
-        _row([
-          _BudgetCell('#', style: header),
-          _BudgetCell('UACS Code', style: header),
-          _BudgetCell('Expense (UACS Name)', style: header),
-          _BudgetCell('Allotment', align: TextAlign.right, style: header),
-          _BudgetCell('Obligation', align: TextAlign.right, style: header),
-          _BudgetCell('Obligation Rate', align: TextAlign.right, style: header),
-          _BudgetCell('Balance', align: TextAlign.right, style: header),
-          _BudgetCell('Disbursement', align: TextAlign.right, style: header),
-          _BudgetCell(
-            'Disbursement Rate',
-            align: TextAlign.right,
-            style: header,
-          ),
-          _BudgetCell('Remarks', style: header),
-        ], const Color(0xffeef3fb)),
-      ],
-    );
-    final bodyTable = Table(
-      border: const TableBorder(
-        horizontalInside: _border,
-        verticalInside: _border,
-      ),
-      columnWidths: _columns,
-      defaultVerticalAlignment: TableCellVerticalAlignment.middle,
-      children: [
-        if (records.isEmpty)
-          _row([
-            for (var i = 0; i < 10; i++)
-              i == 2
-                  ? const _BudgetCell(
-                      'No records found.',
-                      style: TextStyle(fontSize: 13, color: muted),
-                    )
-                  : const _BudgetCell(''),
-          ], Colors.white),
-        for (final (i, r) in records.indexed)
-          _row(
-            [
-              _BudgetCell(
-                '${widget.startIndex + i + 1}',
-                style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: blue,
-                ),
-              ),
-              _BudgetCell(displayCode(r.code), style: body, tip: true),
-              _BudgetCell(r.name, style: body, tip: true),
-              _BudgetCell(
-                money(r.allotment),
-                align: TextAlign.right,
-                style: amount,
-              ),
-              _BudgetCell(
-                money(r.obligation),
-                align: TextAlign.right,
-                style: amount,
-              ),
-              _BudgetCell(
-                rate(r.obligation, r.allotment),
-                align: TextAlign.right,
-                style: body,
-              ),
-              _BudgetCell(
-                money(r.balance),
-                align: TextAlign.right,
-                style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w800,
-                  color: navy,
-                ),
-              ),
-              _BudgetCell(
-                money(r.disbursement),
-                align: TextAlign.right,
-                style: amount,
-              ),
-              _BudgetCell(
-                rate(r.disbursement, r.obligation),
-                align: TextAlign.right,
-                style: body,
-              ),
-              _BudgetCell(r.remarks, style: body, tip: true),
-            ],
-            r.id == widget.selectedId
-                ? const Color(0xffe4edfb)
-                : i.isOdd
-                ? const Color(0xfff7f9fc)
-                : Colors.white,
-            widget.onSelect == null ? null : () => widget.onSelect!(r),
-          ),
-        if (total != null)
-          _row([
-            const _BudgetCell(''),
-            const _BudgetCell(''),
-            _BudgetCell(
-              'Program Total (${widget.totalLabel})',
-              style: totalStyle,
-              tip: true,
-            ),
-            _BudgetCell(
-              money(total.allotment),
-              align: TextAlign.right,
-              style: totalStyle,
-            ),
-            _BudgetCell(
-              money(total.obligation),
-              align: TextAlign.right,
-              style: totalStyle,
-            ),
-            _BudgetCell(
-              rate(total.obligation, total.allotment),
-              align: TextAlign.right,
-              style: totalStyle,
-            ),
-            _BudgetCell(
-              money(total.balance),
-              align: TextAlign.right,
-              style: totalStyle,
-            ),
-            _BudgetCell(
-              money(total.disbursement),
-              align: TextAlign.right,
-              style: totalStyle,
-            ),
-            _BudgetCell(
-              rate(total.disbursement, total.obligation),
-              align: TextAlign.right,
-              style: totalStyle,
-            ),
-            const _BudgetCell(''),
-          ], const Color(0xffe7eefc)),
-      ],
-    );
+    final measured = _measuredWidths(records, total, totalStyle);
+    final contentWidth = measured.fold<double>(0, (sum, width) => sum + width);
     return LayoutBuilder(
       builder: (context, constraints) {
-        final width = math.max(constraints.maxWidth, _minWidth);
+        final width = math.max(constraints.maxWidth, contentWidth);
+        final widths = List<double>.from(measured);
+        if (width > contentWidth + 1) {
+          final extra = width - contentWidth;
+          widths[2] += extra * 0.6;
+          widths[9] += extra * 0.4;
+        }
+        final columns = <int, TableColumnWidth>{
+          for (var i = 0; i < widths.length; i++) i: FixedColumnWidth(widths[i]),
+        };
+        final headerTable = Table(
+          border: const TableBorder(verticalInside: _border, bottom: _border),
+          columnWidths: columns,
+          defaultVerticalAlignment: TableCellVerticalAlignment.middle,
+          children: [
+            _row([
+              _BudgetCell('#', style: header),
+              _BudgetCell('UACS Code', style: header),
+              _BudgetCell('Expense (UACS Name)', style: header),
+              _BudgetCell('Allotment', align: TextAlign.right, style: header),
+              _BudgetCell('Obligation', align: TextAlign.right, style: header),
+              _BudgetCell(
+                'Obligation Rate',
+                align: TextAlign.right,
+                style: header,
+              ),
+              _BudgetCell('Balance', align: TextAlign.right, style: header),
+              _BudgetCell(
+                'Disbursement',
+                align: TextAlign.right,
+                style: header,
+              ),
+              _BudgetCell(
+                'Disbursement Rate',
+                align: TextAlign.right,
+                style: header,
+              ),
+              _BudgetCell('Remarks', style: header),
+            ], const Color(0xffeef3fb)),
+          ],
+        );
+        final bodyTable = Table(
+          border: const TableBorder(
+            horizontalInside: _border,
+            verticalInside: _border,
+          ),
+          columnWidths: columns,
+          defaultVerticalAlignment: TableCellVerticalAlignment.middle,
+          children: [
+            if (records.isEmpty)
+              _row([
+                for (var i = 0; i < 10; i++)
+                  i == 2
+                      ? const _BudgetCell(
+                          'No records found.',
+                          style: TextStyle(fontSize: 13, color: muted),
+                        )
+                      : const _BudgetCell(''),
+              ], Colors.white),
+            for (final (i, r) in records.indexed)
+              _row(
+                [
+                  _BudgetCell(
+                    '${widget.startIndex + i + 1}',
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: blue,
+                    ),
+                  ),
+                  _BudgetCell(displayCode(r.code), style: body, tip: true),
+                  _BudgetCell(r.name, style: body, tip: true),
+                  _BudgetCell(
+                    money(r.allotment),
+                    align: TextAlign.right,
+                    style: amount,
+                  ),
+                  _BudgetCell(
+                    money(r.obligation),
+                    align: TextAlign.right,
+                    style: amount,
+                  ),
+                  _BudgetCell(
+                    rate(r.obligation, r.allotment),
+                    align: TextAlign.right,
+                    style: body,
+                  ),
+                  _BudgetCell(
+                    money(r.balance),
+                    align: TextAlign.right,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w800,
+                      color: navy,
+                    ),
+                  ),
+                  _BudgetCell(
+                    money(r.disbursement),
+                    align: TextAlign.right,
+                    style: amount,
+                  ),
+                  _BudgetCell(
+                    rate(r.disbursement, r.obligation),
+                    align: TextAlign.right,
+                    style: body,
+                  ),
+                  _BudgetCell(r.remarks, style: body, tip: true),
+                ],
+                r.id == widget.selectedId
+                    ? const Color(0xffe4edfb)
+                    : i.isOdd
+                    ? const Color(0xfff7f9fc)
+                    : Colors.white,
+                widget.onSelect == null ? null : () => widget.onSelect!(r),
+              ),
+            if (total != null)
+              _row([
+                const _BudgetCell(''),
+                const _BudgetCell(''),
+                _BudgetCell(
+                  'Program Total (${widget.totalLabel})',
+                  style: totalStyle,
+                  tip: true,
+                ),
+                _BudgetCell(
+                  money(total.allotment),
+                  align: TextAlign.right,
+                  style: totalStyle,
+                ),
+                _BudgetCell(
+                  money(total.obligation),
+                  align: TextAlign.right,
+                  style: totalStyle,
+                ),
+                _BudgetCell(
+                  rate(total.obligation, total.allotment),
+                  align: TextAlign.right,
+                  style: totalStyle,
+                ),
+                _BudgetCell(
+                  money(total.balance),
+                  align: TextAlign.right,
+                  style: totalStyle,
+                ),
+                _BudgetCell(
+                  money(total.disbursement),
+                  align: TextAlign.right,
+                  style: totalStyle,
+                ),
+                _BudgetCell(
+                  rate(total.disbursement, total.obligation),
+                  align: TextAlign.right,
+                  style: totalStyle,
+                ),
+                const _BudgetCell(''),
+              ], const Color(0xffe7eefc)),
+          ],
+        );
         return Scrollbar(
           controller: _scroll,
           thumbVisibility: true,

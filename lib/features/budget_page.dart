@@ -7,35 +7,44 @@ import '../ui/common.dart';
 import '../ui/theme.dart';
 import 'import_page.dart';
 
-ButtonStyle _outlineAction(Color color, Color hover) => ButtonStyle(
-  foregroundColor: WidgetStatePropertyAll(color),
-  iconColor: WidgetStatePropertyAll(color),
-  backgroundColor: WidgetStateProperty.resolveWith((states) {
-    final active =
-        states.contains(WidgetState.hovered) ||
-        states.contains(WidgetState.pressed) ||
-        states.contains(WidgetState.focused);
-    if (states.contains(WidgetState.disabled) || !active) return Colors.white;
-    return hover;
-  }),
-  overlayColor: WidgetStateProperty.resolveWith((states) {
-    if (states.contains(WidgetState.disabled)) return Colors.transparent;
-    if (states.contains(WidgetState.pressed)) {
-      return color.withValues(alpha: 0.16);
-    }
-    if (states.contains(WidgetState.hovered)) {
-      return color.withValues(alpha: 0.1);
-    }
-    return Colors.transparent;
-  }),
-  side: WidgetStatePropertyAll(BorderSide(color: color, width: 1.4)),
-  padding: const WidgetStatePropertyAll(
-    EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-  ),
-  shape: WidgetStatePropertyAll(
-    RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-  ),
-);
+ButtonStyle _outlineAction(Color color, Color hover) {
+  const disabled = Color(0xffb0b6bf);
+  Color fg(Set<WidgetState> states) =>
+      states.contains(WidgetState.disabled) ? disabled : color;
+  return ButtonStyle(
+    foregroundColor: WidgetStateProperty.resolveWith(fg),
+    iconColor: WidgetStateProperty.resolveWith(fg),
+    backgroundColor: WidgetStateProperty.resolveWith((states) {
+      final active =
+          states.contains(WidgetState.hovered) ||
+          states.contains(WidgetState.pressed) ||
+          states.contains(WidgetState.focused);
+      if (states.contains(WidgetState.disabled) || !active) {
+        return Colors.white;
+      }
+      return hover;
+    }),
+    overlayColor: WidgetStateProperty.resolveWith((states) {
+      if (states.contains(WidgetState.disabled)) return Colors.transparent;
+      if (states.contains(WidgetState.pressed)) {
+        return color.withValues(alpha: 0.16);
+      }
+      if (states.contains(WidgetState.hovered)) {
+        return color.withValues(alpha: 0.1);
+      }
+      return Colors.transparent;
+    }),
+    side: WidgetStateProperty.resolveWith(
+      (states) => BorderSide(color: fg(states), width: 1.4),
+    ),
+    padding: const WidgetStatePropertyAll(
+      EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+    ),
+    shape: WidgetStatePropertyAll(
+      RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+    ),
+  );
+}
 
 class BudgetPage extends StatefulWidget {
   const BudgetPage({super.key, required this.store});
@@ -66,6 +75,7 @@ class _BudgetPageState extends State<BudgetPage> {
   Future<void> edit([BudgetRecord? record]) async {
     await showDialog<void>(
       context: context,
+      barrierDismissible: false,
       builder: (ctx) => RecordEditor(
         store: widget.store,
         record: record,
@@ -98,7 +108,9 @@ class _BudgetPageState extends State<BudgetPage> {
   Widget build(BuildContext context) {
     if (program.isNotEmpty &&
         !widget.store.programs.any((p) => p.code == program)) {
-      program = '';
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) change(() => program = '');
+      });
     }
     final rows = widget.store.records(
           year,
@@ -158,7 +170,10 @@ class _BudgetPageState extends State<BudgetPage> {
       children: [
         FilledButton.icon(
           style: FilledButton.styleFrom(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 14,
+            ),
           ),
           onPressed: canEncode ? () => edit() : null,
           icon: const Icon(Icons.add, size: 18),
@@ -167,14 +182,38 @@ class _BudgetPageState extends State<BudgetPage> {
         const SizedBox(width: 8),
         OutlinedButton.icon(
           style: _outlineAction(blue, const Color(0xffe8f0fc)),
-          onPressed: canEncode && chosen != null ? () => edit(chosen) : null,
+          onPressed: !canEncode
+              ? null
+              : () {
+                  if (chosen == null) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Select a record to edit.'),
+                      ),
+                    );
+                    return;
+                  }
+                  edit(chosen);
+                },
           icon: const Icon(Icons.edit_outlined, size: 18),
           label: const Text('Edit'),
         ),
         const SizedBox(width: 8),
         OutlinedButton.icon(
           style: _outlineAction(red, const Color(0xffffe8eb)),
-          onPressed: canEncode && chosen != null ? () => remove(chosen) : null,
+          onPressed: !canEncode
+              ? null
+              : () {
+                  if (chosen == null) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Select a record to delete.'),
+                      ),
+                    );
+                    return;
+                  }
+                  remove(chosen);
+                },
           icon: const Icon(Icons.delete_outline, size: 18),
           label: const Text('Delete'),
         ),
@@ -306,22 +345,39 @@ class RecordEditor extends StatefulWidget {
 class _RecordEditorState extends State<RecordEditor> {
   late int year;
   late String program;
-  late final TextEditingController code,
+  late final TextEditingController yearField,
+      code,
       name,
       allotment,
       obligation,
       disbursement,
       remarks;
+  final codeFocus = FocusNode();
+  final nameFocus = FocusNode();
+  final allotmentFocus = FocusNode();
+  final obligationFocus = FocusNode();
+  final disbursementFocus = FocusNode();
+  final remarksFocus = FocusNode();
+  final _focused = <FocusNode>{};
   String? error;
-  final _dropdownKey = GlobalKey();
+  final _inputKey = GlobalKey();
   double? _inputHeight;
   late final ImportController _imports;
   void _onImports() {
     if (mounted) setState(() {});
   }
 
+  void _bindFocus(FocusNode node) {
+    node.addListener(() {
+      if (!mounted) return;
+      final on = node.hasFocus;
+      final changed = on ? _focused.add(node) : _focused.remove(node);
+      if (changed) setState(() {});
+    });
+  }
+
   void _matchInputHeight() {
-    final height = _dropdownKey.currentContext?.size?.height;
+    final height = _inputKey.currentContext?.size?.height;
     if (!mounted || height == null || height == _inputHeight) return;
     setState(() => _inputHeight = height);
   }
@@ -341,18 +397,29 @@ class _RecordEditorState extends State<RecordEditor> {
         (active.contains(widget.program)
             ? widget.program
             : active.firstOrNull ?? '');
+    yearField = TextEditingController(text: '$year');
     code = TextEditingController(text: r?.code ?? '');
     name = TextEditingController(text: r?.name ?? '');
     allotment = TextEditingController(
       text: r == null ? '' : (r.allotment / 100).toStringAsFixed(2),
     );
     obligation = TextEditingController(
-      text: ((r?.obligation ?? 0) / 100).toStringAsFixed(2),
+      text: r == null ? '' : (r.obligation / 100).toStringAsFixed(2),
     );
     disbursement = TextEditingController(
-      text: ((r?.disbursement ?? 0) / 100).toStringAsFixed(2),
+      text: r == null ? '' : (r.disbursement / 100).toStringAsFixed(2),
     );
     remarks = TextEditingController(text: r?.remarks ?? '');
+    for (final n in [
+      codeFocus,
+      nameFocus,
+      allotmentFocus,
+      obligationFocus,
+      disbursementFocus,
+      remarksFocus,
+    ]) {
+      _bindFocus(n);
+    }
     _imports = ImportController(
       widget.store,
       year: year,
@@ -367,6 +434,7 @@ class _RecordEditorState extends State<RecordEditor> {
     _imports.removeListener(_onImports);
     _imports.dispose();
     for (final c in [
+      yearField,
       code,
       name,
       allotment,
@@ -375,6 +443,16 @@ class _RecordEditorState extends State<RecordEditor> {
       remarks,
     ]) {
       c.dispose();
+    }
+    for (final n in [
+      codeFocus,
+      nameFocus,
+      allotmentFocus,
+      obligationFocus,
+      disbursementFocus,
+      remarksFocus,
+    ]) {
+      n.dispose();
     }
     super.dispose();
   }
@@ -394,7 +472,8 @@ class _RecordEditorState extends State<RecordEditor> {
 
   void save() {
     try {
-      final a = parseCents(allotment.text, required: true),
+      // Empty amounts count as 0 — same as Excel lines with blank cells.
+      final a = parseCents(allotment.text),
           o = parseCents(obligation.text),
           d = parseCents(disbursement.text);
       if (a == null || o == null || d == null) {
@@ -427,19 +506,37 @@ class _RecordEditorState extends State<RecordEditor> {
     String label,
     TextEditingController c, {
     bool amount = false,
+    bool readOnly = false,
+    Key? boxKey,
+    FocusNode? focusNode,
+    String? hint,
     Widget? suffix,
     bool expand = false,
   }) {
     final box = _inputHeight;
+    final focused = focusNode != null && _focused.contains(focusNode);
+    final empty = c.text.isEmpty;
+    // Amount sample: "₱ 0.00". On click/type, keep ₱ only.
+    final showAmountSample = amount && !readOnly && empty && !focused;
+    final showPesoPrefix = amount && !showAmountSample;
+    final showHint =
+        !readOnly &&
+        empty &&
+        !focused &&
+        (amount ? true : hint != null);
     final input = TextField(
+      key: boxKey,
       controller: c,
+      focusNode: focusNode,
+      readOnly: readOnly,
+      enableInteractiveSelection: !readOnly,
       expands: expand,
       minLines: expand ? null : 1,
       maxLines: expand ? null : 1,
       textAlignVertical: expand
           ? TextAlignVertical.top
           : TextAlignVertical.center,
-      onChanged: amount ? (_) => setState(() {}) : null,
+      onChanged: (_) => setState(() {}),
       keyboardType: amount
           ? const TextInputType.numberWithOptions(decimal: true)
           : TextInputType.text,
@@ -449,8 +546,21 @@ class _RecordEditorState extends State<RecordEditor> {
           horizontal: 12,
           vertical: 12,
         ),
-        prefixText: amount ? '₱  ' : null,
-        prefixStyle: const TextStyle(color: muted, fontWeight: FontWeight.w600),
+        hintText: showHint ? (amount ? '₱  0.00' : hint) : null,
+        hintStyle: const TextStyle(color: Color(0xff9aabbf), fontSize: 13),
+        prefix: showPesoPrefix
+            ? const Padding(
+                padding: EdgeInsets.only(right: 4),
+                child: Text(
+                  '₱',
+                  style: TextStyle(
+                    color: muted,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13,
+                  ),
+                ),
+              )
+            : null,
         suffixIcon: suffix,
         suffixIconConstraints: const BoxConstraints(
           minWidth: 32,
@@ -505,132 +615,160 @@ class _RecordEditorState extends State<RecordEditor> {
         ),
       ],
     );
-    return Dialog(
-      alignment: const Alignment(0.45, 0),
-      insetPadding: const EdgeInsets.symmetric(horizontal: 40, vertical: 32),
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 920, minHeight: 480),
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(18, 14, 18, 8),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(
-                widget.record == null
-                    ? 'Add Budget Record'
-                    : 'Edit Budget Record',
-                style: Theme.of(context).textTheme.titleLarge,
-              ),
-              const SizedBox(height: 16),
-              _AlignedRecordColumns(
-                identity: columnFields([
-                  SelectField(
-                    boxKey: _dropdownKey,
-                    label: 'Fiscal Year *',
-                    value: year,
-                    dense: true,
-                    width: double.infinity,
-                    // Encoding/import is locked to the current fiscal year.
-                    items: [
-                      (manilaNow().year, '${manilaNow().year}'),
-                    ],
-                    onChanged: null,
-                  ),
-                  SelectField(
-                    label: 'Program *',
-                    value: program,
-                    dense: true,
-                    width: double.infinity,
-                    items: [
-                      for (final p in programs)
-                        (p.code, programLabel(p.code, p.name)),
-                    ],
-                    onChanged: (v) => setState(() => program = v),
-                  ),
-                  field(
-                    'UACS Code *',
-                    code,
-                    suffix: IconButton(
-                      tooltip: 'Find UACS code',
-                      onPressed: lookup,
-                      visualDensity: VisualDensity.compact,
-                      icon: const Icon(Icons.search, size: 18),
-                    ),
-                  ),
-                  field('Expense (UACS Name) *', name),
-                ]),
-                amounts: columnFields([
-                  field('Allotment *', allotment, amount: true),
-                  field('Obligation', obligation, amount: true),
-                  field('Disbursement', disbursement, amount: true),
-                ]),
-                remarks: field('Remarks', remarks, expand: true),
-                calculated: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
+    return PopScope(
+      canPop: false,
+      child: Dialog(
+        alignment: const Alignment(0.45, 0),
+        insetPadding: const EdgeInsets.symmetric(horizontal: 40, vertical: 32),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 920, minHeight: 480),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(18, 14, 18, 8),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
                   children: [
-                    Container(
-                      padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
-                      decoration: BoxDecoration(
-                        color: const Color(0xffe7f0fb),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Calculated Values\n(Automatic)',
-                            style: TextStyle(
-                              fontSize: 15,
-                              height: 1.2,
-                              fontWeight: FontWeight.w700,
-                              color: blue,
-                            ),
-                          ),
-                          const SizedBox(height: 14),
-                          metric('Obligation Rate', rate(o, a)),
-                          const SizedBox(height: 12),
-                          metric('Balance', money(a - o)),
-                          const SizedBox(height: 12),
-                          metric('Disbursement Rate', rate(d, o)),
-                        ],
+                    Expanded(
+                      child: Text(
+                        widget.record == null
+                            ? 'Add Budget Record'
+                            : 'Edit Budget Record',
+                        style: Theme.of(context).textTheme.titleLarge,
                       ),
                     ),
-                    const SizedBox(height: 12),
-                    ExcelDropZone(session: _imports),
+                    IconButton(
+                      tooltip: 'Close',
+                      onPressed: () => Navigator.pop(context),
+                      visualDensity: VisualDensity.compact,
+                      icon: const Icon(Icons.close),
+                    ),
                   ],
                 ),
-              ),
-              if (error != null)
-                Padding(
-                  padding: const EdgeInsets.only(top: 14),
-                  child: Text(error!, style: const TextStyle(color: red)),
-                ),
-              const SizedBox(height: 20),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text('Cancel'),
-                  ),
-                  const SizedBox(width: 8),
-                  FilledButton(
-                    style: FilledButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 10,
-                      ),
-                      visualDensity: VisualDensity.compact,
+                const SizedBox(height: 16),
+                _AlignedRecordColumns(
+                  identity: columnFields([
+                    field(
+                      'Fiscal Year *',
+                      yearField,
+                      readOnly: true,
+                      boxKey: _inputKey,
                     ),
-                    onPressed: program.isEmpty ? null : save,
-                    child: const Text('Save Record'),
+                    SelectField(
+                      label: 'Program *',
+                      value: program,
+                      dense: true,
+                      width: double.infinity,
+                      items: [
+                        for (final p in programs)
+                          (p.code, programLabel(p.code, p.name)),
+                      ],
+                      onChanged: (v) => setState(() => program = v),
+                    ),
+                    field(
+                      'UACS Code *',
+                      code,
+                      focusNode: codeFocus,
+                      hint: 'e.g. 5020101000',
+                      suffix: IconButton(
+                        tooltip: 'Find UACS code',
+                        onPressed: lookup,
+                        visualDensity: VisualDensity.compact,
+                        icon: const Icon(Icons.search, size: 18),
+                      ),
+                    ),
+                    field(
+                      'Expense (UACS Name) *',
+                      name,
+                      focusNode: nameFocus,
+                      hint: 'e.g. Traveling Expenses - Local',
+                    ),
+                  ]),
+                  amounts: columnFields([
+                    field(
+                      'Allotment',
+                      allotment,
+                      amount: true,
+                      focusNode: allotmentFocus,
+                    ),
+                    field(
+                      'Obligation',
+                      obligation,
+                      amount: true,
+                      focusNode: obligationFocus,
+                    ),
+                    field(
+                      'Disbursement',
+                      disbursement,
+                      amount: true,
+                      focusNode: disbursementFocus,
+                    ),
+                  ]),
+                  remarks: remarks,
+                  remarksFocus: remarksFocus,
+                  showRemarksHint:
+                      remarks.text.isEmpty &&
+                      !_focused.contains(remarksFocus),
+                  summary: Container(
+                    padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xffe7f0fb),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Calculated Values\n(Automatic)',
+                          style: TextStyle(
+                            fontSize: 15,
+                            height: 1.2,
+                            fontWeight: FontWeight.w700,
+                            color: blue,
+                          ),
+                        ),
+                        const SizedBox(height: 14),
+                        metric('Obligation Rate', rate(o, a)),
+                        const SizedBox(height: 12),
+                        metric('Balance', money(a - o)),
+                        const SizedBox(height: 12),
+                        metric('Disbursement Rate', rate(d, o)),
+                      ],
+                    ),
                   ),
-                ],
-              ),
-            ],
+                  importZone: ExcelDropZone(session: _imports),
+                ),
+                if (error != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 14),
+                    child: Text(error!, style: const TextStyle(color: red)),
+                  ),
+                const SizedBox(height: 20),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text('Cancel'),
+                    ),
+                    const SizedBox(width: 8),
+                    FilledButton(
+                      style: FilledButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 10,
+                        ),
+                        visualDensity: VisualDensity.compact,
+                      ),
+                      onPressed: program.isEmpty ? null : save,
+                      child: const Text('Save Record'),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -643,60 +781,112 @@ class _AlignedRecordColumns extends StatefulWidget {
     required this.identity,
     required this.amounts,
     required this.remarks,
-    required this.calculated,
+    required this.remarksFocus,
+    required this.showRemarksHint,
+    required this.summary,
+    required this.importZone,
   });
-  final Widget identity, amounts, remarks, calculated;
+  final Widget identity, amounts, summary, importZone;
+  final TextEditingController remarks;
+  final FocusNode remarksFocus;
+  final bool showRemarksHint;
   @override
   State<_AlignedRecordColumns> createState() => _AlignedRecordColumnsState();
 }
 
 class _AlignedRecordColumnsState extends State<_AlignedRecordColumns> {
-  final _identityKey = GlobalKey();
+  final _importKey = GlobalKey();
   final _amountsKey = GlobalKey();
-  double? _identityHeight, _amountsHeight;
+  final _summaryKey = GlobalKey();
+  final _labelKey = GlobalKey();
+  double _inputHeight = 160;
+  double _topPad = 0;
 
   void _sync() {
     if (!mounted) return;
-    final identity = _identityKey.currentContext?.size?.height;
-    final amounts = _amountsKey.currentContext?.size?.height;
-    if (identity == null || amounts == null) return;
-    if ((_identityHeight ?? -1) == identity &&
-        (_amountsHeight ?? -1) == amounts) {
+    final importHeight = _importKey.currentContext?.size?.height;
+    final amountsHeight = _amountsKey.currentContext?.size?.height;
+    final summaryHeight = _summaryKey.currentContext?.size?.height;
+    final labelHeight = _labelKey.currentContext?.size?.height;
+    if (importHeight == null ||
+        amountsHeight == null ||
+        summaryHeight == null ||
+        labelHeight == null) {
       return;
     }
-    setState(() {
-      _identityHeight = identity;
-      _amountsHeight = amounts;
-    });
+    // Align Remarks input top with Import top; same height as Import box.
+    final remarksChrome = 14.0 + labelHeight + 4.0;
+    final targetTop = summaryHeight + 12;
+    final currentTop = amountsHeight + remarksChrome;
+    final topPad = (targetTop - currentTop).clamp(0.0, 400.0);
+    if ((importHeight - _inputHeight).abs() > 0.5 ||
+        (topPad - _topPad).abs() > 0.5) {
+      setState(() {
+        _inputHeight = importHeight;
+        _topPad = topPad;
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     WidgetsBinding.instance.addPostFrameCallback((_) => _sync());
-    final identityHeight = _identityHeight;
-    final amountsHeight = _amountsHeight;
-    final remarksHeight = identityHeight == null || amountsHeight == null
-        ? 88.0
-        : (identityHeight - amountsHeight - 14).clamp(1.0, double.infinity);
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Expanded(
-          child: KeyedSubtree(key: _identityKey, child: widget.identity),
-        ),
+        Expanded(child: widget.identity),
         const SizedBox(width: 16),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               KeyedSubtree(key: _amountsKey, child: widget.amounts),
+              if (_topPad > 0) SizedBox(height: _topPad),
               const SizedBox(height: 14),
-              SizedBox(height: remarksHeight, child: widget.remarks),
+              KeyedSubtree(
+                key: _labelKey,
+                child: const FieldLabel('Remarks'),
+              ),
+              const SizedBox(height: 4),
+              SizedBox(
+                height: _inputHeight,
+                child: TextField(
+                  controller: widget.remarks,
+                  focusNode: widget.remarksFocus,
+                  expands: true,
+                  maxLines: null,
+                  minLines: null,
+                  textAlignVertical: TextAlignVertical.top,
+                  decoration: InputDecoration(
+                    isDense: true,
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 12,
+                    ),
+                    hintText: widget.showRemarksHint
+                        ? 'e.g. Supporting notes or reference'
+                        : null,
+                    hintStyle: const TextStyle(
+                      color: Color(0xff9aabbf),
+                      fontSize: 13,
+                    ),
+                  ),
+                ),
+              ),
             ],
           ),
         ),
         const SizedBox(width: 16),
-        Expanded(child: widget.calculated),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              KeyedSubtree(key: _summaryKey, child: widget.summary),
+              const SizedBox(height: 12),
+              KeyedSubtree(key: _importKey, child: widget.importZone),
+            ],
+          ),
+        ),
       ],
     );
   }

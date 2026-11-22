@@ -1,7 +1,9 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:archive/archive.dart';
+import 'package:excel/excel.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ncsc_region1_finance/core/format.dart';
 import 'package:ncsc_region1_finance/data/database.dart';
@@ -70,21 +72,17 @@ void main() {
     expect(await Passwords.verify('wrong password', stored), isFalse);
     expect(await Passwords.verify('anything', 'malformed'), isFalse);
   });
-  test('duplicate and invalid saves leave data and audit unchanged', () {
+  test('duplicate saves leave data unchanged; amount cross-checks are not enforced', () {
     store.saveRecord(record());
     final before = db.rows('SELECT * FROM audit_log').length;
     expect(() => store.saveRecord(record()), throwsA(isA<FinanceError>()));
-    expect(
-      () => store.saveRecord(record(code: '5020102000', o: 100011)),
-      throwsA(isA<FinanceError>()),
-    );
-    expect(
-      () => store.saveRecord(record(code: '5020103000', d: 25006)),
-      throwsA(isA<FinanceError>()),
-    );
     expect(store.records(manilaNow().year).length, 1);
     expect(db.rows('SELECT * FROM audit_log').length, before);
-    final row = store.records(manilaNow().year).single;
+    // Like Excel: obligation/disbursement may exceed allotment.
+    store.saveRecord(record(code: '5020102000', o: 100011));
+    store.saveRecord(record(code: '5020103000', a: 100, d: 25006));
+    expect(store.records(manilaNow().year).length, 3);
+    final row = store.records(manilaNow().year, query: '5020101000').single;
     store.saveRecord(record(id: row.id, o: 30000));
     expect(store.byId(row.id!)!.balance, 70010);
     expect(
@@ -93,6 +91,30 @@ void main() {
           .first['detail'],
       contains('Obligation'),
     );
+  });
+  test('workbook import logs one audit for all programs', () {
+    expect(
+      store.importRecords([record()], updateExisting: true),
+      1,
+    );
+    expect(
+      store.importRecords([
+        record(program: 'ECA', code: '5020102000'),
+      ], updateExisting: true),
+      1,
+    );
+    store.logWorkbookImport(
+      filename: 'SAOB_2026.xlsx',
+      year: manilaNow().year,
+    );
+    final detail =
+        db
+                .rows(
+                  "SELECT detail FROM audit_log WHERE action='Imported' ORDER BY id DESC LIMIT 1",
+                )
+                .single['detail']
+            as String;
+    expect(detail, 'SAOB_2026.xlsx');
   });
   test('import is atomic and duplicate-safe; updates are explicit', () {
     // Excel import keeps obligation/allotment as-is even when obligation is higher.
@@ -330,6 +352,47 @@ void main() {
     expect(sheets.single.error, isEmpty);
     expect(sheets.single.lines.single.name, 'Traveling Expenses - Local');
     expect(sheets.single.lines.single.allotment, 10000000);
+  });
+  test('Excel import keeps only 8–14 digit UACS lines; skips notes and junk', () {
+    final book = Excel.createExcel();
+    const sheetName = 'ECA Current';
+    if (book.tables.containsKey('Sheet1')) {
+      book.rename('Sheet1', sheetName);
+    }
+    final sheet = book[sheetName];
+    const values = [
+      [
+        'UACS Code',
+        'UACS Name',
+        'Allotment',
+        'Obligation',
+        'Disbursement',
+        'Remarks',
+      ],
+      ['5020101000', 'Traveling Expenses - Local', '1000', '100', '50', ''],
+      ['UACS Code', 'UACS Name', '', '', '', ''],
+      ['NOTES:', 'NOTES:', '', '', '', ''],
+      ['ORS1562', 'ORS1562', '', '3000', '', ''],
+      ['200000', 'from', '', '', '', ''],
+      ['ATOP', 'REGION I', '100', '', '', ''],
+      ['5020301000', 'Office Supplies', '500', '0', '0', ''],
+      ['Total', '', '1500', '100', '50', ''],
+    ];
+    for (var r = 0; r < values.length; r++) {
+      for (var c = 0; c < values[r].length; c++) {
+        sheet
+            .cell(CellIndex.indexByColumnRow(columnIndex: c, rowIndex: r))
+            .value = TextCellValue(values[r][c]);
+      }
+    }
+    final encoded = book.encode();
+    expect(encoded, isNotNull);
+    final sheets = parseWorkbook(Uint8List.fromList(encoded!));
+    expect(sheets.single.program, 'ECACURRENT');
+    expect(sheets.single.lines.map((l) => l.code).toList(), [
+      '5020101000',
+      '5020301000',
+    ]);
   });
   test('import adds matching worksheet as a program; summary sheets are skipped', () {
     final sheets = parseWorkbook(buildSampleWorkbook());

@@ -22,7 +22,9 @@ class _AuditPageState extends State<AuditPage> {
   Widget build(BuildContext context) {
     if (program.isNotEmpty &&
         !widget.store.programs.any((p) => p.code == program)) {
-      program = '';
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) setState(() => program = '');
+      });
     }
     final rows = widget.store.auditRows(year, program: program, action: action);
     const title = Text(
@@ -175,7 +177,10 @@ class _AuditTableState extends State<_AuditTable> {
               _AuditCell(dateLabel(r['at']), style: body),
               _AuditCell('${r['action']}', style: body),
               _AuditCell(
-                '${r['title']} · ${r['detail']}',
+                _auditDetailText(
+                  '${r['detail'] ?? ''}',
+                  action: '${r['action'] ?? ''}',
+                ),
                 style: body,
                 tip: true,
               ),
@@ -215,6 +220,63 @@ class _AuditCell extends StatelessWidget {
           : label,
     );
   }
+}
+
+/// Display-only cleanup for older audit rows. New rows already store short details.
+String _auditDetailText(String raw, {String action = ''}) {
+  var text = raw.trim();
+  if (text.isEmpty) return '';
+
+  // Filename only (current import format), or extract from older long import text.
+  final fileOnly = RegExp(r'^([^\\/:*?"<>|]+\.xlsx)$', caseSensitive: false);
+  if (fileOnly.hasMatch(text)) return text;
+  final fileInText = RegExp(
+    r'([^\\/:*?"<>|\s,]+\.xlsx)',
+    caseSensitive: false,
+  ).firstMatch(text);
+  if (fileInText != null && action == 'Imported') {
+    return fileInText.group(1)!;
+  }
+
+  // Old import without filename: "29 records (ATOPCONTINUING)" / "29 lines · ATOP Current"
+  final oldRecords = RegExp(
+    r'^(\d+)\s+records\s+\(([^)]+)\)$',
+  ).firstMatch(text);
+  if (oldRecords != null) {
+    return programLabel(oldRecords.group(2)!);
+  }
+  final oldLines = RegExp(
+    r'^(\d+)\s+lines?\s*[·;]\s*(.+)$',
+  ).firstMatch(text);
+  if (oldLines != null) {
+    return oldLines.group(2)!.trim();
+  }
+
+  // Old program rows: "ATOPCONTINUING · ATOP-REG_CONT · Active"
+  final prog = RegExp(
+    r'^([A-Z0-9]{2,32})\s[·;]\s(.+?)(?:\s[·;]\s(Active|Inactive))?$',
+  ).firstMatch(text);
+  if (prog != null) {
+    final label = programLabel(prog.group(1)!, prog.group(2));
+    return prog.group(3) == 'Inactive' ? '$label (Inactive)' : label;
+  }
+
+  // Old report: "TYPE · CODE (PDF)"
+  final report = RegExp(r'^(.+?)\s·\s(.+?)\s\(([^)]+)\)$').firstMatch(text);
+  if (report != null) {
+    return '${report.group(1)} (${report.group(3)})';
+  }
+
+  text = text.replaceAllMapped(
+    RegExp(
+      r'\b(Allotment|Obligation|Disbursement):\s*(₱[^\s·;]+)(?:\s*→\s*(₱[^\s·;]+))?',
+    ),
+    (m) {
+      if (m[3] != null) return '${m[1]} from ${m[2]} to ${m[3]}';
+      return '${m[1]} ${m[2]}';
+    },
+  );
+  return text;
 }
 
 class _AuditFilter<T> extends StatelessWidget {

@@ -82,14 +82,15 @@ class ImportController extends ChangeNotifier {
       final sheets = await compute(parseWorkbook, bytes);
       var imported = 0;
       var programs = 0;
+      final linesByProgram = <String, int>{};
       for (final sheet in sheets) {
         if (sheet.error.isNotEmpty || sheet.program.isEmpty) continue;
         final seen = <String>{};
         final payload = <BudgetRecord>[];
         for (final line in sheet.lines) {
           final key = codeKey(line.code);
-          // Keep every Excel line that has a UACS code; amounts stay as-is.
-          if (key.isEmpty) continue;
+          // Real UACS lines only (parser already filters; keep as a safety net).
+          if (!RegExp(r'^\d{8,14}$').hasMatch(key)) continue;
           final name = line.name.trim().isEmpty ? key : line.name.trim();
           final record = BudgetRecord(
             year: year,
@@ -108,12 +109,17 @@ class ImportController extends ChangeNotifier {
           payload.add(record);
         }
         if (payload.isEmpty) continue;
-        imported += store.importRecords(
+        final count = store.importRecords(
           payload,
           updateExisting: true,
           programName: programNameFromSheet(sheet.name),
         );
+        imported += count;
         programs++;
+        if (count > 0) {
+          linesByProgram[sheet.program] =
+              (linesByProgram[sheet.program] ?? 0) + count;
+        }
       }
       if (!context.mounted) return;
       if (imported == 0 && programs == 0) {
@@ -127,10 +133,11 @@ class ImportController extends ChangeNotifier {
           'Workbook read, but there were no new or changed budget lines to save.',
         );
       } else {
+        store.logWorkbookImport(filename: name, year: year);
         showMessage(
           context,
           '$imported budget record(s) imported'
-          '${programs > 1 ? ' from $programs programs' : ''}.',
+          '${linesByProgram.length > 1 ? ' from ${linesByProgram.length} programs' : ''}.',
         );
       }
       onImported?.call();
