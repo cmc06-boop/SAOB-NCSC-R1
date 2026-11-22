@@ -5,6 +5,7 @@ import '../data/finance_store.dart';
 import '../data/models.dart';
 import '../ui/common.dart';
 import '../ui/theme.dart';
+import 'import_page.dart';
 
 ButtonStyle _outlineAction(Color color, Color hover) => ButtonStyle(
   foregroundColor: WidgetStatePropertyAll(color),
@@ -314,6 +315,11 @@ class _RecordEditorState extends State<RecordEditor> {
   String? error;
   final _dropdownKey = GlobalKey();
   double? _inputHeight;
+  late final ImportController _imports;
+  void _onImports() {
+    if (mounted) setState(() {});
+  }
+
   void _matchInputHeight() {
     final height = _dropdownKey.currentContext?.size?.height;
     if (!mounted || height == null || height == _inputHeight) return;
@@ -347,10 +353,14 @@ class _RecordEditorState extends State<RecordEditor> {
       text: ((r?.disbursement ?? 0) / 100).toStringAsFixed(2),
     );
     remarks = TextEditingController(text: r?.remarks ?? '');
+    _imports = ImportController(widget.store, year: year)
+      ..addListener(_onImports);
   }
 
   @override
   void dispose() {
+    _imports.removeListener(_onImports);
+    _imports.dispose();
     for (final c in [
       code,
       name,
@@ -494,7 +504,7 @@ class _RecordEditorState extends State<RecordEditor> {
       alignment: const Alignment(0.45, 0),
       insetPadding: const EdgeInsets.symmetric(horizontal: 40, vertical: 32),
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 760),
+        constraints: const BoxConstraints(maxWidth: 920, minHeight: 480),
         child: SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(18, 14, 18, 8),
           child: Column(
@@ -556,40 +566,53 @@ class _RecordEditorState extends State<RecordEditor> {
                   field('Disbursement', disbursement, amount: true),
                 ]),
                 remarks: field('Remarks', remarks, expand: true),
-                calculated: Container(
-                  padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
-                  decoration: BoxDecoration(
-                    color: const Color(0xffe7f0fb),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Calculated Values\n(Automatic)',
-                        style: TextStyle(
-                          fontSize: 15,
-                          height: 1.2,
-                          fontWeight: FontWeight.w700,
-                          color: blue,
-                        ),
+                calculated: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xffe7f0fb),
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                      const SizedBox(height: 14),
-                      metric('Obligation Rate', rate(o, a)),
-                      const SizedBox(height: 12),
-                      metric('Balance', money(a - o)),
-                      const SizedBox(height: 12),
-                      metric('Disbursement Rate', rate(d, o)),
-                    ],
-                  ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Calculated Values\n(Automatic)',
+                            style: TextStyle(
+                              fontSize: 15,
+                              height: 1.2,
+                              fontWeight: FontWeight.w700,
+                              color: blue,
+                            ),
+                          ),
+                          const SizedBox(height: 14),
+                          metric('Obligation Rate', rate(o, a)),
+                          const SizedBox(height: 12),
+                          metric('Balance', money(a - o)),
+                          const SizedBox(height: 12),
+                          metric('Disbursement Rate', rate(d, o)),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    ExcelDropZone(session: _imports),
+                  ],
                 ),
               ),
+              if (_imports.sheets.isNotEmpty) ...[
+                const SizedBox(height: 16),
+                ImportPreview(session: _imports),
+              ],
               if (error != null)
                 Padding(
                   padding: const EdgeInsets.only(top: 14),
                   child: Text(error!, style: const TextStyle(color: red)),
                 ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 20),
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
@@ -677,9 +700,7 @@ class _AlignedRecordColumnsState extends State<_AlignedRecordColumns> {
           ),
         ),
         const SizedBox(width: 16),
-        Expanded(
-          child: SizedBox(height: identityHeight, child: widget.calculated),
-        ),
+        Expanded(child: widget.calculated),
       ],
     );
   }

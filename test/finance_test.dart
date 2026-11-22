@@ -10,6 +10,7 @@ import 'package:ncsc_region1_finance/data/models.dart';
 import 'package:ncsc_region1_finance/data/passwords.dart';
 import 'package:ncsc_region1_finance/data/report_io.dart';
 import 'package:ncsc_region1_finance/data/workbook_io.dart';
+import 'package:ncsc_region1_finance/features/import_page.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -269,6 +270,14 @@ void main() {
       temp.deleteSync(recursive: true);
     },
   );
+  test('sample workbook parses as one current GAS line', () {
+    final sheets = parseWorkbook(buildSampleWorkbook());
+    expect(sheets.single.program, 'GAS');
+    expect(sheets.single.fund, 'CURRENT');
+    expect(sheets.single.error, isEmpty);
+    expect(sheets.single.lines.single.name, 'Traveling Expenses - Local');
+    expect(sheets.single.lines.single.allotment, 10000000);
+  });
   test('Excel reads cached formulas and late rows, but flags missing cached amounts', () {
     final sheets = parseWorkbook(
       File('test/fixtures/import_sample.xlsx').readAsBytesSync(),

@@ -4,7 +4,6 @@ import '../data/finance_store.dart';
 import '../features/audit_page.dart';
 import '../features/budget_page.dart';
 import '../features/dashboard_page.dart';
-import '../features/import_page.dart';
 import '../features/reports_page.dart';
 import '../features/settings_page.dart';
 import 'common.dart';
@@ -13,7 +12,6 @@ import 'theme.dart';
 const _menus = [
   ('dashboard', 'Dashboard', Icons.dashboard_outlined),
   ('budget', 'Budget Utilization', Icons.account_balance_wallet_outlined),
-  ('import', 'Import Records', Icons.upload_file_outlined),
   ('reports', 'Reports', Icons.description_outlined),
   ('audit', 'Audit Trail', Icons.history_outlined),
   ('settings', 'Settings', Icons.settings_outlined),
@@ -41,7 +39,6 @@ class _AppShellState extends State<AppShell> {
     final widgets = <String, Widget>{
       'dashboard': DashboardPage(store: widget.store),
       'budget': BudgetPage(store: widget.store),
-      'import': ImportPage(store: widget.store),
       'reports': ReportsPage(store: widget.store),
       'audit': AuditPage(store: widget.store),
       'settings': SettingsPage(store: widget.store),

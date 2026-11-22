@@ -404,7 +404,7 @@ class _DashboardPageState extends State<DashboardPage> {
             const Padding(
               padding: EdgeInsets.only(top: 18),
               child: Text(
-                'No budget records for these filters. Add a record or use Import Records.',
+                'No budget records for these filters. Add a record, or import an Excel file from Add Record.',
                 style: TextStyle(color: muted),
               ),
             ),

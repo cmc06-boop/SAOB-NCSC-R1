@@ -21,6 +21,7 @@ dependencies:
   printing: ^5.14.2
   sqlite3: ^3.9.1
   xml: ^6.5.0
+  desktop_drop: ^0.8.4
 
 dev_dependencies:
   flutter_test:

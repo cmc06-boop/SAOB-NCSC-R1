@@ -83,7 +83,11 @@ class Panel extends StatelessWidget {
       border: Border.all(color: line),
       boxShadow: cardShadow,
     ),
-    child: child,
+    child: Material(
+      color: Colors.white,
+      surfaceTintColor: Colors.transparent,
+      child: child,
+    ),
   );
 }
 

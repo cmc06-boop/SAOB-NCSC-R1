@@ -79,7 +79,6 @@ void main() {
       // Side menu icons work both in expanded and compact navigation.
       for (final icon in [
         Icons.account_balance_wallet_outlined,
-        Icons.upload_file_outlined,
         Icons.description_outlined,
         Icons.history_outlined,
         Icons.settings_outlined,
