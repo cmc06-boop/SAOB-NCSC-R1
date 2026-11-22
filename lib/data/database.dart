@@ -50,24 +50,20 @@ class FinanceDatabase {
       db.connection.execute('PRAGMA journal_mode=WAL');
       db.connection.execute('PRAGMA busy_timeout=5000');
       db.connection.execute(_schema);
+      // One-time legacy copy for on-disk DBs. Marker prevents old programs /
+      // 2026 rows from coming back after finance.db is deleted.
+      // In-memory test DBs still migrate when legacyPath is passed.
       if (isNew && legacy != null && File(legacy).existsSync()) {
-        db._copyLegacy(legacy);
+        final marker = target == ':memory:'
+            ? null
+            : File('$target.legacy_migrated');
+        if (marker == null || !marker.existsSync()) {
+          db._copyLegacy(legacy);
+          marker?.writeAsStringSync(legacy);
+        }
       }
       db.transaction(() {
-        if (db.rows('SELECT code FROM programs').isEmpty) {
-          for (final entry in {
-            'GAS': 'General Administration and Support',
-            'PPD': 'PPD',
-            'ECA': 'ECA',
-            'SECADNA': 'SECADNA',
-            'ATOP': 'ATOP',
-          }.entries) {
-            db.connection.execute(
-              'INSERT INTO programs(code,name,active) VALUES (?,?,1)',
-              [entry.key, entry.value],
-            );
-          }
-        }
+        // Programs come only from Excel import or Settings — never seeded.
         db.ensureCurrentYear(today: today);
       });
       return db;

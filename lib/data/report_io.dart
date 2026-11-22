@@ -171,9 +171,11 @@ String _programLabel(String program) =>
     program.isEmpty ? 'All Programs' : program;
 
 String _saobSheetName(String program, String fund) {
-  final suffix = fund == 'CONTINUING' ? 'CONT' : 'CURRENT';
-  var name = '${program.isEmpty ? 'SAOB' : program}-REG_$suffix';
+  // Sheet name matches the program so re-import adds/uses that program.
+  var name = program.isEmpty ? 'SAOB' : program;
+  if (fund == 'CONTINUING') name = '${name}_CONT';
   name = name.replaceAll(RegExp(r'[:\\/?*\[\]]'), '-').trim();
+  if (name.isEmpty) name = 'SAOB';
   if (name.length > 31) name = name.substring(0, 31);
   return name;
 }

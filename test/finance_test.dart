@@ -37,6 +37,9 @@ void main() {
     db = FinanceDatabase.open(path: ':memory:');
     store = FinanceStore(db);
     store.user = const LocalUser(1, 'AO', 'ao', 'Admin');
+    db.connection.execute(
+      "INSERT INTO programs(code,name,active) VALUES ('GAS','GAS',1),('ECA','ECA',1)",
+    );
   });
   tearDown(() {
     store.dispose();
@@ -91,24 +94,24 @@ void main() {
     );
   });
   test('import is atomic and duplicate-safe; updates are explicit', () {
+    // Excel import keeps obligation/allotment as-is even when obligation is higher.
     expect(
-      () => store.importRecords([
+      store.importRecords([
         record(),
         record(code: '5020102000', o: 200000),
       ], updateExisting: true),
-      throwsA(isA<FinanceError>()),
+      2,
     );
-    expect(store.records(manilaNow().year), isEmpty);
-    expect(store.references(), isEmpty);
-    expect(db.rows('SELECT * FROM audit_log'), isEmpty);
+    expect(store.records(manilaNow().year).length, 2);
     expect(
       () => store.importRecords([record(), record()], updateExisting: true),
       throwsA(isA<FinanceError>()),
     );
-    expect(store.records(manilaNow().year), isEmpty);
-    expect(store.importRecords([record()], updateExisting: false), 1);
     expect(store.importRecords([record(o: 30000)], updateExisting: false), 0);
-    expect(store.records(manilaNow().year).single.obligation, 25005);
+    expect(
+      store.records(manilaNow().year, query: '5020101000').single.obligation,
+      25005,
+    );
     expect(store.importRecords([record(o: 30000)], updateExisting: true), 1);
     expect(store.importRecords([record(o: 30000)], updateExisting: true), 0);
   });
@@ -257,6 +260,9 @@ void main() {
       var db2 = FinanceDatabase.open(path: path);
       var s = FinanceStore(db2);
       await s.createOwner('Finance AO', 'ao', 'TestPassword2026');
+      db2.connection.execute(
+        "INSERT INTO programs(code,name,active) VALUES ('GAS','GAS',1)",
+      );
       s.saveRecord(record());
       s.dispose();
       db2.close();
@@ -270,24 +276,46 @@ void main() {
       temp.deleteSync(recursive: true);
     },
   );
-  test('sample workbook parses as one current GAS line', () {
+  test('sample workbook parses as one Current program line', () {
     final sheets = parseWorkbook(buildSampleWorkbook());
-    expect(sheets.single.program, 'GAS');
+    expect(sheets.single.program, 'CURRENT');
     expect(sheets.single.fund, 'CURRENT');
     expect(sheets.single.error, isEmpty);
     expect(sheets.single.lines.single.name, 'Traveling Expenses - Local');
     expect(sheets.single.lines.single.allotment, 10000000);
   });
-  test('Excel reads cached formulas and late rows, but flags missing cached amounts', () {
+  test('import adds matching worksheet as a program; summary sheets are skipped', () {
+    final sheets = parseWorkbook(buildSampleWorkbook());
+    final sheet = sheets.single;
+    final payload = [
+      for (final line in sheet.lines)
+        line.record(manilaNow().year, sheet.program, sheet.fund),
+    ];
+    expect(store.programs.any((p) => p.code == 'CURRENT'), isFalse);
+    expect(
+      store.importRecords(payload, updateExisting: true, programName: sheet.name),
+      1,
+    );
+    expect(store.programs.any((p) => p.code == 'CURRENT' && p.active), isTrue);
+    expect(store.records(manilaNow().year, program: 'CURRENT').length, 1);
+
+    final fixture = parseWorkbook(
+      File('test/fixtures/import_sample.xlsx').readAsBytesSync(),
+    );
+    expect(fixture.last.error, contains('Summary'));
+    expect(fixture.last.lines, isEmpty);
+  });
+  test('Excel reads cached formulas and late rows; blank/uncached amounts become 0', () {
     final sheets = parseWorkbook(
       File('test/fixtures/import_sample.xlsx').readAsBytesSync(),
     );
     final gas = sheets.first;
-    expect(gas.program, 'GAS');
+    expect(gas.program, 'GASCURRENT');
     expect(gas.fund, 'CURRENT');
     expect(gas.lines.length, 4);
     expect(gas.lines.first.allotment, 100010);
-    expect(gas.lines.firstWhere((r) => r.number == 10).parseError, isNotEmpty);
+    // Rows stay in the import even when some amount cells are blank/uncached.
+    expect(gas.lines.any((r) => r.number == 10), isTrue);
     expect(gas.lines.firstWhere((r) => r.number == 11).obligation, 12500);
     expect(gas.lines.firstWhere((r) => r.number == 350).allotment, 90012);
     expect(sheets.last.error, contains('Summary'));
@@ -301,7 +329,8 @@ void main() {
       program: 'GAS',
     );
     final parsed = parseWorkbook(bytes);
-    expect(parsed.map((s) => s.name), ['GAS-REG_CURRENT']);
+    expect(parsed.map((s) => s.name), ['GAS']);
+    expect(parsed.first.program, 'GAS');
     expect(parsed.first.lines.single.allotment, 100010);
     expect(parsed.first.lines.single.obligation, 25005);
     expect(parsed.first.lines.single.disbursement, 10001);
@@ -333,7 +362,7 @@ void main() {
     );
     expect(
       parseWorkbook(all).map((s) => s.name),
-      containsAll(['GAS-REG_CURRENT', 'ECA-REG_CURRENT', 'SUMMARY']),
+      containsAll(['GAS', 'ECA', 'SUMMARY']),
     );
     expect(
       reportData('Obligation Status Report', rows).headers,

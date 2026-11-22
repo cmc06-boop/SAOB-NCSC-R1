@@ -13,10 +13,10 @@ import '../data/workbook_io.dart';
 import '../ui/common.dart';
 import '../ui/theme.dart';
 
-/// Small valid workbook used by "Load sample workbook" in the Add Record dialog.
+/// Sample workbook used by unit tests.
 Uint8List buildSampleWorkbook() {
   final book = Excel.createExcel();
-  const sheetName = 'GAS_CURRENT';
+  const sheetName = 'Current';
   if (book.tables.containsKey('Sheet1')) {
     book.rename('Sheet1', sheetName);
   }
@@ -56,26 +56,92 @@ Uint8List buildSampleWorkbook() {
 }
 
 class ImportController extends ChangeNotifier {
-  ImportController(this.store, {required this.year});
+  ImportController(
+    this.store, {
+    required this.year,
+    this.onImported,
+  });
   final FinanceStore store;
-  String filename = '', program = '', fund = 'CURRENT';
-  int year, sheetIndex = 0, page = 1;
-  bool busy = false, updateExisting = false;
-  List<ImportSheet> sheets = [];
+  final VoidCallback? onImported;
+  String filename = '';
+  int year;
+  bool busy = false;
+  static const _fund = 'CURRENT';
 
-  Future<void> loadBytes(Uint8List bytes, String name) async {
+  Future<void> importFile(BuildContext context, Uint8List bytes, String name) async {
     if (busy) return;
     busy = true;
+    filename = name;
     notifyListeners();
     try {
       if (bytes.length > 25 * 1024 * 1024) {
         throw const FinanceError('Choose an Excel file smaller than 25 MB.');
       }
-      final parsed = await compute(parseWorkbook, bytes);
-      sheets = parsed;
-      filename = name;
-      sheetIndex = math.max(0, sheets.indexWhere((s) => s.error.isEmpty));
-      syncSheet();
+      final sheets = await compute(parseWorkbook, bytes);
+      var imported = 0;
+      var programs = 0;
+      for (final sheet in sheets) {
+        if (sheet.error.isNotEmpty || sheet.program.isEmpty) continue;
+        final seen = <String>{};
+        final payload = <BudgetRecord>[];
+        for (final line in sheet.lines) {
+          final key = codeKey(line.code);
+          // Keep every Excel line that has a UACS code; amounts stay as-is.
+          if (key.isEmpty) continue;
+          final name = line.name.trim().isEmpty ? key : line.name.trim();
+          final record = BudgetRecord(
+            year: year,
+            program: sheet.program,
+            fund: _fund,
+            code: key,
+            name: name,
+            allotment: line.allotment < 0 ? 0 : line.allotment,
+            obligation: line.obligation < 0 ? 0 : line.obligation,
+            disbursement: line.disbursement < 0 ? 0 : line.disbursement,
+            remarks: line.remarks,
+          );
+          if (!seen.add(key)) {
+            payload.removeWhere((r) => codeKey(r.code) == key);
+          }
+          payload.add(record);
+        }
+        if (payload.isEmpty) continue;
+        imported += store.importRecords(
+          payload,
+          updateExisting: true,
+          programName: programNameFromSheet(sheet.name),
+        );
+        programs++;
+      }
+      if (!context.mounted) return;
+      if (imported == 0 && programs == 0) {
+        throw const FinanceError(
+          'No matching worksheets were found. Use sheets with the same Excel format (UACS Code, UACS Name, Allotment, Obligation, Disbursement).',
+        );
+      }
+      if (imported == 0) {
+        showMessage(
+          context,
+          'Workbook read, but there were no new or changed budget lines to save.',
+        );
+      } else {
+        showMessage(
+          context,
+          '$imported budget record(s) imported'
+          '${programs > 1 ? ' from $programs programs' : ''}.',
+        );
+      }
+      onImported?.call();
+    } catch (e) {
+      if (context.mounted) {
+        showMessage(
+          context,
+          e is FinanceError
+              ? e.message
+              : 'The Excel file could not be imported. Check that it is a valid .xlsx workbook.',
+          error: true,
+        );
+      }
     } finally {
       busy = false;
       notifyListeners();
@@ -91,9 +157,17 @@ class ImportController extends ChangeNotifier {
         ],
       );
       if (file == null || !context.mounted) return;
-      await loadBytes(await file.readAsBytes(), file.name);
+      await importFile(context, await file.readAsBytes(), file.name);
     } catch (e) {
-      if (context.mounted) _showReadError(context, e);
+      if (context.mounted) {
+        showMessage(
+          context,
+          e is FinanceError
+              ? e.message
+              : 'The Excel file could not be read.',
+          error: true,
+        );
+      }
     }
   }
 
@@ -109,130 +183,20 @@ class ImportController extends ChangeNotifier {
       return;
     }
     try {
-      await loadBytes(await file.readAsBytes(), file.name);
+      await importFile(context, await file.readAsBytes(), file.name);
     } catch (e) {
-      if (context.mounted) _showReadError(context, e);
+      if (context.mounted) {
+        showMessage(
+          context,
+          e is FinanceError
+              ? e.message
+              : 'The Excel file could not be read.',
+          error: true,
+        );
+      }
     }
   }
 
-  Future<void> loadSample(BuildContext context) async {
-    if (busy) return;
-    try {
-      await loadBytes(buildSampleWorkbook(), 'sample-workbook.xlsx');
-    } catch (e) {
-      if (context.mounted) _showReadError(context, e);
-    }
-  }
-
-  void syncSheet() {
-    final sheet = sheets[sheetIndex];
-    final active = store.programs
-        .where((p) => p.active)
-        .map((p) => p.code)
-        .toList();
-    program = active.contains(sheet.program)
-        ? sheet.program
-        : active.firstOrNull ?? '';
-    fund = sheet.fund;
-    page = 1;
-  }
-
-  void chooseYear(int value) {
-    year = value;
-    page = 1;
-    notifyListeners();
-  }
-
-  void chooseSheet(int value) {
-    sheetIndex = value;
-    syncSheet();
-    notifyListeners();
-  }
-
-  void chooseProgram(String value) {
-    program = value;
-    page = 1;
-    notifyListeners();
-  }
-
-  void chooseFund(String value) {
-    fund = value;
-    page = 1;
-    notifyListeners();
-  }
-
-  void choosePage(int value) {
-    page = value;
-    notifyListeners();
-  }
-
-  void chooseUpdateExisting(bool value) {
-    updateExisting = value;
-    notifyListeners();
-  }
-
-  List<(ImportLine, BudgetRecord, String, String)> classified() {
-    if (sheets.isEmpty) return [];
-    final lines = sheets[sheetIndex].lines;
-    final previous = {
-      for (final r in store.records(year, program: program, fund: fund))
-        r.code: r,
-    };
-    final counts = <String, int>{};
-    for (final line in lines) {
-      counts[line.code] = (counts[line.code] ?? 0) + 1;
-    }
-    return [
-      for (final line in lines)
-        (() {
-          final record = line.record(year, program, fund),
-              before = previous[line.code];
-          final error = line.parseError.isNotEmpty
-              ? line.parseError
-              : (record.error ??
-                    ((counts[line.code] ?? 0) > 1
-                        ? 'This code appears more than once in this worksheet.'
-                        : ''));
-          final status = error.isNotEmpty
-              ? 'Invalid'
-              : before == null
-              ? 'Added'
-              : before.sameAmountsAndText(record)
-              ? 'Unchanged'
-              : 'Updated';
-          return (line, record, status, error);
-        })(),
-    ];
-  }
-
-  Future<void> apply(BuildContext context) async {
-    if (busy || sheets.isEmpty) return;
-    final payload = classified()
-        .where((r) => r.$3 == 'Added' || (r.$3 == 'Updated' && updateExisting))
-        .map((r) => r.$2)
-        .toList();
-    try {
-      final count = store.importRecords(
-        payload,
-        updateExisting: updateExisting,
-      );
-      if (!context.mounted) return;
-      page = 1;
-      notifyListeners();
-      showMessage(context, '$count budget record(s) imported.');
-    } catch (e) {
-      if (context.mounted) showMessage(context, friendlyError(e), error: true);
-    }
-  }
-
-  void _showReadError(BuildContext context, Object error) {
-    if (!context.mounted) return;
-    showMessage(
-      context,
-      error is FinanceError ? error.message : 'The Excel file could not be read. Check that it is a valid .xlsx workbook.',
-      error: true,
-    );
-  }
 }
 
 class ExcelDropZone extends StatefulWidget {
@@ -249,7 +213,9 @@ class _ExcelDropZoneState extends State<ExcelDropZone> {
   Widget build(BuildContext context) {
     final session = widget.session;
     final active = _hover || _dragging;
-    final caption = session.filename.isEmpty
+    final caption = session.busy
+        ? 'Importing…'
+        : session.filename.isEmpty
         ? 'Drag and drop the file here, or click the button below.'
         : session.filename;
     return MouseRegion(
@@ -303,10 +269,10 @@ class _ExcelDropZoneState extends State<ExcelDropZone> {
                     style: TextStyle(
                       fontSize: 11.5,
                       height: 1.35,
-                      color: session.filename.isEmpty
+                      color: session.filename.isEmpty && !session.busy
                           ? const Color(0xff7d8ba3)
                           : ink,
-                      fontWeight: session.filename.isEmpty
+                      fontWeight: session.filename.isEmpty && !session.busy
                           ? FontWeight.w400
                           : FontWeight.w600,
                     ),
@@ -341,190 +307,13 @@ class _ExcelDropZoneState extends State<ExcelDropZone> {
                           : Icons.folder_outlined,
                       size: 16,
                     ),
-                    label: Text(session.busy ? 'Reading…' : 'Browse File'),
-                  ),
-                  const SizedBox(height: 6),
-                  TextButton(
-                    style: TextButton.styleFrom(
-                      foregroundColor: blue,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 2,
-                      ),
-                      minimumSize: Size.zero,
-                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      textStyle: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    onPressed: session.busy
-                        ? null
-                        : () => session.loadSample(context),
-                    child: const Text('Load sample workbook'),
+                    label: Text(session.busy ? 'Importing…' : 'Browse File'),
                   ),
                 ],
               ),
             ),
           ),
         ),
-      ),
-    );
-  }
-}
-
-class ImportPreview extends StatelessWidget {
-  const ImportPreview({super.key, required this.session});
-  final ImportController session;
-  @override
-  Widget build(BuildContext context) {
-    final rows = session.classified(), counts = <String, int>{};
-    for (final row in rows) {
-      counts[row.$3] = (counts[row.$3] ?? 0) + 1;
-    }
-    final eligible =
-        (counts['Added'] ?? 0) +
-        (session.updateExisting ? (counts['Updated'] ?? 0) : 0);
-    final page = session.page
-        .clamp(1, math.max(1, (rows.length / 25).ceil()))
-        .toInt();
-    final sheet = session.sheets[session.sheetIndex];
-    return Panel(
-      padding: 14,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Wrap(
-            spacing: 14,
-            runSpacing: 14,
-            children: [
-              SelectField(
-                label: 'Fiscal Year',
-                value: session.year,
-                width: 130,
-                items: [for (final y in session.store.years) (y, '$y')],
-                onChanged: session.chooseYear,
-              ),
-              SelectField(
-                label: 'Worksheet',
-                value: session.sheetIndex,
-                width: 220,
-                items: [
-                  for (var i = 0; i < session.sheets.length; i++)
-                    (i, session.sheets[i].name),
-                ],
-                onChanged: session.chooseSheet,
-              ),
-              SelectField(
-                label: 'Program',
-                value: session.program,
-                items: [
-                  for (final p in session.store.programs.where((p) => p.active))
-                    (p.code, p.code),
-                ],
-                onChanged: session.chooseProgram,
-              ),
-              SelectField(
-                label: 'Fund Source',
-                value: session.fund,
-                items: const [
-                  ('CURRENT', 'Current'),
-                  ('CONTINUING', 'Continuing'),
-                ],
-                onChanged: session.chooseFund,
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          const Text(
-            'Import Preview',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
-          ),
-          const SizedBox(height: 8),
-          if (sheet.error.isNotEmpty)
-            Text(sheet.error, style: const TextStyle(color: red))
-          else
-            Text(
-              'Added ${counts['Added'] ?? 0}   ·   Updated ${counts['Updated'] ?? 0}   ·   Unchanged ${counts['Unchanged'] ?? 0}   ·   Invalid ${counts['Invalid'] ?? 0}',
-              style: const TextStyle(color: muted),
-            ),
-          const SizedBox(height: 12),
-          WideTable(
-            columns: const [
-              'Excel Row',
-              'UACS Code',
-              'Expense',
-              'Allotment',
-              'Obligation',
-              'Disbursement',
-              'Status',
-            ],
-            numeric: const {3, 4, 5},
-            rows: [
-              for (final r in rows.skip((page - 1) * 25).take(25))
-                [
-                  Text('${r.$1.number}'),
-                  tableText(displayCode(r.$2.code)),
-                  tableText(r.$2.name, width: 180),
-                  Text(money(r.$2.allotment)),
-                  Text(money(r.$2.obligation)),
-                  Text(money(r.$2.disbursement)),
-                  Tooltip(
-                    message: r.$4,
-                    child: tableText(
-                      '${r.$3}${r.$4.isEmpty ? '' : ' · ${r.$4}'}',
-                      width: 220,
-                    ),
-                  ),
-                ],
-            ],
-          ),
-          Pager(
-            page: page,
-            count: rows.length,
-            pageSize: 25,
-            onChanged: session.choosePage,
-          ),
-          const Divider(),
-          CheckboxListTile(
-            contentPadding: EdgeInsets.zero,
-            value: session.updateExisting,
-            controlAffinity: ListTileControlAffinity.leading,
-            title: const Text(
-              'Apply updates to existing records',
-              style: TextStyle(fontSize: 14),
-            ),
-            subtitle: const Text(
-              'Replace the amounts, expense name, and remarks of matching lines.',
-              style: TextStyle(fontSize: 12),
-            ),
-            onChanged: session.busy
-                ? null
-                : (v) => session.chooseUpdateExisting(v ?? false),
-          ),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 18,
-            runSpacing: 10,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            children: [
-              FilledButton.icon(
-                onPressed:
-                    eligible > 0 && session.program.isNotEmpty && !session.busy
-                    ? () => session.apply(context)
-                    : null,
-                icon: const Icon(Icons.file_download_done, size: 18),
-                label: Text(
-                  'Import $eligible Record${eligible == 1 ? '' : 's'}',
-                ),
-              ),
-              const Text(
-                'Invalid and unchanged rows are skipped.',
-                style: TextStyle(fontSize: 12, color: muted),
-              ),
-            ],
-          ),
-        ],
       ),
     );
   }

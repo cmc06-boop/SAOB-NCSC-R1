@@ -47,7 +47,7 @@ class BudgetPage extends StatefulWidget {
 class _BudgetPageState extends State<BudgetPage> {
   final _actionsKey = GlobalKey();
   int year = manilaNow().year;
-  String program = '', fund = 'CURRENT', query = '';
+  String program = '', query = '';
   int? selectedId;
   double _searchWidth = 320;
   void _matchSearchWidth() {
@@ -71,7 +71,6 @@ class _BudgetPageState extends State<BudgetPage> {
         record: record,
         year: year,
         program: program,
-        fund: fund,
       ),
     );
   }
@@ -104,7 +103,6 @@ class _BudgetPageState extends State<BudgetPage> {
     final rows = widget.store.records(
           year,
           program: program,
-          fund: fund,
           query: query,
         ),
         t = Totals(rows);
@@ -128,19 +126,13 @@ class _BudgetPageState extends State<BudgetPage> {
         _InlineChoice(
           label: 'Program',
           value: program,
-          width: 132,
+          width: 160,
           items: [
             ('', 'All Programs'),
-            for (final p in widget.store.programs) (p.code, p.code),
+            for (final p in widget.store.programs)
+              (p.code, programLabel(p.code, p.name)),
           ],
           onChanged: (v) => change(() => program = v),
-        ),
-        _InlineChoice(
-          label: 'Fund',
-          value: fund,
-          width: 132,
-          items: const [('CURRENT', 'Current'), ('CONTINUING', 'Continuing')],
-          onChanged: (v) => change(() => fund = v),
         ),
       ],
     );
@@ -206,7 +198,9 @@ class _BudgetPageState extends State<BudgetPage> {
               records: rows,
               selectedId: selected?.id,
               total: t,
-              totalLabel: program.isEmpty ? 'All Programs' : program,
+              totalLabel: program.isEmpty
+                  ? 'All Programs'
+                  : programLabel(program),
               onSelect: (record) => setState(
                 () => selectedId = selectedId == record.id ? null : record.id,
               ),
@@ -293,19 +287,18 @@ class RecordEditor extends StatefulWidget {
     this.record,
     required this.year,
     required this.program,
-    required this.fund,
   });
   final FinanceStore store;
   final BudgetRecord? record;
   final int year;
-  final String program, fund;
+  final String program;
   @override
   State<RecordEditor> createState() => _RecordEditorState();
 }
 
 class _RecordEditorState extends State<RecordEditor> {
   late int year;
-  late String program, fund;
+  late String program;
   late final TextEditingController code,
       name,
       allotment,
@@ -331,7 +324,6 @@ class _RecordEditorState extends State<RecordEditor> {
     super.initState();
     final r = widget.record;
     year = r?.year ?? widget.year;
-    fund = r?.fund ?? widget.fund;
     final active = widget.store.programs
         .where((p) => p.active)
         .map((p) => p.code)
@@ -353,8 +345,13 @@ class _RecordEditorState extends State<RecordEditor> {
       text: ((r?.disbursement ?? 0) / 100).toStringAsFixed(2),
     );
     remarks = TextEditingController(text: r?.remarks ?? '');
-    _imports = ImportController(widget.store, year: year)
-      ..addListener(_onImports);
+    _imports = ImportController(
+      widget.store,
+      year: year,
+      onImported: () {
+        if (mounted) Navigator.pop(context);
+      },
+    )..addListener(_onImports);
   }
 
   @override
@@ -402,7 +399,7 @@ class _RecordEditorState extends State<RecordEditor> {
           id: widget.record?.id,
           year: year,
           program: program,
-          fund: fund,
+          fund: widget.record?.fund ?? 'CURRENT',
           code: codeKey(code.text),
           name: name.text,
           allotment: a,
@@ -527,26 +524,21 @@ class _RecordEditorState extends State<RecordEditor> {
                     dense: true,
                     width: double.infinity,
                     items: [for (final y in widget.store.years) (y, '$y')],
-                    onChanged: (v) => setState(() => year = v),
+                    onChanged: (v) => setState(() {
+                      year = v;
+                      _imports.year = v;
+                    }),
                   ),
                   SelectField(
                     label: 'Program *',
                     value: program,
                     dense: true,
                     width: double.infinity,
-                    items: [for (final p in programs) (p.code, p.code)],
-                    onChanged: (v) => setState(() => program = v),
-                  ),
-                  SelectField(
-                    label: 'Fund Source *',
-                    value: fund,
-                    dense: true,
-                    width: double.infinity,
-                    items: const [
-                      ('CURRENT', 'Current'),
-                      ('CONTINUING', 'Continuing'),
+                    items: [
+                      for (final p in programs)
+                        (p.code, programLabel(p.code, p.name)),
                     ],
-                    onChanged: (v) => setState(() => fund = v),
+                    onChanged: (v) => setState(() => program = v),
                   ),
                   field(
                     'UACS Code *',
@@ -603,10 +595,6 @@ class _RecordEditorState extends State<RecordEditor> {
                   ],
                 ),
               ),
-              if (_imports.sheets.isNotEmpty) ...[
-                const SizedBox(height: 16),
-                ImportPreview(session: _imports),
-              ],
               if (error != null)
                 Padding(
                   padding: const EdgeInsets.only(top: 14),

@@ -34,11 +34,19 @@ class _DashboardPageState extends State<DashboardPage> {
       program = '';
     }
     final all = widget.store.records(year, program: program);
+    // One dropdown entry per budget line (program + UACS), so All Items
+    // matches every row shown in Budget Utilization.
     final items = <String, String>{
-      for (final r in all) r.code: '${r.name} (${displayCode(r.code)})',
+      for (final r in all)
+        '${r.program}\u0001${r.code}': program.isEmpty
+            ? '${r.name} (${displayCode(r.code)}) · ${programLabel(r.program)}'
+            : '${r.name} (${displayCode(r.code)})',
     };
     if (!items.containsKey(item)) item = '';
-    final rows = all.where((r) => item.isEmpty || r.code == item).toList(),
+    final rows = all.where((r) {
+          if (item.isEmpty) return true;
+          return item == '${r.program}\u0001${r.code}';
+        }).toList(),
         t = Totals(rows);
     final shares = <String, int>{
       for (final p in widget.store.programs) p.code: 0,
@@ -67,7 +75,8 @@ class _DashboardPageState extends State<DashboardPage> {
           fieldWidth: 146,
           items: [
             ('', 'All Programs'),
-            for (final p in widget.store.programs) (p.code, p.code),
+            for (final p in widget.store.programs)
+              (p.code, programLabel(p.code, p.name)),
           ],
           onChanged: (v) => setState(() {
             program = v;
@@ -77,9 +86,9 @@ class _DashboardPageState extends State<DashboardPage> {
         _InlineFilter(
           label: 'Item',
           value: item,
-          fieldWidth: 214,
+          fieldWidth: 280,
           items: [
-            ('', 'All Items'),
+            ('', 'All Items (${all.length})'),
             for (final e in items.entries) (e.key, e.value),
           ],
           onChanged: (v) => setState(() => item = v),

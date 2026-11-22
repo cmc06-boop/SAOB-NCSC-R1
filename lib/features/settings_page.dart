@@ -192,7 +192,7 @@ class _SettingsPageState extends State<SettingsPage> {
                                         fontWeight: FontWeight.w700,
                                       ),
                                     ),
-                                    Text(p.name),
+                                    Text(programLabel(p.code, p.name)),
                                     Row(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [

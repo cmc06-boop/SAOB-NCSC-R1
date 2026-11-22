@@ -59,6 +59,9 @@ void main() {
       addTearDown(() => binding.setSurfaceSize(null));
       final store = createStore()
         ..user = const LocalUser(1, 'Finance AO', 'ao', 'Admin');
+      store.db.connection.execute(
+        "INSERT INTO programs(code,name,active) VALUES ('GAS','GAS',1),('ECA','ECA',1)",
+      );
       for (var i = 0; i < 16; i++) {
         store.saveRecord(
           BudgetRecord(

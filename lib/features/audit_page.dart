@@ -38,8 +38,11 @@ class _AuditPageState extends State<AuditPage> {
       'Record of changes made to budget records and reference data.',
       style: TextStyle(fontSize: 14, color: muted, height: 1.35),
     );
-    final filters = Row(
-      mainAxisSize: MainAxisSize.min,
+    final filters = Wrap(
+      spacing: 16,
+      runSpacing: 12,
+      alignment: WrapAlignment.end,
+      crossAxisAlignment: WrapCrossAlignment.center,
       children: [
         _AuditFilter<int>(
           label: 'Fiscal Year',
@@ -48,18 +51,17 @@ class _AuditPageState extends State<AuditPage> {
           items: [for (final y in widget.store.years) (y, '$y')],
           onChanged: (v) => change(() => year = v),
         ),
-        const SizedBox(width: 16),
         _AuditFilter<String>(
           label: 'Program',
           value: program,
           fieldWidth: 146,
           items: [
             ('', 'All Programs'),
-            for (final p in widget.store.programs) (p.code, p.code),
+            for (final p in widget.store.programs)
+              (p.code, programLabel(p.code, p.name)),
           ],
           onChanged: (v) => change(() => program = v),
         ),
-        const SizedBox(width: 16),
         _AuditFilter<String>(
           label: 'Action',
           value: action,

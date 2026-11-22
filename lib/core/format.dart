@@ -19,6 +19,41 @@ String codeKey(Object? value) =>
 String displayCode(String value) => value.length == 10
     ? '${value.substring(0, 8)} ${value.substring(8)}'
     : value;
+
+/// Dropdown label: ATOPCURRENT → "ATOP Current", ATOPCONTINUING → "ATOP Continuing".
+String programLabel(String code, [String? name]) {
+  final upper = code.trim().toUpperCase();
+  if (upper.endsWith('CONTINUING')) {
+    final prefix = upper.substring(0, upper.length - 'CONTINUING'.length);
+    return prefix.isEmpty ? 'Continuing' : '$prefix Continuing';
+  }
+  if (upper.endsWith('CURRENT')) {
+    final prefix = upper.substring(0, upper.length - 'CURRENT'.length);
+    return prefix.isEmpty ? 'Current' : '$prefix Current';
+  }
+  final fallback = (name ?? '').trim();
+  if (fallback.isNotEmpty && fallback.toUpperCase() != upper) return fallback;
+  return code.trim().isEmpty ? fallback : code.trim();
+}
+
+/// Stored program name from a sheet tab, e.g. ATOP-REG_CONT → "ATOP Continuing".
+String programNameFromSheet(String sheetName) {
+  final tokens = sheetName
+      .trim()
+      .toUpperCase()
+      .split(RegExp(r'[^A-Z0-9]+'))
+      .where((t) => t.isNotEmpty && t != 'REG')
+      .map((t) => t == 'CONT' ? 'CONTINUING' : t)
+      .toList();
+  if (tokens.isEmpty) return sheetName.trim();
+  return tokens
+      .map((t) {
+        if (t == 'CURRENT') return 'Current';
+        if (t == 'CONTINUING') return 'Continuing';
+        return t;
+      })
+      .join(' ');
+}
 String dateLabel(Object? value) {
   var text = (value ?? '').toString();
   if (text.isEmpty) return '';

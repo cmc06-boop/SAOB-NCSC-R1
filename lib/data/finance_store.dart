@@ -128,8 +128,27 @@ class FinanceStore extends ChangeNotifier {
     return rows.isEmpty ? null : BudgetRecord.fromMap(rows.first);
   }
 
-  void _validate(BudgetRecord record, {BudgetRecord? previous}) {
-    if (record.error != null) throw FinanceError(record.error!);
+  void _validate(
+    BudgetRecord record, {
+    BudgetRecord? previous,
+    bool fromImport = false,
+  }) {
+    if (fromImport) {
+      // Excel import keeps amounts/codes as-is; only reject unusable rows.
+      if (codeKey(record.code).isEmpty) {
+        throw const FinanceError('A budget line is missing a UACS code.');
+      }
+      if (record.name.trim().isEmpty) {
+        throw const FinanceError('A budget line is missing an expense name.');
+      }
+      if ([record.allotment, record.obligation, record.disbursement].any(
+        (v) => v < 0,
+      )) {
+        throw const FinanceError('Amounts cannot be negative.');
+      }
+    } else if (record.error != null) {
+      throw FinanceError(record.error!);
+    }
     if (!['CURRENT', 'CONTINUING'].contains(record.fund)) {
       throw const FinanceError('Select a valid fund source.');
     }
@@ -184,7 +203,7 @@ class FinanceStore extends ChangeNotifier {
       );
       if (clash.isNotEmpty) {
         throw const FinanceError(
-          'This UACS code already exists for this year, program, and fund source.',
+          'This UACS code already exists for this year and program.',
         );
       }
       _write(record, id: record.id);
@@ -234,6 +253,7 @@ class FinanceStore extends ChangeNotifier {
   int importRecords(
     List<BudgetRecord> payload, {
     required bool updateExisting,
+    String? programName,
   }) {
     require('import');
     if (payload.isEmpty) {
@@ -243,9 +263,37 @@ class FinanceStore extends ChangeNotifier {
     }
     var count = 0;
     db.transaction(() {
+      final program = payload.first.program.trim().toUpperCase();
+      final label = (programName ?? programLabel(program)).trim();
+      final existing = db.rows('SELECT code FROM programs WHERE code=?', [
+        program,
+      ]);
+      if (existing.isEmpty) {
+        if (!RegExp(r'^[A-Z0-9]{2,32}$').hasMatch(program)) {
+          throw const FinanceError(
+            'This worksheet name cannot be used as a program code.',
+          );
+        }
+        db.connection.execute(
+          'INSERT INTO programs(code,name,active) VALUES (?,?,1)',
+          [program, label.isEmpty ? programLabel(program) : label],
+        );
+        _audit(
+          'Added',
+          'Added program from Excel worksheet',
+          '$program · ${label.isEmpty ? programLabel(program) : label}',
+          year: payload.first.year,
+          program: program,
+        );
+      } else if (label.isNotEmpty) {
+        db.connection.execute('UPDATE programs SET name=? WHERE code=?', [
+          label,
+          program,
+        ]);
+      }
       final seen = <String>{};
       for (final record in payload) {
-        _validate(record);
+        _validate(record, fromImport: true);
         final identity =
             '${record.year}/${record.program}/${record.fund}/${codeKey(record.code)}';
         if (!seen.add(identity)) {
@@ -270,7 +318,7 @@ class FinanceStore extends ChangeNotifier {
         _audit(
           'Imported',
           'Imported records from Excel',
-          '$count records (${payload.first.fund})',
+          '$count records (${payload.first.program})',
           year: payload.first.year,
           program: payload.first.program,
         );
@@ -284,9 +332,9 @@ class FinanceStore extends ChangeNotifier {
     require('settings');
     code = code.trim().toUpperCase();
     name = name.trim();
-    if (!RegExp(r'^[A-Z0-9]{2,16}$').hasMatch(code) || name.isEmpty) {
+    if (!RegExp(r'^[A-Z0-9]{2,32}$').hasMatch(code) || name.isEmpty) {
       throw const FinanceError(
-        'Enter a program name and a code with 2–16 letters or numbers.',
+        'Enter a program name and a code with 2–32 letters or numbers.',
       );
     }
     db.transaction(() {

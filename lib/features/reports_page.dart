@@ -244,7 +244,8 @@ class _ReportsPageState extends State<ReportsPage> {
           width: 168,
           items: [
             ('', 'All Programs'),
-            for (final p in widget.store.programs) (p.code, p.code),
+            for (final p in widget.store.programs)
+              (p.code, programLabel(p.code, p.name)),
           ],
           onChanged: busy ? null : (v) => change(() => program = v),
         ),
@@ -306,7 +307,7 @@ class _ReportsPageState extends State<ReportsPage> {
                 totals: totals,
                 utilization: utilization,
               );
-              if (c.maxWidth < 860) {
+              if (c.maxWidth < 1100) {
                 return Column(
                   children: [chart, const SizedBox(height: 16), summary],
                 );
@@ -405,7 +406,8 @@ class _ReportsPageState extends State<ReportsPage> {
             width: double.infinity,
             items: [
               ('', 'All Programs'),
-              for (final p in widget.store.programs) (p.code, p.code),
+              for (final p in widget.store.programs)
+                (p.code, programLabel(p.code, p.name)),
             ],
             onChanged: busy ? null : (v) => change(() => program = v),
           ),
@@ -1096,12 +1098,26 @@ class _SummaryCard extends StatelessWidget {
               child: Row(
                 children: [
                   Expanded(
+                    flex: 2,
                     child: Text(
                       entry.$1,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: const TextStyle(fontWeight: FontWeight.w600),
                     ),
                   ),
-                  value,
+                  const SizedBox(width: 8),
+                  Expanded(
+                    flex: 3,
+                    child: Align(
+                      alignment: Alignment.centerRight,
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerRight,
+                        child: value,
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),

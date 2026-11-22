@@ -41,16 +41,34 @@ class ImportSheet {
   final List<ImportLine> lines;
 }
 
+/// Sheet tab name becomes the program (e.g. "ATOP Current" → ATOPCURRENT).
+/// Keeps CURRENT/CONTINUING so Current and Continuing sheets stay separate.
+String programCodeFromSheet(String name) {
+  final tokens = name
+      .trim()
+      .toUpperCase()
+      .split(RegExp(r'[^A-Z0-9]+'))
+      .where((t) => t.isNotEmpty && t != 'REG')
+      .map((t) => t == 'CONT' ? 'CONTINUING' : t)
+      .toList();
+  final cleaned = tokens.join();
+  if (cleaned.length < 2) return '';
+  return cleaned.length <= 32 ? cleaned : cleaned.substring(0, 32);
+}
+
 String _key(String value) =>
     value.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '');
 const _aliases = {
-  'code': ['uacscode', 'uacscodes'],
+  'code': ['uacscode', 'uacscodes', 'code', 'accountcode', 'objectcode'],
   'name': [
     'uacsname',
     'expenseuacsname',
     'expense',
     'expenseitem',
     'particulars',
+    'objectofexpenditures',
+    'objectofexpenditure',
+    'accounttitle',
   ],
   'allotment': ['allotment', 'allotments', 'totalallotment'],
   'obligation': [
@@ -132,15 +150,9 @@ List<ImportSheet> parseWorkbook(Uint8List bytes) {
   final result = <ImportSheet>[];
   for (final sheet in _elements(workbook, 'sheet')) {
     final name = sheet.getAttribute('name') ?? 'Worksheet';
-    final tokens = name.toUpperCase().split(RegExp(r'[^A-Z0-9]+'));
-    final fund = tokens.any((s) => s.startsWith('CONT'))
-        ? 'CONTINUING'
-        : 'CURRENT';
-    final program =
-        tokens
-            .where(['GAS', 'PPD', 'ECA', 'SECADNA', 'ATOP'].contains)
-            .firstOrNull ??
-        '';
+    // Fund is no longer a UI dimension; keep CURRENT for DB compatibility.
+    const fund = 'CURRENT';
+    final program = programCodeFromSheet(name);
     if (name.toUpperCase().contains('SUMMARY')) {
       result.add(
         ImportSheet(
@@ -242,14 +254,14 @@ List<ImportSheet> parseWorkbook(Uint8List bytes) {
       var code = codeKey(value('code'));
       final expense = value('name');
       if (code.isEmpty && expense.isEmpty) continue;
-      if (RegExp(
-            r'^(sub\s*)?total',
-            caseSensitive: false,
-          ).hasMatch('$code $expense') ||
-          RegExp(r'^(sub\s*)?total', caseSensitive: false).hasMatch(expense)) {
+      // Skip total rows only; keep every UACS line even when amounts are blank.
+      final totalLabel = RegExp(
+        r'^(sub\s*)?total\b',
+        caseSensitive: false,
+      );
+      if (totalLabel.hasMatch(expense.trim()) || totalLabel.hasMatch(code)) {
         continue;
       }
-      // Ignore empty section headings; keep malformed data lines visible for review.
       if (code.isEmpty &&
           [
             'allotment',
@@ -266,11 +278,13 @@ List<ImportSheet> parseWorkbook(Uint8List bytes) {
       }
       var error = '';
       int amount(String field) {
+        final raw = value(field).trim();
+        // Blank allotment/obligation/disbursement means 0 — still import the line.
+        if (raw.isEmpty) return 0;
         if (unresolved.contains('${entry.key}/${columns[field]}')) {
-          error = 'An amount has an Excel error or an uncached formula. Open, recalculate, and save the workbook in Excel.';
+          // Formula/error cells: keep the row, use 0 for that amount.
           return 0;
         }
-        final raw = value(field);
         // Excel numeric cells may contain more than two binary-decimal digits.
         final numeric = num.tryParse(raw.replaceAll(',', ''));
         if (numeric != null &&
@@ -279,12 +293,13 @@ List<ImportSheet> parseWorkbook(Uint8List bytes) {
             numeric <= 9000000000000) {
           return (numeric * 100).round();
         }
-        final parsed = parseCents(raw, required: field == 'allotment');
+        final parsed = parseCents(raw);
         if (parsed == null) {
           error =
               'Invalid $field amount. Enter a valid non-negative peso amount.';
+          return 0;
         }
-        return parsed ?? 0;
+        return parsed;
       }
 
       final a = amount('allotment'),
