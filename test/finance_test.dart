@@ -22,10 +22,11 @@ void main() {
     int o = 25005,
     int d = 10001,
     int? id,
+    int? year,
     String program = 'GAS',
   }) => BudgetRecord(
     id: id,
-    year: manilaNow().year,
+    year: year ?? manilaNow().year,
     program: program,
     code: code,
     name: 'Office supplies',
@@ -168,6 +169,52 @@ void main() {
       db.rows('SELECT * FROM budget_records WHERE year=?', [current]).length,
       1,
     );
+  });
+  test('past fiscal years are read-only for encode, import, and delete', () {
+    final past = manilaNow().year - 1;
+    expect(
+      () => store.saveRecord(record(year: past, code: '5020104000')),
+      throwsA(
+        isA<FinanceError>().having(
+          (e) => e.message,
+          'message',
+          contains('current fiscal year'),
+        ),
+      ),
+    );
+    expect(
+      () => store.importRecords([
+        record(year: past, code: '5020105000'),
+      ], updateExisting: true),
+      throwsA(
+        isA<FinanceError>().having(
+          (e) => e.message,
+          'message',
+          contains('current fiscal year'),
+        ),
+      ),
+    );
+    db.connection.execute(
+      "INSERT INTO budget_records(year,program,fund_source,code,name,allotment,obligation,disbursement,remarks) "
+      "VALUES (?,?, 'CURRENT','5020106000','Past year line',100,10,5,'')",
+      [past, 'GAS'],
+    );
+    final pastId =
+        db.rows('SELECT id FROM budget_records WHERE code=?', [
+              '5020106000',
+            ]).single['id']
+            as int;
+    expect(
+      () => store.deleteRecord(pastId),
+      throwsA(
+        isA<FinanceError>().having(
+          (e) => e.message,
+          'message',
+          contains('current fiscal year'),
+        ),
+      ),
+    );
+    expect(store.byId(pastId), isNotNull);
   });
   test('Manila audit dates do not shift backward around midnight', () {
     db.connection.execute(

@@ -111,6 +111,8 @@ class _BudgetPageState extends State<BudgetPage> {
       if (row.id == selectedId) selected = row;
     }
     final chosen = selected;
+    final currentYear = manilaNow().year;
+    final canEncode = year == currentYear;
     final filters = Wrap(
       spacing: 18,
       runSpacing: 12,
@@ -134,6 +136,11 @@ class _BudgetPageState extends State<BudgetPage> {
           ],
           onChanged: (v) => change(() => program = v),
         ),
+        if (!canEncode)
+          const Text(
+            'Past years are view-only. Encode/import is for the current year only.',
+            style: TextStyle(fontSize: 12, color: muted),
+          ),
       ],
     );
     final searchField = TextField(
@@ -153,21 +160,21 @@ class _BudgetPageState extends State<BudgetPage> {
           style: FilledButton.styleFrom(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           ),
-          onPressed: () => edit(),
+          onPressed: canEncode ? () => edit() : null,
           icon: const Icon(Icons.add, size: 18),
           label: const Text('Add Record'),
         ),
         const SizedBox(width: 8),
         OutlinedButton.icon(
           style: _outlineAction(blue, const Color(0xffe8f0fc)),
-          onPressed: chosen == null ? null : () => edit(chosen),
+          onPressed: canEncode && chosen != null ? () => edit(chosen) : null,
           icon: const Icon(Icons.edit_outlined, size: 18),
           label: const Text('Edit'),
         ),
         const SizedBox(width: 8),
         OutlinedButton.icon(
           style: _outlineAction(red, const Color(0xffffe8eb)),
-          onPressed: chosen == null ? null : () => remove(chosen),
+          onPressed: canEncode && chosen != null ? () => remove(chosen) : null,
           icon: const Icon(Icons.delete_outline, size: 18),
           label: const Text('Delete'),
         ),
@@ -323,7 +330,8 @@ class _RecordEditorState extends State<RecordEditor> {
   void initState() {
     super.initState();
     final r = widget.record;
-    year = r?.year ?? widget.year;
+    // Encoding/import is always for the current fiscal year only.
+    year = manilaNow().year;
     final active = widget.store.programs
         .where((p) => p.active)
         .map((p) => p.code)
@@ -523,11 +531,11 @@ class _RecordEditorState extends State<RecordEditor> {
                     value: year,
                     dense: true,
                     width: double.infinity,
-                    items: [for (final y in widget.store.years) (y, '$y')],
-                    onChanged: (v) => setState(() {
-                      year = v;
-                      _imports.year = v;
-                    }),
+                    // Encoding/import is locked to the current fiscal year.
+                    items: [
+                      (manilaNow().year, '${manilaNow().year}'),
+                    ],
+                    onChanged: null,
                   ),
                   SelectField(
                     label: 'Program *',

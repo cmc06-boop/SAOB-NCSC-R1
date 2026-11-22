@@ -72,6 +72,8 @@ class ImportController extends ChangeNotifier {
     if (busy) return;
     busy = true;
     filename = name;
+    // Excel import always targets the current fiscal year.
+    year = manilaNow().year;
     notifyListeners();
     try {
       if (bytes.length > 25 * 1024 * 1024) {

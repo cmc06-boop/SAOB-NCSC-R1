@@ -128,11 +128,21 @@ class FinanceStore extends ChangeNotifier {
     return rows.isEmpty ? null : BudgetRecord.fromMap(rows.first);
   }
 
+  void _requireCurrentYear(int year) {
+    final current = manilaNow().year;
+    if (year != current) {
+      throw FinanceError(
+        'Encoding and Excel import are only allowed for the current fiscal year ($current).',
+      );
+    }
+  }
+
   void _validate(
     BudgetRecord record, {
     BudgetRecord? previous,
     bool fromImport = false,
   }) {
+    _requireCurrentYear(record.year);
     if (fromImport) {
       // Excel import keeps amounts/codes as-is; only reject unusable rows.
       if (codeKey(record.code).isEmpty) {
@@ -238,6 +248,7 @@ class FinanceStore extends ChangeNotifier {
       if (record == null) {
         throw const FinanceError('This record no longer exists.');
       }
+      _requireCurrentYear(record.year);
       db.connection.execute('DELETE FROM budget_records WHERE id=?', [id]);
       _audit(
         'Deleted',

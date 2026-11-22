@@ -300,29 +300,24 @@ class _ReportsPageState extends State<ReportsPage> {
                   ),
           ),
           const SizedBox(height: 22),
-          LayoutBuilder(
-            builder: (context, c) {
-              final chart = _UtilizationChart(year: year, records: records);
-              final summary = _SummaryCard(
-                totals: totals,
-                utilization: utilization,
-              );
-              if (c.maxWidth < 1100) {
-                return Column(
-                  children: [chart, const SizedBox(height: 16), summary],
-                );
-              }
-              return IntrinsicHeight(
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Expanded(flex: 5, child: chart),
-                    const SizedBox(width: 16),
-                    Expanded(flex: 2, child: summary),
-                  ],
+          IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(
+                  flex: 2,
+                  child: _SummaryCard(
+                    totals: totals,
+                    utilization: utilization,
+                  ),
                 ),
-              );
-            },
+                const SizedBox(width: 16),
+                Expanded(
+                  flex: 5,
+                  child: _UtilizationChart(year: year, records: records),
+                ),
+              ],
+            ),
           ),
           const SizedBox(height: 16),
           _HistoryCard(history: history),
@@ -885,7 +880,7 @@ class _UtilizationChart extends StatelessWidget {
             )
           else
             SizedBox(
-              height: 260,
+              height: 274,
               width: double.infinity,
               child: CustomPaint(
                 painter: _UtilizationPainter(totals.entries.toList(), ticks),
@@ -905,7 +900,7 @@ class _UtilizationPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     const left = 112.0;
-    const bottom = 30.0;
+    const bottom = 44.0;
     const topPad = 8.0;
     final plot = Rect.fromLTRB(
       left,
@@ -971,24 +966,39 @@ class _UtilizationPainter extends CustomPainter {
         }
         x += barWidth + gap;
       }
-      final name = TextPainter(
-        text: TextSpan(
-          text: entry.key,
-          style: const TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w700,
-            color: ink,
-            fontFamily: 'Segoe UI',
-          ),
-        ),
+      final parts = _chartLabelParts(entry.key);
+      final maxLabel = math.max(0.0, slot - 8);
+      const titleStyle = TextStyle(
+        fontSize: 11,
+        fontWeight: FontWeight.w700,
+        color: ink,
+        fontFamily: 'Segoe UI',
+      );
+      const subStyle = TextStyle(
+        fontSize: 10,
+        fontWeight: FontWeight.w600,
+        color: muted,
+        fontFamily: 'Segoe UI',
+      );
+      final title = TextPainter(
+        text: TextSpan(text: parts.$1, style: titleStyle),
         textDirection: TextDirection.ltr,
         maxLines: 1,
         ellipsis: '…',
-      )..layout(maxWidth: math.max(0, slot - 8));
-      name.paint(
-        canvas,
-        Offset(plot.left + slot * g + (slot - name.width) / 2, plot.bottom + 8),
-      );
+      )..layout(maxWidth: maxLabel);
+      final centerX = plot.left + slot * g + slot / 2;
+      var labelY = plot.bottom + 6;
+      title.paint(canvas, Offset(centerX - title.width / 2, labelY));
+      labelY += title.height + 1;
+      if (parts.$2 != null) {
+        final sub = TextPainter(
+          text: TextSpan(text: parts.$2, style: subStyle),
+          textDirection: TextDirection.ltr,
+          maxLines: 1,
+          ellipsis: '…',
+        )..layout(maxWidth: maxLabel);
+        sub.paint(canvas, Offset(centerX - sub.width / 2, labelY));
+      }
     }
   }
 
@@ -1016,6 +1026,20 @@ class _LegendDot extends StatelessWidget {
       Text(label, style: const TextStyle(fontSize: 12, color: muted)),
     ],
   );
+}
+
+/// Chart axis: ATOPCURRENT → ("ATOP", "Current"), else (code, null).
+(String, String?) _chartLabelParts(String code) {
+  final upper = code.trim().toUpperCase();
+  if (upper.endsWith('CONTINUING')) {
+    final prefix = upper.substring(0, upper.length - 'CONTINUING'.length);
+    return (prefix.isEmpty ? upper : prefix, 'Continuing');
+  }
+  if (upper.endsWith('CURRENT')) {
+    final prefix = upper.substring(0, upper.length - 'CURRENT'.length);
+    return (prefix.isEmpty ? upper : prefix, 'Current');
+  }
+  return (code.trim().isEmpty ? code : code.trim(), null);
 }
 
 List<int> _axisTicks(int peakCents) {
