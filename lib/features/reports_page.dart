@@ -302,24 +302,55 @@ class _ReportsPageState extends State<ReportsPage> {
                   ),
           ),
           const SizedBox(height: 22),
-          IntrinsicHeight(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Expanded(
-                  flex: 2,
-                  child: _SummaryCard(
-                    totals: totals,
-                    utilization: utilization,
-                  ),
+          LayoutBuilder(
+            builder: (context, c) {
+              const panelHeight = 378.0;
+              final summary = _SummaryCard(
+                totals: totals,
+                utilization: utilization,
+                expand: true,
+              );
+              final chart = _UtilizationChart(
+                year: year,
+                records: records,
+                expand: true,
+              );
+              if (c.maxWidth < 900) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    SizedBox(
+                      height: panelHeight,
+                      child: _SummaryCard(
+                        totals: totals,
+                        utilization: utilization,
+                        expand: true,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      height: panelHeight,
+                      child: _UtilizationChart(
+                        year: year,
+                        records: records,
+                        expand: true,
+                      ),
+                    ),
+                  ],
+                );
+              }
+              return SizedBox(
+                height: panelHeight,
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    SizedBox(width: 360, child: summary),
+                    const SizedBox(width: 16),
+                    Expanded(child: chart),
+                  ],
                 ),
-                const SizedBox(width: 16),
-                Expanded(
-                  flex: 5,
-                  child: _UtilizationChart(year: year, records: records),
-                ),
-              ],
-            ),
+              );
+            },
           ),
           const SizedBox(height: 16),
           _HistoryCard(history: history),
@@ -851,9 +882,14 @@ const _obligated = Color(0xff3b82f6);
 const _balanceBar = Color(0xffbfdbfe);
 
 class _UtilizationChart extends StatelessWidget {
-  const _UtilizationChart({required this.year, required this.records});
+  const _UtilizationChart({
+    required this.year,
+    required this.records,
+    this.expand = false,
+  });
   final int year;
   final List<BudgetRecord> records;
+  final bool expand;
 
   @override
   Widget build(BuildContext context) {
@@ -862,13 +898,43 @@ class _UtilizationChart extends StatelessWidget {
       groups.putIfAbsent(r.program, () => []).add(r);
     }
     final totals = {for (final g in groups.entries) g.key: Totals(g.value)};
-    final peak = totals.values.fold<int>(0, (m, t) {
+    // Sorted labels so every program keeps a stable slot on the axis.
+    final entries = totals.entries.toList()
+      ..sort((a, b) => programLabel(a.key).compareTo(programLabel(b.key)));
+    // Absolute pesos when one program is filtered. For All Programs, ECA (~₱225M)
+    // would crush every other bar — use % of each program's allotment instead.
+    final usePercent = entries.length > 1;
+    final peak = entries.fold<int>(0, (m, e) {
+      final t = e.value;
+      if (usePercent) {
+        if (t.allotment <= 0) return m;
+        final d = (t.disbursement * 10000 / t.allotment).round();
+        final o = (t.obligation * 10000 / t.allotment).round();
+        final b = (t.balance * 10000 / t.allotment).round().clamp(0, 1 << 30);
+        return math.max(m, math.max(d, math.max(o, b)));
+      }
       return math.max(
         m,
-        math.max(t.disbursement, math.max(t.obligation, t.balance)),
+        math.max(
+          t.disbursement,
+          math.max(t.obligation, math.max(0, t.balance)),
+        ),
       );
     });
-    final ticks = _axisTicks(peak);
+    final ticks = usePercent
+        ? _percentTicks(peak <= 0 ? 10000 : peak)
+        : _axisTicks(peak);
+    final plot = entries.isEmpty
+        ? const Center(
+            child: Text(
+              'No budget records for these filters.',
+              style: TextStyle(color: muted),
+            ),
+          )
+        : CustomPaint(
+            painter: _UtilizationPainter(entries, ticks, usePercent),
+            child: const SizedBox.expand(),
+          );
     return Panel(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -879,7 +945,9 @@ class _UtilizationChart extends StatelessWidget {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  'Budget Utilization – $year',
+                  usePercent
+                      ? 'Budget Utilization – $year (% of allotment)'
+                      : 'Budget Utilization – $year',
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
@@ -894,24 +962,7 @@ class _UtilizationChart extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 18),
-          if (totals.isEmpty)
-            const SizedBox(
-              height: 220,
-              child: Center(
-                child: Text(
-                  'No budget records for these filters.',
-                  style: TextStyle(color: muted),
-                ),
-              ),
-            )
-          else
-            SizedBox(
-              height: 274,
-              width: double.infinity,
-              child: CustomPaint(
-                painter: _UtilizationPainter(totals.entries.toList(), ticks),
-              ),
-            ),
+          if (expand) Expanded(child: plot) else SizedBox(height: 274, child: plot),
         ],
       ),
     );
@@ -919,9 +970,26 @@ class _UtilizationChart extends StatelessWidget {
 }
 
 class _UtilizationPainter extends CustomPainter {
-  _UtilizationPainter(this.groups, this.ticks);
+  _UtilizationPainter(this.groups, this.ticks, this.usePercent);
   final List<MapEntry<String, Totals>> groups;
   final List<int> ticks;
+  final bool usePercent;
+
+  List<double> _barValues(Totals t) {
+    if (!usePercent) {
+      return [
+        t.disbursement.toDouble(),
+        t.obligation.toDouble(),
+        math.max(0, t.balance).toDouble(),
+      ];
+    }
+    if (t.allotment <= 0) return [0, 0, 0];
+    return [
+      t.disbursement * 10000 / t.allotment,
+      t.obligation * 10000 / t.allotment,
+      math.max(0, t.balance) * 10000 / t.allotment,
+    ];
+  }
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -942,7 +1010,7 @@ class _UtilizationPainter extends CustomPainter {
       color: muted,
       fontFamily: 'Segoe UI',
     );
-    final top = ticks.last;
+    final top = ticks.last.toDouble();
     final steps = math.max(1, ticks.length - 1);
     canvas.drawLine(
       Offset(plot.left, plot.top),
@@ -952,8 +1020,11 @@ class _UtilizationPainter extends CustomPainter {
     for (var i = 0; i < ticks.length; i++) {
       final y = plot.bottom - plot.height * i / steps;
       canvas.drawLine(Offset(plot.left, y), Offset(plot.right, y), grid);
+      final text = usePercent
+          ? '${(ticks[i] / 100).toStringAsFixed(ticks[i] % 100 == 0 ? 0 : 1)}%'
+          : _axisMoney(ticks[i]);
       final label = TextPainter(
-        text: TextSpan(text: _axisMoney(ticks[i]), style: axisStyle),
+        text: TextSpan(text: text, style: axisStyle),
         textDirection: TextDirection.ltr,
         maxLines: 1,
       )..layout(maxWidth: left - 12);
@@ -966,11 +1037,7 @@ class _UtilizationPainter extends CustomPainter {
     final slot = plot.width / groups.length;
     for (var g = 0; g < groups.length; g++) {
       final entry = groups[g];
-      final values = [
-        entry.value.disbursement,
-        entry.value.obligation,
-        entry.value.balance,
-      ];
+      final values = _barValues(entry.value);
       const colors = [_disbursed, _obligated, _balanceBar];
       const gap = 6.0;
       final barWidth = math.min(40.0, math.max(4.0, (slot - 16 - gap * 2) / 3));
@@ -1088,6 +1155,14 @@ List<int> _axisTicks(int peakCents) {
   return [for (var i = 0; i <= count; i++) (step * i).round()];
 }
 
+/// Units: 10000 = 100%. Always covers at least 100%.
+List<int> _percentTicks(int peakUnits) {
+  final top = math.max(10000, peakUnits);
+  const step = 2000; // 20%
+  final count = (top / step).ceil().clamp(2, 10);
+  return [for (var i = 0; i <= count; i++) step * i];
+}
+
 String _axisMoney(int cents) => NumberFormat.currency(
   locale: 'en_PH',
   symbol: '₱',
@@ -1095,9 +1170,14 @@ String _axisMoney(int cents) => NumberFormat.currency(
 ).format(cents / 100);
 
 class _SummaryCard extends StatelessWidget {
-  const _SummaryCard({required this.totals, required this.utilization});
+  const _SummaryCard({
+    required this.totals,
+    required this.utilization,
+    this.expand = false,
+  });
   final Totals totals;
   final String utilization;
+  final bool expand;
   @override
   Widget build(BuildContext context) {
     final entries = <(String, String, Color?, Color?)>[
@@ -1115,8 +1195,19 @@ class _SummaryCard extends StatelessWidget {
     Widget rowAt(int index) {
       final entry = entries[index];
       final badge = entry.$3;
+      final valueStyle = TextStyle(
+        color: entry.$4 ?? ink,
+        fontWeight: badge == null ? FontWeight.w600 : FontWeight.w700,
+        fontSize: 14,
+        height: 1.25,
+      );
       final value = badge == null
-          ? Text(entry.$2, style: const TextStyle(fontWeight: FontWeight.w600))
+          ? Text(
+              entry.$2,
+              textAlign: TextAlign.right,
+              softWrap: true,
+              style: valueStyle,
+            )
           : Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
@@ -1125,7 +1216,9 @@ class _SummaryCard extends StatelessWidget {
               ),
               child: Text(
                 entry.$2,
-                style: TextStyle(color: entry.$4, fontWeight: FontWeight.w700),
+                textAlign: TextAlign.right,
+                softWrap: true,
+                style: valueStyle,
               ),
             );
       return DecoratedBox(
@@ -1144,28 +1237,28 @@ class _SummaryCard extends StatelessWidget {
           child: Align(
             alignment: Alignment.centerLeft,
             child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 12),
+              padding: const EdgeInsets.symmetric(vertical: 10),
               child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Expanded(
-                    flex: 2,
+                    flex: 5,
                     child: Text(
                       entry.$1,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontWeight: FontWeight.w600),
+                      softWrap: true,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
+                        height: 1.25,
+                      ),
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 12),
                   Expanded(
-                    flex: 3,
+                    flex: 6,
                     child: Align(
                       alignment: Alignment.centerRight,
-                      child: FittedBox(
-                        fit: BoxFit.scaleDown,
-                        alignment: Alignment.centerRight,
-                        child: value,
-                      ),
+                      child: value,
                     ),
                   ),
                 ],
@@ -1176,9 +1269,25 @@ class _SummaryCard extends StatelessWidget {
       );
     }
 
+    final table = DecoratedBox(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: const Color(0xffdce6f5)),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(10),
+        child: Column(
+          mainAxisSize: expand ? MainAxisSize.max : MainAxisSize.min,
+          children: [
+            for (var i = 0; i < entries.length; i++)
+              expand ? Expanded(child: rowAt(i)) : rowAt(i),
+          ],
+        ),
+      ),
+    );
     return Panel(
       child: Column(
-        mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           const Row(
@@ -1192,20 +1301,7 @@ class _SummaryCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 14),
-          DecoratedBox(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: const Color(0xffdce6f5)),
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(10),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [for (var i = 0; i < entries.length; i++) rowAt(i)],
-              ),
-            ),
-          ),
+          if (expand) Expanded(child: table) else table,
         ],
       ),
     );
@@ -1232,16 +1328,18 @@ class _HistoryCard extends StatelessWidget {
 
   Widget _cell(String text, {TextStyle style = _body, bool number = false}) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 8, 8, 8),
+      padding: const EdgeInsets.fromLTRB(12, 10, 10, 10),
       child: Text(
         text,
+        softWrap: true,
         style: number
             ? const TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
                 color: blue,
+                height: 1.3,
               )
-            : style,
+            : style.copyWith(height: style.height ?? 1.3),
       ),
     );
   }

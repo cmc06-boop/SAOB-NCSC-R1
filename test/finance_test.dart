@@ -353,6 +353,57 @@ void main() {
     expect(sheets.single.lines.single.name, 'Traveling Expenses - Local');
     expect(sheets.single.lines.single.allotment, 10000000);
   });
+  test('Excel stops at TOTAL so stacked Continuing block cannot overwrite Current', () {
+    final book = Excel.createExcel();
+    const sheetName = 'ATOP-REG_CURRENT';
+    if (book.tables.containsKey('Sheet1')) {
+      book.rename('Sheet1', sheetName);
+    }
+    final sheet = book[sheetName];
+    const values = [
+      [
+        'UACS Name',
+        'UACS Code',
+        'Allotment',
+        'Obligation',
+        'Disbursement',
+        'Remarks',
+      ],
+      ['Training Expenses', '5020201002', '40000', '0', '0', ''],
+      ['Representation Expenses', '5029903000', '134000', '60000', '0', ''],
+      ['TOTAL CURRENT', '', '174000', '60000', '0', ''],
+      ['REGION I', 'ATOP', '49979.73', '', '', ''],
+      [
+        'UACS Name',
+        'UACS Code',
+        'Allotment',
+        'Obligation',
+        'Disbursement',
+        'Remarks',
+      ],
+      ['Training Expenses', '5020201002', '0', '0', '0', ''],
+      ['Representation Expenses', '5029903000', '49979.73', '15000', '0', ''],
+      ['TOTAL CONTINUING', '', '49979.73', '15000', '0', ''],
+    ];
+    for (var r = 0; r < values.length; r++) {
+      for (var c = 0; c < values[r].length; c++) {
+        sheet
+            .cell(CellIndex.indexByColumnRow(columnIndex: c, rowIndex: r))
+            .value = TextCellValue(values[r][c]);
+      }
+    }
+    final encoded = book.encode();
+    expect(encoded, isNotNull);
+    final sheets = parseWorkbook(Uint8List.fromList(encoded!));
+    expect(sheets.single.program, 'ATOPCURRENT');
+    expect(sheets.single.lines.map((l) => l.code).toList(), [
+      '5020201002',
+      '5029903000',
+    ]);
+    expect(sheets.single.lines[0].allotment, 4000000);
+    expect(sheets.single.lines[1].allotment, 13400000);
+    expect(sheets.single.lines[1].obligation, 6000000);
+  });
   test('Excel import keeps only 8–14 digit UACS lines; skips notes and junk', () {
     final book = Excel.createExcel();
     const sheetName = 'ECA Current';

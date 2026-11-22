@@ -252,21 +252,27 @@ List<ImportSheet> parseWorkbook(Uint8List bytes) {
     final headerKeys = {
       for (final aliases in _aliases.values) ...aliases.map(_key),
     };
-    for (final entry in cells.entries.where((e) => e.key > header)) {
+    // SAOB sheets (e.g. ATOP-REG_CURRENT) may stack a Current table then a
+    // Continuing table. Import only the first table: stop at TOTAL / a second
+    // header so later duplicates cannot overwrite the correct amounts.
+    final totalLabel = RegExp(
+      r'^(sub\s*)?total\b|^grand\s*total\b',
+      caseSensitive: false,
+    );
+    final dataRows = cells.entries.where((e) => e.key > header).toList()
+      ..sort((a, b) => a.key.compareTo(b.key));
+    for (final entry in dataRows) {
       String value(String field) => entry.value[columns[field]] ?? '';
       var code = codeKey(value('code'));
       final expense = value('name').trim();
       if (code.isEmpty && expense.isEmpty) continue;
-      // Skip total / grand-total label rows.
-      final totalLabel = RegExp(
-        r'^(sub\s*)?total\b|^grand\s*total\b',
-        caseSensitive: false,
-      );
+      // End of the primary SAOB table on this worksheet.
       if (totalLabel.hasMatch(expense) || totalLabel.hasMatch(code)) {
-        continue;
+        break;
       }
       // Skip repeated header rows (e.g. "UACS Code" / "UACS Name").
-      if (headerKeys.contains(_key(code)) || headerKeys.contains(_key(expense))) {
+      if (headerKeys.contains(_key(code)) ||
+          headerKeys.contains(_key(expense))) {
         continue;
       }
       // Excel may store codes as 5020101000.0

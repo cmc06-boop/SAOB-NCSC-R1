@@ -103,9 +103,9 @@ class ImportController extends ChangeNotifier {
             disbursement: line.disbursement < 0 ? 0 : line.disbursement,
             remarks: line.remarks,
           );
-          if (!seen.add(key)) {
-            payload.removeWhere((r) => codeKey(r.code) == key);
-          }
+          // Keep the first UACS row (first SAOB table). Later duplicates on the
+          // same sheet are usually a stacked Continuing block — do not overwrite.
+          if (!seen.add(key)) continue;
           payload.add(record);
         }
         if (payload.isEmpty) continue;
