@@ -101,6 +101,7 @@ class SelectField<T> extends StatelessWidget {
     this.width = 180,
     this.dense = false,
     this.boxKey,
+    this.labelStyle,
   });
   final String label;
   final T value;
@@ -109,6 +110,7 @@ class SelectField<T> extends StatelessWidget {
   final double width;
   final bool dense;
   final Key? boxKey;
+  final TextStyle? labelStyle;
   @override
   Widget build(BuildContext context) => SizedBox(
     width: width,
@@ -116,7 +118,7 @@ class SelectField<T> extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        FieldLabel(label),
+        FieldLabel(label, style: labelStyle),
         SizedBox(height: dense ? 4 : 7),
         InputDecorator(
           key: boxKey,
@@ -166,19 +168,20 @@ class SelectField<T> extends StatelessWidget {
 }
 
 class FieldLabel extends StatelessWidget {
-  const FieldLabel(this.label, {super.key});
+  const FieldLabel(this.label, {super.key, this.style});
   final String label;
+  final TextStyle? style;
   @override
   Widget build(BuildContext context) {
-    const style = TextStyle(
+    final textStyle = style ?? const TextStyle(
       fontSize: 12,
       fontWeight: FontWeight.w600,
       color: muted,
     );
-    if (!label.endsWith(' *')) return Text(label, style: style);
+    if (!label.endsWith(' *')) return Text(label, style: textStyle);
     return Text.rich(
       TextSpan(
-        style: style,
+        style: textStyle,
         children: [
           TextSpan(text: label.substring(0, label.length - 1)),
           const TextSpan(
