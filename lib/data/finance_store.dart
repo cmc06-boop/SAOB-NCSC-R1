@@ -116,12 +116,16 @@ class FinanceStore extends ChangeNotifier {
         .toList();
   }
 
-  List<DbRow> references([String query = '']) => query.trim().isEmpty
-      ? db.rows('SELECT * FROM uacs_refs ORDER BY code')
-      : db.rows(
-          'SELECT * FROM uacs_refs WHERE code LIKE ? OR name LIKE ? ORDER BY code',
-          ['%${codeKey(query)}%', '%${query.trim()}%'],
-        );
+  List<DbRow> references([String query = '']) {
+    const real =
+        "length(code) BETWEEN 8 AND 14 AND code NOT GLOB '*[^0-9]*'";
+    return query.trim().isEmpty
+        ? db.rows('SELECT * FROM uacs_refs WHERE $real ORDER BY code')
+        : db.rows(
+            'SELECT * FROM uacs_refs WHERE $real AND (code LIKE ? OR name LIKE ?) ORDER BY code',
+            ['%${codeKey(query)}%', '%${query.trim()}%'],
+          );
+  }
 
   BudgetRecord? byId(int id) {
     final rows = db.rows('SELECT * FROM budget_records WHERE id=?', [id]);
@@ -189,10 +193,13 @@ class FinanceStore extends ChangeNotifier {
         [...record.values, id],
       );
     }
-    db.connection.execute(
-      'INSERT OR REPLACE INTO uacs_refs(code,name) VALUES (?,?)',
-      [codeKey(record.code), record.name.trim()],
-    );
+    final uacs = codeKey(record.code);
+    if (RegExp(r'^\d{8,14}$').hasMatch(uacs)) {
+      db.connection.execute(
+        'INSERT OR REPLACE INTO uacs_refs(code,name) VALUES (?,?)',
+        [uacs, record.name.trim()],
+      );
+    }
   }
 
   void saveRecord(BudgetRecord record) {
@@ -283,27 +290,24 @@ class FinanceStore extends ChangeNotifier {
     }
     var count = 0;
     db.transaction(() {
-      final program = payload.first.program.trim().toUpperCase();
-      final label = (programName ?? programLabel(program)).trim();
+      final program = normalizeProgramCode(payload.first.program);
+      final label = (programName ?? program).trim();
       final existing = db.rows('SELECT code FROM programs WHERE code=?', [
         program,
       ]);
       if (existing.isEmpty) {
-        if (!RegExp(r'^[A-Z0-9]{2,32}$').hasMatch(program)) {
+        if (!validProgramCode(program)) {
           throw const FinanceError(
             'This worksheet name cannot be used as a program code.',
           );
         }
         db.connection.execute(
           'INSERT INTO programs(code,name,active) VALUES (?,?,1)',
-          [program, label.isEmpty ? programLabel(program) : label],
+          [program, label.isEmpty ? program : label],
         );
         // No per-program audit here — workbook import logs the Excel filename once.
-      } else if (label.isNotEmpty) {
-        db.connection.execute('UPDATE programs SET name=? WHERE code=?', [
-          label,
-          program,
-        ]);
+        // An existing program keeps its name, so editing the name does not
+        // change the code and a later import does not put them back together.
       }
       final seen = <String>{};
       for (final record in payload) {
@@ -353,11 +357,11 @@ class FinanceStore extends ChangeNotifier {
 
   void saveProgram(String code, String name, bool active, {String? original}) {
     require('settings');
-    code = code.trim().toUpperCase();
+    code = normalizeProgramCode(code);
     name = name.trim();
-    if (!RegExp(r'^[A-Z0-9]{2,32}$').hasMatch(code) || name.isEmpty) {
+    if (!validProgramCode(code) || name.isEmpty) {
       throw const FinanceError(
-        'Enter a program name and a code with 2–32 letters or numbers.',
+        'Enter a program name and a code using letters, numbers, and spaces.',
       );
     }
     db.transaction(() {

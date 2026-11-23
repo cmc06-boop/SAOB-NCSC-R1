@@ -179,7 +179,7 @@ class _SettingsPageState extends State<SettingsPage> {
                                 'Actions',
                               ],
                               widths: const {
-                                0: FixedColumnWidth(140),
+                                0: FixedColumnWidth(200),
                                 1: FlexColumnWidth(),
                                 2: FixedColumnWidth(96),
                               },
@@ -192,7 +192,7 @@ class _SettingsPageState extends State<SettingsPage> {
                                         fontWeight: FontWeight.w700,
                                       ),
                                     ),
-                                    Text(programLabel(p.code, p.name)),
+                                    Text(p.name),
                                     Row(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
@@ -394,14 +394,14 @@ class ReferenceEditor extends StatefulWidget {
 
 class _ReferenceEditorState extends State<ReferenceEditor> {
   late final TextEditingController code, name;
-  late bool active;
   String? error;
   @override
   void initState() {
     super.initState();
+    final program = widget.program;
     code = TextEditingController(
       text: widget.isProgram
-          ? widget.program?.code
+          ? program?.code
           : widget.reference?['code'] as String?,
     );
     name = TextEditingController(
@@ -409,7 +409,6 @@ class _ReferenceEditorState extends State<ReferenceEditor> {
           ? widget.program?.name
           : widget.reference?['name'] as String?,
     );
-    active = widget.program?.active ?? true;
   }
 
   @override
@@ -425,7 +424,7 @@ class _ReferenceEditorState extends State<ReferenceEditor> {
         widget.store.saveProgram(
           code.text,
           name.text,
-          active,
+          widget.program?.active ?? true,
           original: widget.program?.code,
         );
       } else {
@@ -466,13 +465,6 @@ class _ReferenceEditorState extends State<ReferenceEditor> {
                     : 'Expense (UACS Name)',
               ),
             ),
-            if (widget.isProgram)
-              CheckboxListTile(
-                contentPadding: EdgeInsets.zero,
-                title: const Text('Active'),
-                value: active,
-                onChanged: (v) => setState(() => active = v ?? true),
-              ),
             if (error != null)
               Padding(
                 padding: const EdgeInsets.only(top: 12),

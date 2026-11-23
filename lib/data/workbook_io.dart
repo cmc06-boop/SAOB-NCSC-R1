@@ -41,19 +41,12 @@ class ImportSheet {
   final List<ImportLine> lines;
 }
 
-/// Sheet tab name becomes the program (e.g. "ATOP Current" → ATOPCURRENT).
-/// Keeps CURRENT/CONTINUING so Current and Continuing sheets stay separate.
+/// Sheet tab becomes the stored program code, e.g. ATOP-REG_CURRENT → ATOP_Current.
+/// Current and Continuing stay separate. Words are joined with an underscore.
 String programCodeFromSheet(String name) {
-  final tokens = name
-      .trim()
-      .toUpperCase()
-      .split(RegExp(r'[^A-Z0-9]+'))
-      .where((t) => t.isNotEmpty && t != 'REG')
-      .map((t) => t == 'CONT' ? 'CONTINUING' : t)
-      .toList();
-  final cleaned = tokens.join();
-  if (cleaned.length < 2) return '';
-  return cleaned.length <= 32 ? cleaned : cleaned.substring(0, 32);
+  final label = programNameFromSheet(name).trim().replaceAll(RegExp(r'\s+'), '_');
+  if (label.length < 2) return '';
+  return label.length <= 40 ? label : label.substring(0, 40);
 }
 
 String _key(String value) =>

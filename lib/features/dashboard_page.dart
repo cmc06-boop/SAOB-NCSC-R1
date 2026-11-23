@@ -78,7 +78,7 @@ class _DashboardPageState extends State<DashboardPage> {
           items: [
             ('', 'All Programs'),
             for (final p in widget.store.programs)
-              (p.code, programLabel(p.code, p.name)),
+              (p.code, p.code),
           ],
           onChanged: (v) => setState(() {
             program = v;

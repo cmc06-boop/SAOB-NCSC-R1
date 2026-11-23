@@ -20,21 +20,44 @@ String displayCode(String value) => value.length == 10
     ? '${value.substring(0, 8)} ${value.substring(8)}'
     : value;
 
-/// Dropdown label: ATOPCURRENT → "ATOP Current", ATOPCONTINUING → "ATOP Continuing".
+/// Readable program code. Compact or spaced keys become ATOP_Continuing.
+/// A custom program name is never used in place of the code.
 String programLabel(String code, [String? name]) {
-  final upper = code.trim().toUpperCase();
-  if (upper.endsWith('CONTINUING')) {
-    final prefix = upper.substring(0, upper.length - 'CONTINUING'.length);
-    return prefix.isEmpty ? 'Continuing' : '$prefix Continuing';
-  }
-  if (upper.endsWith('CURRENT')) {
-    final prefix = upper.substring(0, upper.length - 'CURRENT'.length);
-    return prefix.isEmpty ? 'Current' : '$prefix Current';
-  }
+  final trimmed = code.trim();
+  final underscored = readableProgramCode(trimmed);
+  if (underscored != null) return underscored;
   final fallback = (name ?? '').trim();
+  final upper = trimmed.toUpperCase();
   if (fallback.isNotEmpty && fallback.toUpperCase() != upper) return fallback;
-  return code.trim().isEmpty ? fallback : code.trim();
+  return trimmed.isEmpty ? fallback : trimmed;
 }
+
+/// ATOPCONTINUING, "ATOP Continuing", or ATOP_Continuing → "ATOP_Continuing".
+/// Null when the code is not a Current/Continuing key.
+String? readableProgramCode(String code) {
+  final compact = code.trim().toUpperCase().replaceAll(RegExp(r'[\s_]+'), '');
+  if (compact.length <= 'CURRENT'.length) return null;
+  String? suffix;
+  if (compact.endsWith('CONTINUING')) {
+    suffix = 'Continuing';
+  } else if (compact.endsWith('CURRENT')) {
+    suffix = 'Current';
+  }
+  if (suffix == null) return null;
+  final prefix = compact.substring(0, compact.length - suffix.length);
+  if (prefix.isEmpty) return null;
+  return '${prefix}_$suffix';
+}
+
+bool validProgramCode(String code) =>
+    code.length >= 2 &&
+    code.length <= 40 &&
+    RegExp(r'^[A-Za-z0-9]+(?:_[A-Za-z0-9]+)*$').hasMatch(code);
+
+String normalizeProgramCode(String value) => value
+    .trim()
+    .replaceAll(RegExp(r'[\s_]+'), '_')
+    .replaceAll(RegExp(r'^_|_$'), '');
 
 /// Stored program name from a sheet tab, e.g. ATOP-REG_CONT → "ATOP Continuing".
 String programNameFromSheet(String sheetName) {
@@ -54,13 +77,30 @@ String programNameFromSheet(String sheetName) {
       })
       .join(' ');
 }
-String dateLabel(Object? value) {
+DateTime? _manilaStamp(Object? value) {
   var text = (value ?? '').toString();
-  if (text.isEmpty) return '';
+  if (text.isEmpty) return null;
   text = text.replaceFirst(' ', 'T');
   if (!RegExp(r'(Z|[+-]\d\d:\d\d)$').hasMatch(text)) text += '+08:00';
-  final d = DateTime.tryParse(text)?.toUtc().add(const Duration(hours: 8));
-  return d == null ? text : DateFormat('MMM d, yyyy  h:mm a').format(d);
+  return DateTime.tryParse(text)?.toUtc().add(const Duration(hours: 8));
+}
+
+String dateLabel(Object? value) {
+  final d = _manilaStamp(value);
+  if (d == null) return (value ?? '').toString();
+  return DateFormat('MMM d, yyyy  h:mm a').format(d);
+}
+
+String dateOnly(Object? value) {
+  final d = _manilaStamp(value);
+  if (d == null) return (value ?? '').toString();
+  return DateFormat('MMMM d, yyyy').format(d);
+}
+
+String timeOnly(Object? value) {
+  final d = _manilaStamp(value);
+  if (d == null) return '';
+  return DateFormat('h:mm a').format(d);
 }
 
 /// Parse decimal text without binary floating point or silent rounding.

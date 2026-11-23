@@ -210,9 +210,6 @@ class _ReportsPageState extends State<ReportsPage> {
     final records = widget.store.records(year, program: program);
     final totals = Totals(records);
     final history = widget.store.reportHistory;
-    final utilization = totals.allotment == 0
-        ? '—'
-        : '${(totals.obligation * 100 / totals.allotment).toStringAsFixed(1)}%';
     if (preview) return _previewPage(records);
     const title = Text(
       'Reports',
@@ -247,7 +244,7 @@ class _ReportsPageState extends State<ReportsPage> {
           items: [
             ('', 'All Programs'),
             for (final p in widget.store.programs)
-              (p.code, programLabel(p.code, p.name)),
+              (p.code, p.code),
           ],
           onChanged: busy ? null : (v) => change(() => program = v),
         ),
@@ -307,7 +304,6 @@ class _ReportsPageState extends State<ReportsPage> {
               const panelHeight = 378.0;
               final summary = _SummaryCard(
                 totals: totals,
-                utilization: utilization,
                 expand: true,
               );
               final chart = _UtilizationChart(
@@ -319,23 +315,9 @@ class _ReportsPageState extends State<ReportsPage> {
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    SizedBox(
-                      height: panelHeight,
-                      child: _SummaryCard(
-                        totals: totals,
-                        utilization: utilization,
-                        expand: true,
-                      ),
-                    ),
+                    SizedBox(height: panelHeight, child: summary),
                     const SizedBox(height: 16),
-                    SizedBox(
-                      height: panelHeight,
-                      child: _UtilizationChart(
-                        year: year,
-                        records: records,
-                        expand: true,
-                      ),
-                    ),
+                    SizedBox(height: panelHeight, child: chart),
                   ],
                 );
               }
@@ -435,7 +417,7 @@ class _ReportsPageState extends State<ReportsPage> {
             items: [
               ('', 'All Programs'),
               for (final p in widget.store.programs)
-                (p.code, programLabel(p.code, p.name)),
+                (p.code, p.code),
             ],
             onChanged: busy ? null : (v) => change(() => program = v),
           ),
@@ -898,32 +880,9 @@ class _UtilizationChart extends StatelessWidget {
       groups.putIfAbsent(r.program, () => []).add(r);
     }
     final totals = {for (final g in groups.entries) g.key: Totals(g.value)};
-    // Sorted labels so every program keeps a stable slot on the axis.
     final entries = totals.entries.toList()
       ..sort((a, b) => programLabel(a.key).compareTo(programLabel(b.key)));
-    // Absolute pesos when one program is filtered. For All Programs, ECA (~₱225M)
-    // would crush every other bar — use % of each program's allotment instead.
-    final usePercent = entries.length > 1;
-    final peak = entries.fold<int>(0, (m, e) {
-      final t = e.value;
-      if (usePercent) {
-        if (t.allotment <= 0) return m;
-        final d = (t.disbursement * 10000 / t.allotment).round();
-        final o = (t.obligation * 10000 / t.allotment).round();
-        final b = (t.balance * 10000 / t.allotment).round().clamp(0, 1 << 30);
-        return math.max(m, math.max(d, math.max(o, b)));
-      }
-      return math.max(
-        m,
-        math.max(
-          t.disbursement,
-          math.max(t.obligation, math.max(0, t.balance)),
-        ),
-      );
-    });
-    final ticks = usePercent
-        ? _percentTicks(peak <= 0 ? 10000 : peak)
-        : _axisTicks(peak);
+    final byRecord = entries.length > 1;
     final plot = entries.isEmpty
         ? const Center(
             child: Text(
@@ -932,7 +891,7 @@ class _UtilizationChart extends StatelessWidget {
             ),
           )
         : CustomPaint(
-            painter: _UtilizationPainter(entries, ticks, usePercent),
+            painter: _UtilizationPainter(entries, byRecord: byRecord),
             child: const SizedBox.expand(),
           );
     return Panel(
@@ -945,15 +904,18 @@ class _UtilizationChart extends StatelessWidget {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  usePercent
+                  byRecord
                       ? 'Budget Utilization – $year (% of allotment)'
                       : 'Budget Utilization – $year',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
               ),
+              const SizedBox(width: 12),
               const _LegendDot('Disbursed', _disbursed),
               const SizedBox(width: 12),
               const _LegendDot('Obligated', _obligated),
@@ -962,7 +924,10 @@ class _UtilizationChart extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 18),
-          if (expand) Expanded(child: plot) else SizedBox(height: 274, child: plot),
+          if (expand)
+            Expanded(child: plot)
+          else
+            SizedBox(height: 274, child: plot),
         ],
       ),
     );
@@ -970,123 +935,160 @@ class _UtilizationChart extends StatelessWidget {
 }
 
 class _UtilizationPainter extends CustomPainter {
-  _UtilizationPainter(this.groups, this.ticks, this.usePercent);
+  _UtilizationPainter(this.groups, {required this.byRecord});
   final List<MapEntry<String, Totals>> groups;
-  final List<int> ticks;
-  final bool usePercent;
 
-  List<double> _barValues(Totals t) {
-    if (!usePercent) {
-      return [
-        t.disbursement.toDouble(),
-        t.obligation.toDouble(),
-        math.max(0, t.balance).toDouble(),
-      ];
-    }
-    if (t.allotment <= 0) return [0, 0, 0];
+  /// All Programs: each bar is that program's own record
+  /// (amount ÷ allotment). One program: absolute pesos.
+  final bool byRecord;
+
+  int _pesoPeak() => groups.fold<int>(0, (m, e) {
+    final t = e.value;
+    return math.max(
+      m,
+      math.max(t.disbursement, math.max(t.obligation, math.max(0, t.balance))),
+    );
+  });
+
+  /// Percents of that program's allotment: disbursed, obligated, balance.
+  List<double> _recordPercents(Totals t) {
+    if (t.allotment <= 0) return const [0, 0, 0];
+    double pct(int part) => part <= 0 ? 0 : part * 100 / t.allotment;
     return [
-      t.disbursement * 10000 / t.allotment,
-      t.obligation * 10000 / t.allotment,
-      math.max(0, t.balance) * 10000 / t.allotment,
+      pct(t.disbursement),
+      pct(t.obligation),
+      pct(math.max(0, t.balance)),
     ];
+  }
+
+  double _percentPeak() {
+    var peak = 100.0;
+    for (final e in groups) {
+      for (final v in _recordPercents(e.value)) {
+        if (v > peak) peak = v;
+      }
+    }
+    return peak;
   }
 
   @override
   void paint(Canvas canvas, Size size) {
-    const left = 112.0;
-    const bottom = 44.0;
+    final percentTop = _percentPeak();
+    final percentTicks = _percentAxis(percentTop);
+    final pesoTicks = _axisTicks(_pesoPeak() <= 0 ? 1 : _pesoPeak());
+    final top = byRecord
+        ? percentTicks.last.toDouble()
+        : math.max(1, pesoTicks.last).toDouble();
+
+    const left = 72.0;
+    const pesoLeft = 128.0;
+    const bottom = 48.0;
     const topPad = 8.0;
+    final axisLeft = byRecord ? left : pesoLeft;
     final plot = Rect.fromLTRB(
-      left,
+      axisLeft,
       topPad,
-      size.width - 4,
+      size.width - 6,
       size.height - bottom,
     );
+    if (plot.width <= 0 || plot.height <= 0 || groups.isEmpty) return;
+
     final grid = Paint()
-      ..color = line
+      ..color = const Color(0xffe6edf6)
       ..strokeWidth = 1;
     const axisStyle = TextStyle(
       fontSize: 11,
-      color: muted,
+      color: Color(0xff8b97ab),
       fontFamily: 'Segoe UI',
     );
-    final top = ticks.last.toDouble();
-    final steps = math.max(1, ticks.length - 1);
-    canvas.drawLine(
-      Offset(plot.left, plot.top),
-      Offset(plot.left, plot.bottom),
-      grid,
-    );
-    for (var i = 0; i < ticks.length; i++) {
-      final y = plot.bottom - plot.height * i / steps;
+
+    final tickCount = byRecord ? percentTicks.length : pesoTicks.length;
+    for (var i = 0; i < tickCount; i++) {
+      final tick = byRecord ? percentTicks[i].toDouble() : pesoTicks[i].toDouble();
+      final y = plot.bottom - plot.height * (tick / top).clamp(0.0, 1.0);
       canvas.drawLine(Offset(plot.left, y), Offset(plot.right, y), grid);
-      final text = usePercent
-          ? '${(ticks[i] / 100).toStringAsFixed(ticks[i] % 100 == 0 ? 0 : 1)}%'
-          : _axisMoney(ticks[i]);
       final label = TextPainter(
-        text: TextSpan(text: text, style: axisStyle),
+        text: TextSpan(
+          text: byRecord ? '${tick.round()}%' : _axisMoney(pesoTicks[i]),
+          style: axisStyle,
+        ),
         textDirection: TextDirection.ltr,
         maxLines: 1,
-      )..layout(maxWidth: left - 12);
+      )..layout();
       label.paint(
         canvas,
-        Offset(plot.left - 8 - label.width, y - label.height / 2),
+        Offset(plot.left - 10 - label.width, y - label.height / 2),
       );
     }
-    if (groups.isEmpty || plot.width <= 0 || top <= 0) return;
+
     final slot = plot.width / groups.length;
+    const colors = [_disbursed, _obligated, _balanceBar];
     for (var g = 0; g < groups.length; g++) {
       final entry = groups[g];
-      final values = _barValues(entry.value);
-      const colors = [_disbursed, _obligated, _balanceBar];
-      const gap = 6.0;
-      final barWidth = math.min(40.0, math.max(4.0, (slot - 16 - gap * 2) / 3));
+      final t = entry.value;
+      final values = byRecord
+          ? _recordPercents(t)
+          : [
+              t.disbursement.toDouble(),
+              t.obligation.toDouble(),
+              math.max(0, t.balance).toDouble(),
+            ];
+      const gap = 4.0;
+      final barWidth = math.min(22.0, math.max(10.0, (slot - 28 - gap * 2) / 3));
       final groupWidth = barWidth * 3 + gap * 2;
       var x = plot.left + slot * g + (slot - groupWidth) / 2;
       for (var b = 0; b < 3; b++) {
-        final ratio = (values[b] / top).clamp(0.0, 1.0);
-        final height = plot.height * ratio;
-        if (height > 0.5) {
-          final rect = Rect.fromLTWH(x, plot.bottom - height, barWidth, height);
-          canvas.drawRRect(
-            RRect.fromRectAndCorners(
-              rect,
-              topLeft: const Radius.circular(3),
-              topRight: const Radius.circular(3),
-            ),
-            Paint()..color = colors[b],
-          );
+        final value = values[b];
+        if (value > 0) {
+          final height = plot.height * (value / top).clamp(0.0, 1.0);
+          if (height >= 1) {
+            canvas.drawRRect(
+              RRect.fromRectAndCorners(
+                Rect.fromLTWH(x, plot.bottom - height, barWidth, height),
+                topLeft: const Radius.circular(3),
+                topRight: const Radius.circular(3),
+              ),
+              Paint()..color = colors[b],
+            );
+          }
         }
         x += barWidth + gap;
       }
+
       final parts = _chartLabelParts(entry.key);
-      final maxLabel = math.max(0.0, slot - 8);
-      const titleStyle = TextStyle(
-        fontSize: 11,
-        fontWeight: FontWeight.w700,
-        color: ink,
-        fontFamily: 'Segoe UI',
-      );
-      const subStyle = TextStyle(
-        fontSize: 10,
-        fontWeight: FontWeight.w600,
-        color: muted,
-        fontFamily: 'Segoe UI',
-      );
+      final maxLabel = math.max(0.0, slot - 4);
       final title = TextPainter(
-        text: TextSpan(text: parts.$1, style: titleStyle),
+        text: TextSpan(
+          text: parts.$1,
+          style: const TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
+            color: ink,
+            fontFamily: 'Segoe UI',
+          ),
+        ),
         textDirection: TextDirection.ltr,
+        textAlign: TextAlign.center,
         maxLines: 1,
         ellipsis: '…',
       )..layout(maxWidth: maxLabel);
       final centerX = plot.left + slot * g + slot / 2;
-      var labelY = plot.bottom + 6;
+      var labelY = plot.bottom + 8;
       title.paint(canvas, Offset(centerX - title.width / 2, labelY));
-      labelY += title.height + 1;
       if (parts.$2 != null) {
+        labelY += title.height + 1;
         final sub = TextPainter(
-          text: TextSpan(text: parts.$2, style: subStyle),
+          text: TextSpan(
+            text: parts.$2,
+            style: const TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w500,
+              color: Color(0xff8b97ab),
+              fontFamily: 'Segoe UI',
+            ),
+          ),
           textDirection: TextDirection.ltr,
+          textAlign: TextAlign.center,
           maxLines: 1,
           ellipsis: '…',
         )..layout(maxWidth: maxLabel);
@@ -1096,7 +1098,15 @@ class _UtilizationPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant _UtilizationPainter oldDelegate) => true;
+  bool shouldRepaint(covariant _UtilizationPainter oldDelegate) =>
+      oldDelegate.byRecord != byRecord || oldDelegate.groups != groups;
+}
+
+List<int> _percentAxis(double peak) {
+  final top = math.max(100.0, peak);
+  const step = 20;
+  final count = (top / step).ceil().clamp(5, 10);
+  return [for (var i = 0; i <= count; i++) step * i];
 }
 
 class _LegendDot extends StatelessWidget {
@@ -1121,18 +1131,23 @@ class _LegendDot extends StatelessWidget {
   );
 }
 
-/// Chart axis: ATOPCURRENT → ("ATOP", "Current"), else (code, null).
+/// Chart axis: ATOP_Continuing → ("ATOP", "Continuing").
 (String, String?) _chartLabelParts(String code) {
-  final upper = code.trim().toUpperCase();
+  final trimmed = code.trim();
+  final upper = trimmed.toUpperCase();
   if (upper.endsWith('CONTINUING')) {
-    final prefix = upper.substring(0, upper.length - 'CONTINUING'.length);
-    return (prefix.isEmpty ? upper : prefix, 'Continuing');
+    final prefix = upper
+        .substring(0, upper.length - 'CONTINUING'.length)
+        .replaceAll(RegExp(r'[_\s]+'), '');
+    return (prefix.isEmpty ? trimmed : prefix, 'Continuing');
   }
   if (upper.endsWith('CURRENT')) {
-    final prefix = upper.substring(0, upper.length - 'CURRENT'.length);
-    return (prefix.isEmpty ? upper : prefix, 'Current');
+    final prefix = upper
+        .substring(0, upper.length - 'CURRENT'.length)
+        .replaceAll(RegExp(r'[_\s]+'), '');
+    return (prefix.isEmpty ? trimmed : prefix, 'Current');
   }
-  return (code.trim().isEmpty ? code : code.trim(), null);
+  return (trimmed.isEmpty ? code : trimmed, null);
 }
 
 List<int> _axisTicks(int peakCents) {
@@ -1155,14 +1170,6 @@ List<int> _axisTicks(int peakCents) {
   return [for (var i = 0; i <= count; i++) (step * i).round()];
 }
 
-/// Units: 10000 = 100%. Always covers at least 100%.
-List<int> _percentTicks(int peakUnits) {
-  final top = math.max(10000, peakUnits);
-  const step = 2000; // 20%
-  final count = (top / step).ceil().clamp(2, 10);
-  return [for (var i = 0; i <= count; i++) step * i];
-}
-
 String _axisMoney(int cents) => NumberFormat.currency(
   locale: 'en_PH',
   symbol: '₱',
@@ -1172,25 +1179,35 @@ String _axisMoney(int cents) => NumberFormat.currency(
 class _SummaryCard extends StatelessWidget {
   const _SummaryCard({
     required this.totals,
-    required this.utilization,
     this.expand = false,
   });
   final Totals totals;
-  final String utilization;
   final bool expand;
+
   @override
   Widget build(BuildContext context) {
     final entries = <(String, String, Color?, Color?)>[
-      ('Total Budget', money(totals.allotment), null, null),
-      ('Total Disbursed', money(totals.disbursement), null, null),
-      ('Total Obligated', money(totals.obligation), null, null),
+      ('Allotment', money(totals.allotment), null, null),
+      ('Obligation', money(totals.obligation), null, null),
       (
-        'Balance',
+        'Unobligated Allotment',
         money(totals.balance),
         const Color(0xffdcfce7),
         const Color(0xff15803d),
       ),
-      ('Utilization Rate', utilization, const Color(0xffdbeafe), blue),
+      (
+        'Utilization Rate',
+        rate(totals.obligation, totals.allotment),
+        const Color(0xffdbeafe),
+        blue,
+      ),
+      ('Disbursement', money(totals.disbursement), null, null),
+      (
+        'Disbursement Rate',
+        rate(totals.disbursement, totals.obligation),
+        const Color(0xffdbeafe),
+        blue,
+      ),
     ];
     Widget rowAt(int index) {
       final entry = entries[index];
@@ -1237,7 +1254,7 @@ class _SummaryCard extends StatelessWidget {
           child: Align(
             alignment: Alignment.centerLeft,
             child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 10),
+              padding: const EdgeInsets.symmetric(vertical: 8),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
@@ -1248,7 +1265,7 @@ class _SummaryCard extends StatelessWidget {
                       softWrap: true,
                       style: const TextStyle(
                         fontWeight: FontWeight.w600,
-                        fontSize: 14,
+                        fontSize: 13.5,
                         height: 1.25,
                       ),
                     ),

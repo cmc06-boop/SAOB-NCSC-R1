@@ -144,7 +144,7 @@ class _BudgetPageState extends State<BudgetPage> {
           items: [
             ('', 'All Programs'),
             for (final p in widget.store.programs)
-              (p.code, programLabel(p.code, p.name)),
+              (p.code, p.code),
           ],
           onChanged: (v) => change(() => program = v),
         ),
@@ -662,7 +662,7 @@ class _RecordEditorState extends State<RecordEditor> {
                       width: double.infinity,
                       items: [
                         for (final p in programs)
-                          (p.code, programLabel(p.code, p.name)),
+                          (p.code, p.code),
                       ],
                       onChanged: (v) => setState(() => program = v),
                     ),

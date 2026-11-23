@@ -60,7 +60,7 @@ class _AuditPageState extends State<AuditPage> {
           items: [
             ('', 'All Programs'),
             for (final p in widget.store.programs)
-              (p.code, programLabel(p.code, p.name)),
+              (p.code, p.code),
           ],
           onChanged: (v) => change(() => program = v),
         ),
@@ -112,8 +112,9 @@ class _AuditTableState extends State<_AuditTable> {
   static const _border = BorderSide(color: Color(0xffd5e1f2));
   static const _columns = <int, TableColumnWidth>{
     0: FixedColumnWidth(188),
-    1: FixedColumnWidth(140),
-    2: FlexColumnWidth(),
+    1: FixedColumnWidth(112),
+    2: FixedColumnWidth(168),
+    3: FlexColumnWidth(),
   };
 
   @override
@@ -148,7 +149,8 @@ class _AuditTableState extends State<_AuditTable> {
       defaultVerticalAlignment: TableCellVerticalAlignment.middle,
       children: [
         _row([
-          const _AuditCell('Date & Time', style: header),
+          const _AuditCell('Date', style: header),
+          const _AuditCell('Time', style: header),
           const _AuditCell('Action', style: header),
           const _AuditCell('Details', style: header),
         ], const Color(0xffeef3fb)),
@@ -166,6 +168,7 @@ class _AuditTableState extends State<_AuditTable> {
           _row([
             const _AuditCell(''),
             const _AuditCell(''),
+            const _AuditCell(''),
             const _AuditCell(
               'No records found.',
               style: TextStyle(fontSize: 13, color: muted),
@@ -174,7 +177,8 @@ class _AuditTableState extends State<_AuditTable> {
         else
           for (final (i, r) in rows.indexed)
             _row([
-              _AuditCell(dateLabel(r['at']), style: body),
+              _AuditCell(dateOnly(r['at']), style: body),
+              _AuditCell(timeOnly(r['at']), style: body),
               _AuditCell('${r['action']}', style: body),
               _AuditCell(
                 _auditDetailText(

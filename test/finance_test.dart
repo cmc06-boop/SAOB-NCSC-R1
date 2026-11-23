@@ -347,7 +347,7 @@ void main() {
   );
   test('sample workbook parses as one Current program line', () {
     final sheets = parseWorkbook(buildSampleWorkbook());
-    expect(sheets.single.program, 'CURRENT');
+    expect(sheets.single.program, 'Current');
     expect(sheets.single.fund, 'CURRENT');
     expect(sheets.single.error, isEmpty);
     expect(sheets.single.lines.single.name, 'Traveling Expenses - Local');
@@ -395,7 +395,7 @@ void main() {
     final encoded = book.encode();
     expect(encoded, isNotNull);
     final sheets = parseWorkbook(Uint8List.fromList(encoded!));
-    expect(sheets.single.program, 'ATOPCURRENT');
+    expect(sheets.single.program, 'ATOP_Current');
     expect(sheets.single.lines.map((l) => l.code).toList(), [
       '5020201002',
       '5029903000',
@@ -439,7 +439,7 @@ void main() {
     final encoded = book.encode();
     expect(encoded, isNotNull);
     final sheets = parseWorkbook(Uint8List.fromList(encoded!));
-    expect(sheets.single.program, 'ECACURRENT');
+    expect(sheets.single.program, 'ECA_Current');
     expect(sheets.single.lines.map((l) => l.code).toList(), [
       '5020101000',
       '5020301000',
@@ -452,13 +452,13 @@ void main() {
       for (final line in sheet.lines)
         line.record(manilaNow().year, sheet.program, sheet.fund),
     ];
-    expect(store.programs.any((p) => p.code == 'CURRENT'), isFalse);
+    expect(store.programs.any((p) => p.code == 'Current'), isFalse);
     expect(
       store.importRecords(payload, updateExisting: true, programName: sheet.name),
       1,
     );
-    expect(store.programs.any((p) => p.code == 'CURRENT' && p.active), isTrue);
-    expect(store.records(manilaNow().year, program: 'CURRENT').length, 1);
+    expect(store.programs.any((p) => p.code == 'Current' && p.active), isTrue);
+    expect(store.records(manilaNow().year, program: 'Current').length, 1);
 
     final fixture = parseWorkbook(
       File('test/fixtures/import_sample.xlsx').readAsBytesSync(),
@@ -471,7 +471,7 @@ void main() {
       File('test/fixtures/import_sample.xlsx').readAsBytesSync(),
     );
     final gas = sheets.first;
-    expect(gas.program, 'GASCURRENT');
+    expect(gas.program, 'GAS_Current');
     expect(gas.fund, 'CURRENT');
     expect(gas.lines.length, 4);
     expect(gas.lines.first.allotment, 100010);

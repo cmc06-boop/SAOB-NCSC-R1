@@ -64,6 +64,7 @@ class FinanceDatabase {
       }
       db.transaction(() {
         // Programs come only from Excel import or Settings — never seeded.
+        db._underscoreProgramCodes();
         db.ensureCurrentYear(today: today);
       });
       return db;
@@ -144,6 +145,35 @@ class FinanceDatabase {
     } catch (_) {
       connection.execute('ROLLBACK');
       rethrow;
+    }
+  }
+
+  /// ATOPCONTINUING and "ATOP Continuing" → ATOP_Continuing on the program key
+  /// and every row that points at it. Names are left as stored.
+  void _underscoreProgramCodes() {
+    for (final row in rows('SELECT code FROM programs')) {
+      final code = row['code'] as String;
+      final next = readableProgramCode(code);
+      if (next == null || next == code) continue;
+      if (rows('SELECT code FROM programs WHERE code=?', [next]).isNotEmpty) {
+        continue;
+      }
+      connection.execute('UPDATE programs SET code=? WHERE code=?', [
+        next,
+        code,
+      ]);
+      connection.execute(
+        'UPDATE budget_records SET program=? WHERE program=?',
+        [next, code],
+      );
+      connection.execute('UPDATE audit_log SET program=? WHERE program=?', [
+        next,
+        code,
+      ]);
+      connection.execute(
+        'UPDATE report_history SET program=? WHERE program=?',
+        [next, code],
+      );
     }
   }
 
