@@ -40,42 +40,21 @@ class _HeaderFilter<T> extends StatelessWidget {
       const SizedBox(width: 8),
       SizedBox(
         width: width,
-        child: InputDecorator(
+        child: AppDropdown<T>(
+          value: value,
+          items: items,
+          onChanged: onChanged,
+          fieldTextStyle: const TextStyle(
+            fontFamily: 'Segoe UI',
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: ink,
+          ),
           decoration: const InputDecoration(
             filled: true,
             fillColor: Colors.white,
             isDense: true,
             contentPadding: EdgeInsets.fromLTRB(12, 12, 0, 12),
-          ),
-          child: DropdownButtonHideUnderline(
-            child: DropdownButton<T>(
-              isExpanded: true,
-              isDense: true,
-              padding: const EdgeInsets.only(right: 2),
-              value: items.any((e) => e.$1 == value) ? value : null,
-              style: const TextStyle(
-                fontFamily: 'Segoe UI',
-                fontSize: 14,
-                fontWeight: FontWeight.w700,
-                color: ink,
-              ),
-              items: [
-                for (final e in items)
-                  DropdownMenuItem<T>(
-                    value: e.$1,
-                    child: Text(
-                      e.$2,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-              ],
-              onChanged: onChanged == null
-                  ? null
-                  : (v) {
-                      if (v != null) onChanged!(v);
-                    },
-            ),
           ),
         ),
       ),
