@@ -1280,9 +1280,34 @@ class _SummaryCard extends StatelessWidget {
   }
 }
 
-class _HistoryCard extends StatelessWidget {
+class _HistoryCard extends StatefulWidget {
   const _HistoryCard({required this.history});
   final List<DbRow> history;
+
+  @override
+  State<_HistoryCard> createState() => _HistoryCardState();
+}
+
+class _HistoryCardState extends State<_HistoryCard> {
+  final _historyScroll = ScrollController();
+
+  @override
+  void dispose() {
+    _historyScroll.dispose();
+    super.dispose();
+  }
+
+  String _reportName(DbRow report) {
+    final program = (report['program'] as String? ?? '').trim();
+    final name = program.isEmpty ? 'All' : program;
+    final storedFormat = (report['format'] as String? ?? '').trim();
+    final format = switch (storedFormat.toUpperCase()) {
+      'PDF' => 'PDF',
+      'EXCEL' || 'XLSX' => 'Excel',
+      _ => storedFormat,
+    };
+    return '${name}_Current ($format)';
+  }
 
   static const _border = BorderSide(color: Color(0xffd5e1f2));
   static const _columns = <int, TableColumnWidth>{
@@ -1322,7 +1347,10 @@ class _HistoryCard extends StatelessWidget {
       for (final cell in cells)
         TableCell(
           verticalAlignment: TableCellVerticalAlignment.middle,
-          child: cell,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: 48),
+            child: Align(alignment: Alignment.centerLeft, child: cell),
+          ),
         ),
     ],
   );
@@ -1368,35 +1396,45 @@ class _HistoryCard extends StatelessWidget {
                     ], const Color(0xffeef3fb)),
                   ],
                 ),
-                Table(
-                  border: const TableBorder(
-                    horizontalInside: _border,
-                    verticalInside: _border,
-                  ),
-                  columnWidths: _columns,
-                  defaultVerticalAlignment: TableCellVerticalAlignment.middle,
-                  children: [
-                    if (history.isEmpty)
-                      _row([
-                        _cell(''),
-                        _cell(
-                          'No reports generated yet.',
-                          style: const TextStyle(fontSize: 13, color: muted),
+                ConstrainedBox(
+                  // Keep four rows visible; scroll the history from five on.
+                  constraints: const BoxConstraints(maxHeight: 4 * 48.0),
+                  child: Scrollbar(
+                    controller: _historyScroll,
+                    thumbVisibility: widget.history.length >= 5,
+                    child: SingleChildScrollView(
+                      controller: _historyScroll,
+                      primary: false,
+                      child: Table(
+                        border: const TableBorder(
+                          horizontalInside: _border,
+                          verticalInside: _border,
                         ),
-                        _cell(''),
-                        _cell(''),
-                      ], Colors.white)
-                    else
-                      for (var i = 0; i < history.length; i++)
-                        _row([
-                          _cell('${i + 1}', number: true),
-                          _cell(
-                            '${history[i]['type']}${(history[i]['program'] as String).isEmpty ? '' : ' – ${history[i]['program']}'}',
-                          ),
-                          _cell('${history[i]['year']}'),
-                          _cell(dateLabel(history[i]['at'])),
-                        ], i.isOdd ? const Color(0xfff7f9fc) : Colors.white),
-                  ],
+                        columnWidths: _columns,
+                        defaultVerticalAlignment: TableCellVerticalAlignment.middle,
+                        children: [
+                          if (widget.history.isEmpty)
+                            _row([
+                              _cell(''),
+                              _cell(
+                                'No reports generated yet.',
+                                style: const TextStyle(fontSize: 13, color: muted),
+                              ),
+                              _cell(''),
+                              _cell(''),
+                            ], Colors.white)
+                          else
+                            for (var i = 0; i < widget.history.length; i++)
+                              _row([
+                                _cell('${i + 1}', number: true),
+                                _cell(_reportName(widget.history[i])),
+                                _cell('${widget.history[i]['year']}'),
+                                _cell(dateLabel(widget.history[i]['at'])),
+                              ], i.isOdd ? const Color(0xfff7f9fc) : Colors.white),
+                        ],
+                      ),
+                    ),
+                  ),
                 ),
               ],
             ),
