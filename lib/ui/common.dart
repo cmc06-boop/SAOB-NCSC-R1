@@ -120,8 +120,17 @@ class SelectField<T> extends StatelessWidget {
       children: [
         FieldLabel(label, style: labelStyle),
         SizedBox(height: dense ? 4 : 7),
-        InputDecorator(
-          key: boxKey,
+        AppDropdown<T>(
+          value: value,
+          items: items,
+          onChanged: onChanged,
+          dense: dense,
+          decoratorKey: boxKey,
+          fieldTextStyle: const TextStyle(
+            fontFamily: 'Segoe UI',
+            fontSize: 13,
+            color: ink,
+          ),
           decoration: InputDecoration(
             isDense: dense,
             contentPadding: EdgeInsets.symmetric(
@@ -129,42 +138,134 @@ class SelectField<T> extends StatelessWidget {
               vertical: dense ? 12 : 3,
             ),
           ),
-          child: DropdownButtonHideUnderline(
-            child: DropdownButton<T>(
-              isDense: dense,
-              isExpanded: true,
-              value: items.any((e) => e.$1 == value) ? value : null,
-              style: const TextStyle(
-                fontFamily: 'Segoe UI',
-                fontSize: 13,
-                color: ink,
-              ),
-              items: items
-                  .map(
-                    (e) => DropdownMenuItem<T>(
-                      value: e.$1,
-                      child: Tooltip(
-                        message: e.$2,
-                        child: Text(
-                          e.$2,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ),
-                  )
-                  .toList(),
-              onChanged: onChanged == null
-                  ? null
-                  : (v) {
-                      if (v != null) onChanged!(v);
-                    },
-            ),
-          ),
         ),
       ],
     ),
   );
+}
+
+/// A compact, anchored select field: options open below the field rather
+/// than covering the selected value. Used by filters and record editors.
+class AppDropdown<T> extends StatelessWidget {
+  const AppDropdown({
+    super.key,
+    required this.value,
+    required this.items,
+    required this.onChanged,
+    required this.decoration,
+    this.decoratorKey,
+    this.dense = true,
+    this.fieldTextStyle = const TextStyle(
+      fontFamily: 'Segoe UI',
+      fontSize: 13,
+      color: ink,
+    ),
+  });
+
+  final T value;
+  final List<(T, String)> items;
+  final ValueChanged<T>? onChanged;
+  final InputDecoration decoration;
+  final Key? decoratorKey;
+  final bool dense;
+  final TextStyle fieldTextStyle;
+
+  @override
+  Widget build(BuildContext context) {
+    var selectedLabel = '';
+    var longestLabel = 0;
+    for (final option in items) {
+      if (option.$1 == value) selectedLabel = option.$2;
+      longestLabel = math.max(longestLabel, option.$2.length);
+    }
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final fieldWidth =
+            constraints.maxWidth.isFinite ? constraints.maxWidth : 180.0;
+        // Wider menus let long UACS names wrap instead of being cut off.
+        final menuWidth = math.max(
+          fieldWidth,
+          math.min(380.0, longestLabel * 6.5 + 48.0),
+        );
+        final menuHeight = math.min(
+          320.0,
+          MediaQuery.sizeOf(context).height * 0.6,
+        );
+
+        return PopupMenuButton<T>(
+          enabled: onChanged != null && items.isNotEmpty,
+          tooltip: 'Choose an option',
+          position: PopupMenuPosition.under,
+          offset: const Offset(0, 5),
+          color: Colors.white,
+          elevation: 6,
+          shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.all(Radius.circular(12)),
+            side: BorderSide(color: line),
+          ),
+          constraints: BoxConstraints(
+            minWidth: fieldWidth,
+            maxWidth: menuWidth,
+            maxHeight: menuHeight,
+          ),
+          onSelected: onChanged,
+          itemBuilder: (context) => [
+            for (final option in items)
+              PopupMenuItem<T>(
+                value: option.$1,
+                child: Tooltip(
+                  message: option.$2,
+                  child: Text(
+                    option.$2,
+                    softWrap: true,
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontFamily: 'Segoe UI',
+                      fontSize: 13,
+                      height: 1.25,
+                      color: ink,
+                    ),
+                  ),
+                ),
+              ),
+          ],
+          child: InputDecorator(
+            key: decoratorKey,
+            decoration: decoration,
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minHeight: dense ? 24 : 44),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Tooltip(
+                      message: selectedLabel,
+                      child: Text(
+                        selectedLabel.isEmpty ? 'Select…' : selectedLabel,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: fieldTextStyle,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  const Padding(
+                    padding: EdgeInsets.only(right: 8),
+                    child: Icon(
+                      Icons.keyboard_arrow_down_rounded,
+                      size: 18,
+                      color: muted,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
 }
 
 class FieldLabel extends StatelessWidget {
