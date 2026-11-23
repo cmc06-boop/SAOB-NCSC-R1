@@ -198,7 +198,7 @@ class AppDropdown<T> extends StatelessWidget {
           tooltip: 'Choose an option',
           position: PopupMenuPosition.under,
           offset: const Offset(0, 5),
-          color: Colors.white,
+          color: const Color(0xffedf3fe),
           elevation: 6,
           shape: const RoundedRectangleBorder(
             borderRadius: BorderRadius.all(Radius.circular(12)),
