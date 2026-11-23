@@ -11,7 +11,6 @@ import '../data/models.dart';
 import '../data/report_io.dart';
 import '../ui/common.dart';
 import '../ui/theme.dart';
-import 'print_dialog.dart';
 
 class _HeaderFilter<T> extends StatelessWidget {
   const _HeaderFilter({
@@ -118,64 +117,49 @@ class _ReportsPageState extends State<ReportsPage> {
     setState(() => busy = true);
     try {
       final data = reportData(selectedType, rows);
-      var completed = false;
-      if (fmt == 'Print') {
-        if (mounted) setState(() => busy = false);
-        completed = await showReportPrintDialog(
+      final extension = fmt == 'PDF' ? 'pdf' : 'xlsx';
+      final location = await getSaveLocation(
+        suggestedName:
+            'NCSC-R1-$selectedYear-${selectedProgram.isEmpty ? 'All' : selectedProgram}.$extension',
+        acceptedTypeGroups: [
+          XTypeGroup(label: fmt, extensions: [extension]),
+        ],
+      );
+      if (location == null) return;
+      final bytes = fmt == 'PDF'
+          ? await pdfReport(
+              data,
+              title: selectedType,
+              year: selectedYear,
+              program: selectedProgram,
+            )
+          : excelReport(
+              rows,
+              title: selectedType,
+              year: selectedYear,
+              program: selectedProgram,
+            );
+      if (bytes.isEmpty) {
+        throw const FinanceError('The report file could not be created.');
+      }
+      final destination = location.path.toLowerCase().endsWith('.$extension')
+          ? location.path
+          : '${location.path}.$extension';
+      await File(destination).writeAsBytes(bytes, flush: true);
+      if (mounted) {
+        showMessage(
           context,
-          data: data,
-          title: selectedType,
-          year: selectedYear,
-          program: selectedProgram,
-        );
-      } else {
-        final extension = fmt == 'PDF' ? 'pdf' : 'xlsx';
-        final location = await getSaveLocation(
-          suggestedName:
-              'NCSC-R1-$selectedYear-${selectedProgram.isEmpty ? 'All' : selectedProgram}.$extension',
-          acceptedTypeGroups: [
-            XTypeGroup(label: fmt, extensions: [extension]),
-          ],
-        );
-        if (location == null) return;
-        final bytes = fmt == 'PDF'
-            ? await pdfReport(
-                data,
-                title: selectedType,
-                year: selectedYear,
-                program: selectedProgram,
-              )
-            : excelReport(
-                rows,
-                title: selectedType,
-                year: selectedYear,
-                program: selectedProgram,
-              );
-        if (bytes.isEmpty) {
-          throw const FinanceError('The report file could not be created.');
-        }
-        final destination = location.path.toLowerCase().endsWith('.$extension')
-            ? location.path
-            : '${location.path}.$extension';
-        await File(destination).writeAsBytes(bytes, flush: true);
-        completed = true;
-        if (mounted) {
-          showMessage(
-            context,
-            fmt == 'PDF'
-                ? 'PDF report saved to $destination'
-                : 'Excel report saved to $destination',
-          );
-        }
-      }
-      if (completed) {
-        widget.store.logReport(
-          selectedType,
-          selectedYear,
-          selectedProgram,
-          fmt,
+          fmt == 'PDF'
+              ? 'PDF report saved to $destination'
+              : 'Excel report saved to $destination',
         );
       }
+      widget.store.logReport(
+        selectedType,
+        selectedYear,
+        selectedProgram,
+        fmt,
+      );
     } on FileSystemException {
       if (mounted) {
         showMessage(
@@ -439,14 +423,6 @@ class _ReportsPageState extends State<ReportsPage> {
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
                 ),
               ),
-              OutlinedButton.icon(
-                onPressed: busy || records.isEmpty
-                    ? null
-                    : () => generate('Print'),
-                icon: const Icon(Icons.print_outlined, size: 18),
-                label: const Text('Print'),
-              ),
-              const SizedBox(width: 8),
               PopupMenuButton<String>(
                 onSelected: records.isEmpty ? null : generate,
                 enabled: !busy && records.isNotEmpty,
