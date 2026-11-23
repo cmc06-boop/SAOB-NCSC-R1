@@ -326,6 +326,12 @@ class _InlineChoice<T> extends StatelessWidget {
   );
 }
 
+const _recordEditorLabelStyle = TextStyle(
+  fontSize: 12,
+  fontWeight: FontWeight.w700,
+  color: Colors.black,
+);
+
 class RecordEditor extends StatefulWidget {
   const RecordEditor({
     super.key,
@@ -571,7 +577,7 @@ class _RecordEditorState extends State<RecordEditor> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        FieldLabel(label),
+        FieldLabel(label, style: _recordEditorLabelStyle),
         const SizedBox(height: 4),
         if (expand)
           Expanded(child: input)
@@ -628,21 +634,24 @@ class _RecordEditorState extends State<RecordEditor> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Row(
+                Stack(
+                  alignment: Alignment.center,
                   children: [
-                    Expanded(
-                      child: Text(
-                        widget.record == null
-                            ? 'Add Budget Record'
-                            : 'Edit Budget Record',
-                        style: Theme.of(context).textTheme.titleLarge,
-                      ),
+                    Text(
+                      widget.record == null
+                          ? 'Add Budget Record'
+                          : 'Edit Budget Record',
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.titleLarge,
                     ),
-                    IconButton(
-                      tooltip: 'Close',
-                      onPressed: () => Navigator.pop(context),
-                      visualDensity: VisualDensity.compact,
-                      icon: const Icon(Icons.close),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: IconButton(
+                        tooltip: 'Close',
+                        onPressed: () => Navigator.pop(context),
+                        visualDensity: VisualDensity.compact,
+                        icon: const Icon(Icons.close),
+                      ),
                     ),
                   ],
                 ),
@@ -657,6 +666,7 @@ class _RecordEditorState extends State<RecordEditor> {
                     ),
                     SelectField(
                       label: 'Program *',
+                      labelStyle: _recordEditorLabelStyle,
                       value: program,
                       dense: true,
                       width: double.infinity,
@@ -845,7 +855,10 @@ class _AlignedRecordColumnsState extends State<_AlignedRecordColumns> {
               const SizedBox(height: 14),
               KeyedSubtree(
                 key: _labelKey,
-                child: const FieldLabel('Remarks'),
+                child: const FieldLabel(
+                  'Remarks',
+                  style: _recordEditorLabelStyle,
+                ),
               ),
               const SizedBox(height: 4),
               SizedBox(
