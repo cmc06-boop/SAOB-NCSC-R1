@@ -1301,17 +1301,10 @@ class _HistoryCardState extends State<_HistoryCard> {
     super.dispose();
   }
 
-  String _reportName(DbRow report) {
-    final program = (report['program'] as String? ?? '').trim();
-    final name = program.isEmpty ? 'All' : program;
-    final storedFormat = (report['format'] as String? ?? '').trim();
-    final format = switch (storedFormat.toUpperCase()) {
-      'PDF' => 'PDF',
-      'EXCEL' || 'XLSX' => 'Excel',
-      _ => storedFormat,
-    };
-    return '${name}_Current ($format)';
-  }
+  String _reportName(DbRow report) => generatedReportName(
+    (report['program'] as String? ?? ''),
+    (report['format'] as String? ?? ''),
+  );
 
   static const _border = BorderSide(color: Color(0xffd5e1f2));
   static const _columns = <int, TableColumnWidth>{
