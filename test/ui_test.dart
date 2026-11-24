@@ -193,6 +193,11 @@ void main() {
         (programHeader.columnWidths![3] as FixedColumnWidth).value,
         160,
       );
+      // Programs must keep its original compact number column.
+      expect(
+        (programHeader.columnWidths![0] as FixedColumnWidth).value,
+        48,
+      );
       // The action is now aligned with the page subtitle, above the table.
       final programSubtitle = tester.getCenter(
         find.text('Manage programs and their associated names.'),
@@ -203,6 +208,17 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.byKey(const ValueKey('uacs-table')), findsOneWidget);
       final uacsTable = find.byKey(const ValueKey('uacs-table'));
+      final uacsHeader = tester.widget<Table>(
+        find.descendant(of: uacsTable, matching: find.byType(Table)).first,
+      );
+      expect(
+        (uacsHeader.columnWidths![0] as FixedColumnWidth).value,
+        80,
+      );
+      expect(
+        (uacsHeader.columnWidths![1] as FixedColumnWidth).value,
+        240,
+      );
       final firstUacs = find.descendant(
         of: uacsTable,
         matching: find.text(
