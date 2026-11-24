@@ -7,7 +7,6 @@ import '../features/budget_page.dart';
 import '../features/dashboard_page.dart';
 import '../features/reports_page.dart';
 import '../features/settings_page.dart';
-import 'common.dart';
 import 'theme.dart';
 
 const _menus = [
