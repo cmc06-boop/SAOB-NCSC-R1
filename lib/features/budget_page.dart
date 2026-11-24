@@ -4,6 +4,7 @@ import '../core/format.dart';
 import '../data/finance_store.dart';
 import '../data/models.dart';
 import '../ui/common.dart';
+import '../ui/svg_icon.dart';
 import '../ui/theme.dart';
 import 'import_page.dart';
 
@@ -160,7 +161,7 @@ class _BudgetPageState extends State<BudgetPage> {
       style: const TextStyle(fontSize: 14),
       decoration: const InputDecoration(
         hintText: 'Search UACS Code or Expense...',
-        prefixIcon: Icon(Icons.search, size: 20),
+        prefixIcon: AppSvgIcon('search', size: 20),
         isDense: true,
         contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
       ),
@@ -176,7 +177,7 @@ class _BudgetPageState extends State<BudgetPage> {
             ),
           ),
           onPressed: canEncode ? () => edit() : null,
-          icon: const Icon(Icons.add, size: 18),
+          icon: const AppSvgIcon('plus', size: 18),
           label: const Text('Add Record'),
         ),
         const SizedBox(width: 8),
@@ -191,7 +192,7 @@ class _BudgetPageState extends State<BudgetPage> {
                   }
                   edit(chosen);
                 },
-          icon: const Icon(Icons.edit_outlined, size: 18),
+          icon: const AppSvgIcon('pencil', size: 18),
           label: const Text('Edit'),
         ),
         const SizedBox(width: 8),
@@ -206,7 +207,7 @@ class _BudgetPageState extends State<BudgetPage> {
                   }
                   remove(chosen);
                 },
-          icon: const Icon(Icons.delete_outline, size: 18),
+          icon: const AppSvgIcon('trash-2', size: 18),
           label: const Text('Delete'),
         ),
       ],
@@ -627,7 +628,7 @@ class _RecordEditorState extends State<RecordEditor> {
                         tooltip: 'Close',
                         onPressed: () => Navigator.pop(context),
                         visualDensity: VisualDensity.compact,
-                        icon: const Icon(Icons.close),
+                        icon: const AppSvgIcon('x'),
                       ),
                     ),
                   ],
@@ -662,7 +663,7 @@ class _RecordEditorState extends State<RecordEditor> {
                         tooltip: 'Find UACS code',
                         onPressed: lookup,
                         visualDensity: VisualDensity.compact,
-                        icon: const Icon(Icons.search, size: 18),
+                        icon: const AppSvgIcon('search', size: 18),
                       ),
                     ),
                     field(
