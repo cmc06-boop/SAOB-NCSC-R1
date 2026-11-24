@@ -351,11 +351,19 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byKey(const ValueKey('nav-account')), findsOneWidget);
+    expect(
+      tester.widget<Text>(find.byKey(const ValueKey('sidebar-account-name'))).data,
+      'Finance AO',
+    );
+    expect(
+      tester.widget<Text>(find.byKey(const ValueKey('sidebar-account-username'))).data,
+      'ao',
+    );
+    expect(find.text('My Account'), findsNothing);
     await tester.tap(find.byKey(const ValueKey('nav-account')));
     await tester.pumpAndSettle();
     expect(find.byType(AlertDialog), findsOneWidget);
-    // The sidebar profile label may also be "My Account".
-    // Target the dialog heading itself, not all matching text widgets.
+    // Target the dialog heading itself, not the sidebar's profile labels.
     final accountTitle = find.byKey(const ValueKey('account-title'));
     expect(accountTitle, findsOneWidget);
     expect(tester.widget<Text>(accountTitle).textAlign, TextAlign.center);
@@ -513,6 +521,8 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('nav-account')));
     await tester.pumpAndSettle();
     expect(find.byType(AlertDialog), findsOneWidget);
+    expect(find.byKey(const ValueKey('sidebar-account-name')), findsNothing);
+    expect(find.byKey(const ValueKey('sidebar-account-username')), findsNothing);
     expect(find.byKey(const ValueKey('account-save')), findsOneWidget);
     await tester.tap(find.byKey(const ValueKey('account-close')));
     await tester.pumpAndSettle();
