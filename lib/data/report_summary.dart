@@ -36,9 +36,9 @@ class SaobSummarySection {
 /// ATOP_Continuing while keeping fund_source=CURRENT for DB compatibility.
 /// For summaries, the program suffix is the authoritative appropriation type.
 /// Manually encoded programs without that suffix still use their fund source.
-(String, String) _summaryCodeAndFund(BudgetRecord row) {
-  final readable = readableProgramCode(row.program);
-  if (readable == null) return (row.program, row.fund);
+(String, String) summaryProgramAndFund(String program, String fund) {
+  final readable = readableProgramCode(program);
+  if (readable == null) return (program, fund);
   if (readable.endsWith('_Continuing')) {
     return (
       readable.substring(0, readable.length - '_Continuing'.length),
@@ -61,7 +61,7 @@ List<SaobSummarySection> saobSummarySections(
     'CONTINUING': {},
   };
   for (final record in records) {
-    final (code, fund) = _summaryCodeAndFund(record);
+    final (code, fund) = summaryProgramAndFund(record.program, record.fund);
     if (!byFund.containsKey(fund)) continue;
     byFund[fund]!.putIfAbsent(code, () => []).add(record);
   }
