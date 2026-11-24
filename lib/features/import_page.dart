@@ -11,6 +11,7 @@ import '../data/finance_store.dart';
 import '../data/models.dart';
 import '../data/workbook_io.dart';
 import '../ui/common.dart';
+import '../ui/svg_icon.dart';
 import '../ui/theme.dart';
 
 /// Sample workbook used by unit tests.
@@ -314,10 +315,8 @@ class _ExcelDropZoneState extends State<ExcelDropZone> {
                     onPressed: session.busy
                         ? null
                         : () => session.browse(context),
-                    icon: Icon(
-                      session.busy
-                          ? Icons.hourglass_top
-                          : Icons.folder_outlined,
+                    icon: AppSvgIcon(
+                      session.busy ? 'hourglass' : 'folder',
                       size: 16,
                     ),
                     label: Text(session.busy ? 'Importing…' : 'Browse File'),
