@@ -1,6 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 
 import '../data/finance_store.dart';
+import '../features/account_page.dart';
 import '../features/audit_page.dart';
 import '../features/budget_page.dart';
 import '../features/dashboard_page.dart';
@@ -14,7 +15,8 @@ const _menus = [
   ('budget', 'Budget Utilization', Icons.account_balance_wallet_outlined),
   ('reports', 'Reports', Icons.description_outlined),
   ('audit', 'Audit Trail', Icons.history_outlined),
-  ('settings', 'Settings', Icons.settings_outlined),
+  ('programs', 'Programs', Icons.category_outlined),
+  ('uacs', 'UACS Reference', Icons.menu_book_outlined),
 ];
 
 class AppShell extends StatefulWidget {
@@ -41,7 +43,9 @@ class _AppShellState extends State<AppShell> {
       'budget': BudgetPage(store: widget.store),
       'reports': ReportsPage(store: widget.store),
       'audit': AuditPage(store: widget.store),
-      'settings': SettingsPage(store: widget.store),
+      'programs': ProgramsPage(store: widget.store),
+      'uacs': UacsReferencePage(store: widget.store),
+      'account': AccountPage(store: widget.store),
     };
     return Scaffold(
       body: LayoutBuilder(
@@ -54,10 +58,17 @@ class _AppShellState extends State<AppShell> {
               Padding(
                 padding: EdgeInsets.only(left: sideWidth),
                 child: IndexedStack(
-                  index: visible.indexWhere((m) => m.$1 == selected),
+                  index: selected == 'account' && user.can('settings')
+                      ? visible.length
+                      : visible.indexWhere((m) => m.$1 == selected),
                   children: [
                     for (final m in visible)
                       KeyedSubtree(key: ValueKey(m.$1), child: widgets[m.$1]!),
+                    if (user.can('settings'))
+                      KeyedSubtree(
+                        key: const ValueKey('account'),
+                        child: widgets['account']!,
+                      ),
                   ],
                 ),
               ),
@@ -206,60 +217,88 @@ class _AppShellState extends State<AppShell> {
                             ],
                           ),
                         ),
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
-                          child: Row(
-                            mainAxisAlignment: expanded
-                                ? MainAxisAlignment.start
-                                : MainAxisAlignment.center,
-                            children: [
-                              CircleAvatar(
-                                radius: 14,
-                                backgroundColor: Colors.white,
-                                child: Text(
-                                  user.name.trim().isEmpty
-                                      ? '?'
-                                      : user.name.trim()[0].toUpperCase(),
-                                  style: const TextStyle(
-                                    color: navy,
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w800,
+                        if (user.can('settings'))
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+                            child: Tooltip(
+                              message: 'My Account',
+                              child: Material(
+                                color: selected == 'account'
+                                    ? Colors.white.withValues(alpha: 0.16)
+                                    : Colors.white.withValues(alpha: 0.08),
+                                borderRadius: BorderRadius.circular(12),
+                                child: InkWell(
+                                  borderRadius: BorderRadius.circular(12),
+                                  onTap: () =>
+                                      setState(() => selected = 'account'),
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 10,
+                                      vertical: 11,
+                                    ),
+                                    child: Row(
+                                      mainAxisAlignment: expanded
+                                          ? MainAxisAlignment.start
+                                          : MainAxisAlignment.center,
+                                      children: [
+                                        CircleAvatar(
+                                          radius: 15,
+                                          backgroundColor: Colors.white,
+                                          child: Text(
+                                            user.name.trim().isEmpty
+                                                ? '?'
+                                                : user.name.trim()[0]
+                                                    .toUpperCase(),
+                                            style: const TextStyle(
+                                              color: navy,
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.w800,
+                                            ),
+                                          ),
+                                        ),
+                                        if (expanded) ...[
+                                          const SizedBox(width: 10),
+                                          Expanded(
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  user.name,
+                                                  maxLines: 1,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                  style: const TextStyle(
+                                                    color: Colors.white,
+                                                    fontSize: 12,
+                                                    fontWeight:
+                                                        FontWeight.w700,
+                                                  ),
+                                                ),
+                                                const SizedBox(height: 3),
+                                                const Text(
+                                                  'My Account',
+                                                  style: TextStyle(
+                                                    color: Color(0xffc5d4ef),
+                                                    fontSize: 11,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                          const Icon(
+                                            Icons.chevron_right,
+                                            color: Colors.white70,
+                                            size: 18,
+                                          ),
+                                        ],
+                                      ],
+                                    ),
                                   ),
                                 ),
                               ),
-                              if (expanded) ...[
-                                const SizedBox(width: 10),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        user.name,
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w700,
-                                        ),
-                                      ),
-                                      Text(
-                                        user.role,
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: const TextStyle(
-                                          color: Color(0xffc5d4ef),
-                                          fontSize: 10,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ],
+                            ),
                           ),
-                        ),
                         Padding(
                           padding: const EdgeInsets.fromLTRB(12, 0, 12, 16),
                           child: Material(
