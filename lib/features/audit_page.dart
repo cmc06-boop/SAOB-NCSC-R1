@@ -252,7 +252,7 @@ class _AuditCell extends StatelessWidget {
   Widget build(BuildContext context) {
     final label = Text(text, textAlign: align, softWrap: true, style: style);
     return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 8, 8, 8),
+      padding: EdgeInsets.fromLTRB(align == TextAlign.center ? 8 : 12, 8, 8, 8),
       child: tip && text.isNotEmpty
           ? Tooltip(message: tooltip ?? text, child: label)
           : label,
