@@ -536,6 +536,8 @@ void main() {
     );
     expect(codeField.decoration?.hintText, 'GAS');
     expect(nameField.decoration?.hintText, 'General Administrative Services');
+    expect(codeField.decoration?.hintStyle?.color, const Color(0xff888888));
+    expect(nameField.decoration?.hintStyle?.color, const Color(0xff888888));
     expect(codeField.controller?.text, isEmpty);
     expect(nameField.controller?.text, isEmpty);
     expect(find.byKey(const ValueKey('reference-editor-cancel')), findsOneWidget);
