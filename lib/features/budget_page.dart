@@ -606,12 +606,14 @@ class _RecordEditorState extends State<RecordEditor> {
     return PopScope(
       canPop: false,
       child: Dialog(
+        key: const ValueKey('budget-record-dialog'),
         alignment: const Alignment(0.45, 0),
         insetPadding: const EdgeInsets.symmetric(horizontal: 40, vertical: 32),
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 920, minHeight: 480),
+          constraints: const BoxConstraints(maxWidth: 920, minHeight: 500),
           child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(18, 14, 18, 8),
+            key: const ValueKey('budget-record-dialog-scroll'),
+            padding: const EdgeInsets.fromLTRB(18, 14, 18, 24),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
