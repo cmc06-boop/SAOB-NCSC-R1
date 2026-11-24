@@ -1,5 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:ncsc_region1_finance/core/format.dart';
 import 'package:ncsc_region1_finance/data/database.dart';
 import 'package:ncsc_region1_finance/data/finance_store.dart';
@@ -523,20 +524,25 @@ void main() {
       // 44 px minimum height must not shrink to 36 px on Windows.
       expect(tester.getSize(pdfFormat).height, greaterThanOrEqualTo(44));
       expect(tester.getSize(excelFormat).height, greaterThanOrEqualTo(44));
-      // The report formats have custom recognizable document artwork
-      // (PDF lettering and Excel X/grid), rather than generic Material icons.
+      // PDF and Excel now use real SVG vector assets rather than CustomPaint.
       final pdfFileIcon = find.byKey(const ValueKey('reports-file-icon-pdf'));
       final excelFileIcon = find.byKey(const ValueKey('reports-file-icon-excel'));
-      expect(find.descendant(of: pdfFormat, matching: pdfFileIcon), findsOneWidget);
-      expect(find.descendant(of: excelFormat, matching: excelFileIcon), findsOneWidget);
-      expect(tester.getSize(pdfFileIcon), const Size(24, 26));
-      expect(tester.getSize(excelFileIcon), const Size(24, 26));
       expect(
-        find.descendant(of: pdfFileIcon, matching: find.byType(CustomPaint)),
+        find.descendant(of: pdfFormat, matching: pdfFileIcon),
         findsOneWidget,
       );
       expect(
-        find.descendant(of: excelFileIcon, matching: find.byType(CustomPaint)),
+        find.descendant(of: excelFormat, matching: excelFileIcon),
+        findsOneWidget,
+      );
+      expect(tester.getSize(pdfFileIcon), const Size(24, 26));
+      expect(tester.getSize(excelFileIcon), const Size(24, 26));
+      expect(
+        find.descendant(of: pdfFileIcon, matching: find.byType(SvgPicture)),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(of: excelFileIcon, matching: find.byType(SvgPicture)),
         findsOneWidget,
       );
       expect(
