@@ -94,6 +94,19 @@ void main() {
         await tester.tap(find.byKey(ValueKey('nav-$page')));
         await tester.pumpAndSettle();
         expect(tester.takeException(), isNull);
+        final header = switch (page) {
+          'budget' => 'UACS Code',
+          'reports' => 'Report Name',
+          'audit' => 'Details',
+          'programs' => 'Program Name',
+          'uacs' => 'UACS Code',
+          _ => '',
+        };
+        expect(
+          tester.widget<Text>(find.text(header)).textAlign,
+          TextAlign.center,
+          reason: '$page table header should be centered',
+        );
       }
       expect(find.text('Settings'), findsNothing);
       expect(find.text('Users'), findsNothing);
@@ -137,6 +150,10 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('Report Parameters'), findsOneWidget);
       expect(find.text('Report Preview'), findsOneWidget);
+      expect(
+        tester.widget<Text>(find.text('Expense (UACS Name)')).textAlign,
+        TextAlign.center,
+      );
       expect(find.byKey(const ValueKey('reports-export')), findsOneWidget);
       expect(find.byKey(const ValueKey('reports-back')), findsOneWidget);
       expect(
