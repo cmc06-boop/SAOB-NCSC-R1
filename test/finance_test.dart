@@ -602,4 +602,110 @@ void main() {
       throwsA(isA<FinanceError>()),
     );
   });
+
+  test('One Save Changes supports a profile-only update', () async {
+    store.user = null;
+    await store.createOwner('Finance AO', 'finance_ao', 'OriginalSecretPass2026!');
+    final changed = await store.saveMyAccount(
+      name: 'Regional Finance Officer',
+      username: 'regional_admin',
+      currentPassword: '',
+      newPassword: '',
+      confirmPassword: '',
+    );
+    expect(changed, isTrue);
+    expect(store.user!.name, 'Regional Finance Officer');
+    expect(store.user!.username, 'regional_admin');
+    store.signOut();
+    await store.signIn('regional_admin', 'OriginalSecretPass2026!');
+    expect(store.user!.name, 'Regional Finance Officer');
+    expect(db.rows('SELECT * FROM audit_log'), hasLength(1));
+  });
+
+  test('One Save Changes supports a password-only update', () async {
+    store.user = null;
+    await store.createOwner('Finance AO', 'finance_ao', 'OriginalSecretPass2026!');
+    expect(await store.saveMyAccount(
+      name: 'Finance AO',
+      username: 'finance_ao',
+      currentPassword: '',
+      newPassword: '',
+      confirmPassword: '',
+    ), isFalse);
+    expect(db.rows('SELECT * FROM audit_log'), isEmpty);
+    final changed = await store.saveMyAccount(
+      name: 'Finance AO',
+      username: 'finance_ao',
+      currentPassword: 'OriginalSecretPass2026!',
+      newPassword: 'MuchStrongerSecret2027!',
+      confirmPassword: 'MuchStrongerSecret2027!',
+    );
+    expect(changed, isTrue);
+    expect(store.user!.username, 'finance_ao');
+    store.signOut();
+    await expectLater(
+      store.signIn('finance_ao', 'OriginalSecretPass2026!'),
+      throwsA(isA<FinanceError>()),
+    );
+    await store.signIn('finance_ao', 'MuchStrongerSecret2027!');
+    expect(db.rows('SELECT * FROM audit_log'), hasLength(1));
+  });
+
+  test('One Save Changes is atomic for profile and password together', () async {
+    store.user = null;
+    await store.createOwner('Finance AO', 'finance_ao', 'OriginalSecretPass2026!');
+    Future<bool> update({
+      required String current,
+      required String confirmation,
+    }) => store.saveMyAccount(
+      name: 'Updated Finance Officer',
+      username: 'new_finance',
+      currentPassword: current,
+      newPassword: 'MuchStrongerSecret2027!',
+      confirmPassword: confirmation,
+    );
+    await expectLater(
+      update(current: 'wrong', confirmation: 'MuchStrongerSecret2027!'),
+      throwsA(isA<FinanceError>()),
+    );
+    await expectLater(
+      update(current: 'OriginalSecretPass2026!', confirmation: 'not-matching'),
+      throwsA(isA<FinanceError>()),
+    );
+    expect(store.user!.username, 'finance_ao');
+    expect(db.rows('SELECT username FROM users').single['username'], 'finance_ao');
+    expect(db.rows('SELECT * FROM audit_log'), isEmpty);
+    expect(await update(
+      current: 'OriginalSecretPass2026!',
+      confirmation: 'MuchStrongerSecret2027!',
+    ), isTrue);
+    store.signOut();
+    await store.signIn('new_finance', 'MuchStrongerSecret2027!');
+    expect(store.user!.name, 'Updated Finance Officer');
+    expect(db.rows('SELECT * FROM audit_log'), hasLength(2));
+  });
+
+  test('Saving profile and password with a duplicate username changes neither', () async {
+    store.user = null;
+    await store.createOwner('Finance AO', 'finance_ao', 'OriginalSecretPass2026!');
+    db.connection.execute(
+      "INSERT INTO users(name,username,password_hash,role,active) "
+      "VALUES ('Other Admin','other_admin','test-hash','Admin',1)",
+    );
+    await expectLater(
+      store.saveMyAccount(
+        name: 'Finance Officer Renamed',
+        username: 'OTHER_ADMIN',
+        currentPassword: 'OriginalSecretPass2026!',
+        newPassword: 'MuchStrongerSecret2027!',
+        confirmPassword: 'MuchStrongerSecret2027!',
+      ),
+      throwsA(isA<FinanceError>()),
+    );
+    expect(store.user!.name, 'Finance AO');
+    expect(store.user!.username, 'finance_ao');
+    store.signOut();
+    await store.signIn('finance_ao', 'OriginalSecretPass2026!');
+    expect(db.rows('SELECT * FROM audit_log'), isEmpty);
+  });
 }
