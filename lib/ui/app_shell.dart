@@ -156,6 +156,7 @@ class _AppShellState extends State<AppShell> {
                                           : Colors.transparent,
                                       borderRadius: BorderRadius.circular(12),
                                       child: InkWell(
+                                        key: ValueKey('nav-${m.$1}'),
                                         borderRadius: BorderRadius.circular(12),
                                         hoverColor: Colors.white.withValues(
                                           alpha: 0.08,
@@ -228,6 +229,7 @@ class _AppShellState extends State<AppShell> {
                                     : Colors.white.withValues(alpha: 0.08),
                                 borderRadius: BorderRadius.circular(12),
                                 child: InkWell(
+                                  key: const ValueKey('nav-account'),
                                   borderRadius: BorderRadius.circular(12),
                                   onTap: () =>
                                       setState(() => selected = 'account'),
