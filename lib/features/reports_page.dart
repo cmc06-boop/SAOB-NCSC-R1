@@ -525,7 +525,9 @@ class _ReportsPageState extends State<ReportsPage> {
         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 10),
         minimumSize: const Size(0, 44),
         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-        visualDensity: VisualDensity.compact,
+        // Compact density subtracts 8 px from the button's minimum height.
+        // Use standard density so both PDF and Excel controls stay >= 44 px.
+        visualDensity: VisualDensity.standard,
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
