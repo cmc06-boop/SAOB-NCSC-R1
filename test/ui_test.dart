@@ -470,7 +470,10 @@ void main() {
     expect(find.byIcon(Icons.logout_rounded), findsOneWidget);
     expect(find.byKey(const ValueKey('logout-cancel')), findsOneWidget);
     expect(find.byKey(const ValueKey('logout-accept')), findsOneWidget);
-    expect(find.text('Logout'), findsOneWidget);
+    expect(
+      find.descendant(of: dialog, matching: find.text('Logout')),
+      findsOneWidget,
+    );
     final surface = tester.widget<Container>(
       find.byKey(const ValueKey('logout-surface')),
     );
