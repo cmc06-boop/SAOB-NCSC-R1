@@ -291,6 +291,8 @@ void main() {
       await tester.tap(find.text('Add Record'));
       await tester.pumpAndSettle();
       expect(find.text('Add Budget Record'), findsOneWidget);
+      expect(find.widgetWithText(FilledButton, 'Save'), findsOneWidget);
+      expect(find.text('Save Record'), findsNothing);
       expect(tester.takeException(), isNull);
       // On compact windows the dialog body scrolls, so bring Cancel
       // on-screen before tapping it rather than tapping an obscured widget.
@@ -364,7 +366,12 @@ void main() {
     );
     expect(find.byKey(const ValueKey('account-two-columns')), findsNothing);
     expect(find.byKey(const ValueKey('account-save')), findsOneWidget);
-    expect(find.text('Save Changes'), findsOneWidget);
+    expect(find.widgetWithText(FilledButton, 'Save'), findsOneWidget);
+    expect(find.text('Save Changes'), findsNothing);
+    expect(
+      tester.widget<FilledButton>(find.byKey(const ValueKey('account-save'))).child,
+      isA<Text>(),
+    );
     expect(find.text('Save Profile Changes'), findsNothing);
     expect(find.text('Update Password'), findsNothing);
 
@@ -442,7 +449,7 @@ void main() {
     await tester.pumpWidget(const SizedBox());
   });
 
-  testWidgets('Logout uses the consistent modal with Close, Cancel, and Log out', (
+  testWidgets('Logout modal matches the centered gradient reference layout', (
     tester,
   ) async {
     await binding.setSurfaceSize(const Size(1366, 720));
@@ -451,35 +458,48 @@ void main() {
       ..user = const LocalUser(1, 'Finance AO', 'ao', 'Admin');
     await tester.pumpWidget(FinanceApp(store: store));
     await tester.pumpAndSettle();
+
     await tester.tap(find.byKey(const ValueKey('sidebar-logout')));
     await tester.pumpAndSettle();
 
-    expect(find.byType(AlertDialog), findsOneWidget);
-    expect(find.text('Log out?'), findsOneWidget);
-    expect(find.text('Return to the login screen?'), findsOneWidget);
-    expect(find.byKey(const ValueKey('confirm-close')), findsOneWidget);
-    expect(find.byKey(const ValueKey('confirm-cancel')), findsOneWidget);
-    expect(find.byKey(const ValueKey('confirm-accept')), findsOneWidget);
-    expect(find.text('Log out'), findsOneWidget);
-
-    // Cancel keeps the user signed in.
-    await tester.tap(find.byKey(const ValueKey('confirm-cancel')));
-    await tester.pumpAndSettle();
+    final dialog = find.byKey(const ValueKey('logout-dialog'));
+    expect(dialog, findsOneWidget);
     expect(find.byType(AlertDialog), findsNothing);
+    expect(find.text('Log Out?'), findsOneWidget);
+    expect(find.text('Are you sure you want to log out?'), findsOneWidget);
+    expect(find.byIcon(Icons.logout_rounded), findsOneWidget);
+    expect(find.byKey(const ValueKey('logout-cancel')), findsOneWidget);
+    expect(find.byKey(const ValueKey('logout-accept')), findsOneWidget);
+    expect(find.text('Logout'), findsOneWidget);
+    final surface = tester.widget<Container>(
+      find.byKey(const ValueKey('logout-surface')),
+    );
+    expect((surface.decoration as BoxDecoration).gradient, isA<LinearGradient>());
+    expect(tester.widget<Text>(find.text('Log Out?')).textAlign,
+        TextAlign.center);
+    expect(
+      tester.getCenter(find.byKey(const ValueKey('logout-cancel'))).dx,
+      lessThan(tester.getCenter(find.byKey(const ValueKey('logout-accept'))).dx),
+    );
+
+    // Cancel leaves the current session active.
+    await tester.tap(find.byKey(const ValueKey('logout-cancel')));
+    await tester.pumpAndSettle();
+    expect(dialog, findsNothing);
     expect(store.user, isNotNull);
 
-    // Closing with X also keeps the session.
+    // Dismissing the popup also keeps the session active.
     await tester.tap(find.byKey(const ValueKey('sidebar-logout')));
     await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const ValueKey('confirm-close')));
+    await tester.tapAt(const Offset(12, 12));
     await tester.pumpAndSettle();
+    expect(dialog, findsNothing);
     expect(store.user, isNotNull);
-    expect(find.byType(AlertDialog), findsNothing);
 
-    // Confirming signs the user out.
+    // Only the blue Logout button ends the session.
     await tester.tap(find.byKey(const ValueKey('sidebar-logout')));
     await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const ValueKey('confirm-accept')));
+    await tester.tap(find.byKey(const ValueKey('logout-accept')));
     await tester.pumpAndSettle();
     expect(store.user, isNull);
     expect(find.text('System Login'), findsOneWidget);
@@ -507,6 +527,24 @@ void main() {
     expect(find.byKey(const ValueKey('reference-editor-name')), findsOneWidget);
     expect(find.byKey(const ValueKey('reference-editor-cancel')), findsOneWidget);
     expect(find.byKey(const ValueKey('reference-editor-save')), findsOneWidget);
+    final programDialog = tester.widget<AlertDialog>(find.byType(AlertDialog));
+    expect(programDialog.actionsAlignment, MainAxisAlignment.end);
+    final dialogTitle = find.descendant(
+      of: find.byType(AlertDialog),
+      matching: find.text('Add Program'),
+    );
+    expect(tester.widget<Text>(dialogTitle).textAlign, TextAlign.center);
+    final programSave = find.byKey(const ValueKey('reference-editor-save'));
+    expect(tester.widget<FilledButton>(programSave).child, isA<Text>());
+    expect(
+      tester.getCenter(find.byKey(const ValueKey('reference-editor-cancel'))).dx,
+      lessThan(tester.getCenter(programSave).dx),
+    );
+    expect(
+      tester.getCenter(programSave).dy,
+      greaterThan(tester.getCenter(find.byKey(const ValueKey('reference-editor-name'))).dy),
+    );
+    expect(find.byIcon(Icons.save_outlined), findsNothing);
 
     // Close without saving, then reopen to validate and save.
     await tester.tap(find.byKey(const ValueKey('reference-editor-close')));
