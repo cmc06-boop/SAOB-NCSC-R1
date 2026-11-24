@@ -99,6 +99,6 @@ void main() {
     ]);
     expect(onlyCurrent.length, 1);
     expect(onlyCurrent.single.title, 'CURRENT APPRO');
-    expect(summaryDisplayRow('GAS', onlyCurrent.single.totals).last, '—');
+    expect(summaryDisplayRow('GAS', onlyCurrent.single.totals).last, '0.00%');
   });
 }
