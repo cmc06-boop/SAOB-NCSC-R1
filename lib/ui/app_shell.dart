@@ -38,12 +38,93 @@ class _AppShellState extends State<AppShell> {
   }
 
   Future<void> logout() async {
-    if (await confirm(
-      context,
-      'Log out?',
-      'Return to the login screen?',
-      confirmLabel: 'Log out',
-    )) {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => Dialog(
+        key: const ValueKey('logout-dialog'),
+        backgroundColor: Colors.transparent,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        insetPadding: const EdgeInsets.symmetric(
+          horizontal: 24,
+          vertical: 24,
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(24),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Container(
+          width: 340,
+          padding: const EdgeInsets.fromLTRB(28, 26, 28, 22),
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Colors.white,
+                Color(0xffe5efff),
+                Color(0xfff8fbff),
+              ],
+            ),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 58,
+                height: 58,
+                decoration: const BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Color(0xffe2eafa),
+                ),
+                child: const Icon(
+                  Icons.logout_rounded,
+                  size: 26,
+                  color: ink,
+                ),
+              ),
+              const SizedBox(height: 14),
+              const Text(
+                'Log Out?',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                  color: ink,
+                ),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Are you sure you want to log out?',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 13, color: ink),
+              ),
+              const SizedBox(height: 28),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextButton(
+                      key: const ValueKey('logout-cancel'),
+                      onPressed: () => Navigator.pop(dialogContext, false),
+                      child: const Text('Cancel'),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: FilledButton(
+                      key: const ValueKey('logout-accept'),
+                      onPressed: () => Navigator.pop(dialogContext, true),
+                      child: const Text('Logout'),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+    if (confirmed == true && mounted) {
       widget.store.signOut();
     }
   }
