@@ -28,6 +28,9 @@ void main() {
       await tester.pumpWidget(FinanceApp(store: store));
       await tester.pumpAndSettle();
       expect(find.text('System Login'), findsOneWidget);
+      expect(find.text('Set Up Account'), findsNothing);
+      expect(find.text('Create Account'), findsNothing);
+      expect(find.text('Forgot Password?'), findsNothing);
       expect(find.text('NCSC-R1'), findsOneWidget);
       expect(find.text('Username'), findsOneWidget);
       final password = tester.widget<TextField>(
@@ -106,4 +109,47 @@ void main() {
       await tester.pumpWidget(const SizedBox());
     });
   }
+
+  testWidgets('Fresh installation shows maintenance notice, not sign up', (
+    tester,
+  ) async {
+    await binding.setSurfaceSize(const Size(1366, 720));
+    addTearDown(() => binding.setSurfaceSize(null));
+    final store = FinanceStore(FinanceDatabase.open(path: ':memory:'));
+    await tester.pumpWidget(FinanceApp(store: store));
+    await tester.pumpAndSettle();
+    expect(find.text('System Login'), findsOneWidget);
+    expect(
+      find.textContaining('No Admin account is configured'),
+      findsOneWidget,
+    );
+    expect(find.text('Create Account'), findsNothing);
+    expect(find.text('Forgot Password?'), findsNothing);
+    final login = tester.widget<FilledButton>(
+      find.widgetWithText(FilledButton, 'Login'),
+    );
+    expect(login.onPressed, isNull);
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox());
+  });
+
+  testWidgets('Admin Settings include editable My Account form', (
+    tester,
+  ) async {
+    await binding.setSurfaceSize(const Size(1366, 720));
+    addTearDown(() => binding.setSurfaceSize(null));
+    final store = createStore()
+      ..user = const LocalUser(1, 'Finance AO', 'ao', 'Admin');
+    await tester.pumpWidget(FinanceApp(store: store));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byIcon(Icons.settings_outlined).first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('My Account').first);
+    await tester.pumpAndSettle();
+    expect(find.text('Personal Information'), findsOneWidget);
+    expect(find.text('Save Profile Changes'), findsOneWidget);
+    expect(find.text('Change Password'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox());
+  });
 }
