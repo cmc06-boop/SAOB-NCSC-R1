@@ -462,6 +462,9 @@ class _ReferenceEditorState extends State<ReferenceEditor> {
               },
               decoration: InputDecoration(
                 hintText: example ?? label,
+                hintStyle: example == null
+                    ? null
+                    : const TextStyle(color: Color(0xff888888)),
                 isDense: true,
                 contentPadding: const EdgeInsets.symmetric(
                   horizontal: 12,
