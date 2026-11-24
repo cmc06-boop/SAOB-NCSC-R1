@@ -441,4 +441,96 @@ void main() {
     expect(tester.takeException(), isNull);
     await tester.pumpWidget(const SizedBox());
   });
+
+  testWidgets('Logout uses the consistent modal with Close, Cancel, and Log out', (
+    tester,
+  ) async {
+    await binding.setSurfaceSize(const Size(1366, 720));
+    addTearDown(() => binding.setSurfaceSize(null));
+    final store = createStore()
+      ..user = const LocalUser(1, 'Finance AO', 'ao', 'Admin');
+    await tester.pumpWidget(FinanceApp(store: store));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('sidebar-logout')));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(AlertDialog), findsOneWidget);
+    expect(find.text('Log out?'), findsOneWidget);
+    expect(find.text('Return to the login screen?'), findsOneWidget);
+    expect(find.byKey(const ValueKey('confirm-close')), findsOneWidget);
+    expect(find.byKey(const ValueKey('confirm-cancel')), findsOneWidget);
+    expect(find.byKey(const ValueKey('confirm-accept')), findsOneWidget);
+    expect(find.text('Log out'), findsOneWidget);
+
+    // Cancel keeps the user signed in.
+    await tester.tap(find.byKey(const ValueKey('confirm-cancel')));
+    await tester.pumpAndSettle();
+    expect(find.byType(AlertDialog), findsNothing);
+    expect(store.user, isNotNull);
+
+    // Closing with X also keeps the session.
+    await tester.tap(find.byKey(const ValueKey('sidebar-logout')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('confirm-close')));
+    await tester.pumpAndSettle();
+    expect(store.user, isNotNull);
+    expect(find.byType(AlertDialog), findsNothing);
+
+    // Confirming signs the user out.
+    await tester.tap(find.byKey(const ValueKey('sidebar-logout')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('confirm-accept')));
+    await tester.pumpAndSettle();
+    expect(store.user, isNull);
+    expect(find.text('System Login'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox());
+  });
+
+  testWidgets('Add Program popup matches account layout and saves a program', (
+    tester,
+  ) async {
+    await binding.setSurfaceSize(const Size(1366, 720));
+    addTearDown(() => binding.setSurfaceSize(null));
+    final store = createStore()
+      ..user = const LocalUser(1, 'Finance AO', 'ao', 'Admin');
+    await tester.pumpWidget(FinanceApp(store: store));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('nav-programs')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Add Program'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(AlertDialog), findsOneWidget);
+    expect(find.byKey(const ValueKey('reference-editor-close')), findsOneWidget);
+    expect(find.byKey(const ValueKey('reference-editor-code')), findsOneWidget);
+    expect(find.byKey(const ValueKey('reference-editor-name')), findsOneWidget);
+    expect(find.byKey(const ValueKey('reference-editor-cancel')), findsOneWidget);
+    expect(find.byKey(const ValueKey('reference-editor-save')), findsOneWidget);
+
+    // Close without saving, then reopen to validate and save.
+    await tester.tap(find.byKey(const ValueKey('reference-editor-close')));
+    await tester.pumpAndSettle();
+    expect(find.byType(AlertDialog), findsNothing);
+    await tester.tap(find.text('Add Program'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('reference-editor-save')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('reference-editor-error')), findsOneWidget);
+    expect(find.byType(AlertDialog), findsOneWidget);
+    await tester.enterText(
+      find.byKey(const ValueKey('reference-editor-code')),
+      'TESTP',
+    );
+    await tester.enterText(
+      find.byKey(const ValueKey('reference-editor-name')),
+      'Test Program',
+    );
+    await tester.tap(find.byKey(const ValueKey('reference-editor-save')));
+    await tester.pumpAndSettle();
+    expect(find.byType(AlertDialog), findsNothing);
+    expect(store.programs.any((p) => p.code == 'TESTP'), isTrue);
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox());
+  });
 }
