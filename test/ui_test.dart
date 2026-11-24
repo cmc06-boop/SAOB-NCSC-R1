@@ -36,6 +36,12 @@ void main() {
       final password = tester.widget<TextField>(
         find.byKey(const ValueKey('Password')),
       );
+      expect(
+        TooltipVisibility.of(
+          tester.element(find.byKey(const ValueKey('Password'))),
+        ),
+        isFalse,
+      );
       expect(password.obscureText, isTrue);
       await tester.tap(find.byTooltip('Show password'));
       await tester.pump();
@@ -82,6 +88,14 @@ void main() {
       await tester.pumpWidget(FinanceApp(store: store));
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
+      // All hover tooltips stay hidden in the app (including its sidebar,
+      // dropdowns, table cells, and icon controls).
+      expect(
+        TooltipVisibility.of(
+          tester.element(find.byKey(const ValueKey('nav-budget'))),
+        ),
+        isFalse,
+      );
       // Sidebar Logout has no filled background at wide or compact widths.
       expect(find.byKey(const ValueKey('sidebar-logout')), findsOneWidget);
       expect(
