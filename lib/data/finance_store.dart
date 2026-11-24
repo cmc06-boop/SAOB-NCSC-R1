@@ -191,7 +191,9 @@ class FinanceStore extends ChangeNotifier {
     final passwordRequested = currentPassword.isNotEmpty ||
         newPassword.isNotEmpty ||
         confirmPassword.isNotEmpty;
-    if (!profileChanged && !passwordRequested) return false;
+    if (!profileChanged && !passwordRequested) {
+      return false;
+    }
 
     String? previousHash;
     String? newHash;
