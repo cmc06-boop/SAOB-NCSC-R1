@@ -78,8 +78,8 @@ class _AppShellState extends State<AppShell> {
                   shape: BoxShape.circle,
                   color: Color(0xffe2eafa),
                 ),
-                child: const Icon(
-                  Icons.logout_rounded,
+                child: const AppSvgIcon(
+                  'log-out',
                   size: 26,
                   color: ink,
                 ),
