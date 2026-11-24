@@ -98,10 +98,24 @@ void main() {
       expect(find.text('Settings'), findsNothing);
       expect(find.text('Users'), findsNothing);
       expect(find.text('System'), findsNothing);
+      // Audit Trail filters should remain usable after repositioning.
+      await tester.tap(find.byKey(const ValueKey('nav-audit')));
+      await tester.pumpAndSettle();
+      expect(find.text('Fiscal Year:'), findsOneWidget);
+      expect(find.text('Program:'), findsOneWidget);
+      expect(find.text('Action:'), findsOneWidget);
+      expect(tester.takeException(), isNull);
       await tester.tap(find.byKey(const ValueKey('nav-programs')));
       await tester.pumpAndSettle();
-      expect(find.text('Program Management'), findsOneWidget);
+      expect(find.text('Program Management'), findsNothing);
       expect(find.text('Add Program'), findsOneWidget);
+      expect(find.byKey(const ValueKey('programs')), findsOneWidget);
+      // The action is now aligned with the page subtitle, above the table.
+      final programSubtitle = tester.getCenter(
+        find.text('Manage programs and their associated names.'),
+      );
+      final addButton = tester.getCenter(find.text('Add Program'));
+      expect((programSubtitle.dy - addButton.dy).abs(), lessThan(26));
       await tester.tap(find.byKey(const ValueKey('nav-uacs')));
       await tester.pumpAndSettle();
       expect(find.byKey(const ValueKey('uacs')), findsOneWidget);
