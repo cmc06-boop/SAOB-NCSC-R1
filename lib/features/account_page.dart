@@ -149,6 +149,7 @@ class _AccountDialogState extends State<AccountDialog> {
           padding: EdgeInsets.symmetric(horizontal: 44),
           child: Text(
             'My Account',
+            key: ValueKey('account-title'),
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 20,
