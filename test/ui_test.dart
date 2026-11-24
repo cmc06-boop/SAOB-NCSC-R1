@@ -158,8 +158,14 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('Add Budget Record'), findsOneWidget);
       expect(tester.takeException(), isNull);
-      await tester.tap(find.text('Cancel').last);
+      // On compact windows the dialog body scrolls, so bring Cancel
+      // on-screen before tapping it rather than tapping an obscured widget.
+      final cancel = find.widgetWithText(TextButton, 'Cancel');
+      await tester.ensureVisible(cancel);
       await tester.pumpAndSettle();
+      await tester.tap(cancel);
+      await tester.pumpAndSettle();
+      expect(find.text('Add Budget Record'), findsNothing);
       expect(tester.takeException(), isNull);
       await tester.pumpWidget(const SizedBox());
     });
