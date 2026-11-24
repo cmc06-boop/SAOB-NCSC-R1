@@ -82,22 +82,30 @@ void main() {
       await tester.pumpWidget(FinanceApp(store: store));
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
-      // Side menu icons work both in expanded and compact navigation.
-      for (final icon in [
-        Icons.account_balance_wallet_outlined,
-        Icons.description_outlined,
-        Icons.history_outlined,
-        Icons.settings_outlined,
+      // The Programs and UACS Reference views are separate sidebar pages.
+      // Stable keys also work when the sidebar is collapsed.
+      for (final page in [
+        'budget',
+        'reports',
+        'audit',
+        'programs',
+        'uacs',
       ]) {
-        await tester.tap(find.byIcon(icon).first);
+        await tester.tap(find.byKey(ValueKey('nav-$page')));
         await tester.pumpAndSettle();
         expect(tester.takeException(), isNull);
       }
+      expect(find.text('Settings'), findsNothing);
       expect(find.text('Users'), findsNothing);
       expect(find.text('System'), findsNothing);
-      await tester.tap(
-        find.byIcon(Icons.account_balance_wallet_outlined).first,
-      );
+      await tester.tap(find.byKey(const ValueKey('nav-programs')));
+      await tester.pumpAndSettle();
+      expect(find.text('Program Management'), findsOneWidget);
+      expect(find.text('Add Program'), findsOneWidget);
+      await tester.tap(find.byKey(const ValueKey('nav-uacs')));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const ValueKey('uacs')), findsOneWidget);
+      await tester.tap(find.byKey(const ValueKey('nav-budget')));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Add Record'));
       await tester.pumpAndSettle();
@@ -133,7 +141,7 @@ void main() {
     await tester.pumpWidget(const SizedBox());
   });
 
-  testWidgets('Admin Settings include editable My Account form', (
+  testWidgets('Profile button above Logout opens My Account form', (
     tester,
   ) async {
     await binding.setSurfaceSize(const Size(1366, 720));
@@ -142,9 +150,8 @@ void main() {
       ..user = const LocalUser(1, 'Finance AO', 'ao', 'Admin');
     await tester.pumpWidget(FinanceApp(store: store));
     await tester.pumpAndSettle();
-    await tester.tap(find.byIcon(Icons.settings_outlined).first);
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('My Account').first);
+    expect(find.byKey(const ValueKey('nav-account')), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('nav-account')));
     await tester.pumpAndSettle();
     expect(find.text('Personal Information'), findsOneWidget);
     expect(find.text('Save Profile Changes'), findsOneWidget);
