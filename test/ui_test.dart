@@ -202,7 +202,17 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('nav-account')));
     await tester.pumpAndSettle();
     expect(find.byType(AlertDialog), findsOneWidget);
-    expect(find.text('Personal Information'), findsOneWidget);
+    expect(find.text('Personal Information'), findsNothing);
+    for (final key in [
+      'account-name',
+      'account-username',
+      'account-current-password',
+      'account-new-password',
+      'account-confirm-password',
+    ]) {
+      final field = tester.widget<TextField>(find.byKey(ValueKey(key)));
+      expect(field.decoration?.hintText, '••••••••');
+    }
     expect(find.text('Change Password'), findsNothing);
     expect(
       find.textContaining('Leave these fields blank'),
