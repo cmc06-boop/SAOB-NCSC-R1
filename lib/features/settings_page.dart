@@ -471,11 +471,14 @@ class _ReferenceEditorState extends State<ReferenceEditor> {
       backgroundColor: Colors.white,
       surfaceTintColor: Colors.transparent,
       titlePadding: const EdgeInsets.fromLTRB(24, 16, 16, 8),
-      title: Row(
+      title: Stack(
+        alignment: Alignment.center,
         children: [
-          Expanded(
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 44),
             child: Text(
               heading,
+              textAlign: TextAlign.center,
               style: const TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.w700,
@@ -483,11 +486,14 @@ class _ReferenceEditorState extends State<ReferenceEditor> {
               ),
             ),
           ),
-          IconButton(
-            key: const ValueKey('reference-editor-close'),
-            tooltip: 'Close editor',
-            onPressed: () => Navigator.pop(context),
-            icon: const Icon(Icons.close),
+          Align(
+            alignment: Alignment.centerRight,
+            child: IconButton(
+              key: const ValueKey('reference-editor-close'),
+              tooltip: 'Close editor',
+              onPressed: () => Navigator.pop(context),
+              icon: const Icon(Icons.close),
+            ),
           ),
         ],
       ),
@@ -524,18 +530,17 @@ class _ReferenceEditorState extends State<ReferenceEditor> {
         ),
       ),
       actionsPadding: const EdgeInsets.fromLTRB(24, 12, 24, 18),
-      actionsAlignment: MainAxisAlignment.center,
+      actionsAlignment: MainAxisAlignment.end,
       actions: [
-        OutlinedButton(
+        TextButton(
           key: const ValueKey('reference-editor-cancel'),
           onPressed: () => Navigator.pop(context),
           child: const Text('Cancel'),
         ),
-        FilledButton.icon(
+        FilledButton(
           key: const ValueKey('reference-editor-save'),
           onPressed: save,
-          icon: const Icon(Icons.save_outlined, size: 18),
-          label: const Text('Save'),
+          child: const Text('Save'),
         ),
       ],
     );
