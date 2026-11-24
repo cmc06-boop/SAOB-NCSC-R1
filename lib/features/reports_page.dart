@@ -14,6 +14,7 @@ import '../data/report_pdf_sections.dart';
 import '../data/report_summary.dart';
 import 'summary_preview.dart';
 import '../ui/common.dart';
+import '../ui/svg_icon.dart';
 import '../ui/theme.dart';
 
 /// Compact file-type artwork, distinct from the generic table/document icons.
@@ -352,7 +353,7 @@ class _ReportsPageState extends State<ReportsPage> {
             minimumSize: Size.zero,
           ),
           onPressed: busy ? null : openPreview,
-          icon: const Icon(Icons.description_outlined, size: 18),
+          icon: const AppSvgIcon('file-text', size: 18),
           label: Text(busy ? 'Generating…' : 'Generate Report'),
         ),
       ],
@@ -558,8 +559,8 @@ class _ReportsPageState extends State<ReportsPage> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            selected ? Icons.radio_button_checked : Icons.radio_button_unchecked,
+          AppSvgIcon(
+            selected ? 'circle-dot' : 'circle',
             size: 18,
             color: selected ? blue : muted,
           ),
@@ -596,7 +597,7 @@ class _ReportsPageState extends State<ReportsPage> {
         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
         visualDensity: VisualDensity.compact,
       ),
-      icon: const Icon(Icons.download_outlined, size: 18),
+      icon: const AppSvgIcon('download', size: 18),
       label: const Text('Export'),
     );
   }
@@ -622,7 +623,7 @@ class _ReportsPageState extends State<ReportsPage> {
                     borderRadius: BorderRadius.circular(8),
                   ),
                 ),
-                icon: const Icon(Icons.arrow_back),
+                icon: const AppSvgIcon('arrow-left', size: 16),
               ),
               const SizedBox(width: 10),
               const Expanded(
@@ -1044,7 +1045,7 @@ class _UtilizationChart extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Icon(Icons.bar_chart, color: blue, size: 22),
+              const AppSvgIcon('chart-no-axes-column-increasing', color: blue, size: 22),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
@@ -1453,7 +1454,7 @@ class _SummaryCard extends StatelessWidget {
         children: [
           const Row(
             children: [
-              Icon(Icons.assignment_outlined, color: blue, size: 20),
+              AppSvgIcon('clipboard-list', color: blue, size: 20),
               SizedBox(width: 8),
               Text(
                 'Summary',
@@ -1559,7 +1560,7 @@ class _HistoryCardState extends State<_HistoryCard> {
             padding: EdgeInsets.fromLTRB(16, 16, 16, 12),
             child: Row(
               children: [
-                Icon(Icons.description_outlined, color: blue, size: 20),
+                AppSvgIcon('file-text', color: blue, size: 20),
                 SizedBox(width: 8),
                 Text(
                   'Generated Reports',
