@@ -121,7 +121,7 @@ class _DashboardPageState extends State<DashboardPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       title,
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 5),
                       subtitle,
                       const SizedBox(height: 16),
                       filters,
@@ -131,7 +131,7 @@ class _DashboardPageState extends State<DashboardPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       title,
-                      const SizedBox(height: 1),
+                      const SizedBox(height: 0),
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
