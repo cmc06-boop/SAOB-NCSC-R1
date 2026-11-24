@@ -376,7 +376,7 @@ class _ReportsPageState extends State<ReportsPage> {
           Align(
             alignment: Alignment.bottomCenter,
             child: PopupMenuButton<String>(
-                                key: const ValueKey('reports-export'),
+                key: const ValueKey('reports-export'),
                 onSelected: records.isEmpty ? null : generate,
                 enabled: !busy && records.isNotEmpty,
                 itemBuilder: (context) => const [
@@ -412,7 +412,7 @@ class _ReportsPageState extends State<ReportsPage> {
                     ],
                   ),
                 ),
-              ),
+            ),
           ),
         ],
       ),
@@ -437,7 +437,7 @@ class _ReportsPageState extends State<ReportsPage> {
                 tooltip: 'Back to Reports',
                 onPressed: busy ? null : () => setState(() => preview = false),
                 icon: const Icon(Icons.arrow_back, size: 20),
-              ),,
+              ),
             ],
           ),
           const SizedBox(height: 14),
