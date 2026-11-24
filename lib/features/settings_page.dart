@@ -90,11 +90,12 @@ class _ReferenceManagementPageState extends State<_ReferenceManagementPage> {
               padding: 0,
               child: _SettingsTable(
                 key: const ValueKey('programs-table'),
+                centeredColumns: const {0, 1, 3},
                 columns: const ['Code', 'Program Name', 'Actions'],
                 widths: const {
                   0: FixedColumnWidth(200),
                   1: FlexColumnWidth(),
-                  2: FixedColumnWidth(96),
+                  2: FixedColumnWidth(160),
                 },
                 rows: [
                   for (final p in programs)
@@ -162,6 +163,7 @@ class _ReferenceManagementPageState extends State<_ReferenceManagementPage> {
             padding: 0,
             child: _SettingsTable(
               key: const ValueKey('uacs-table'),
+              centeredColumns: const {0, 1},
               columns: const [
                 'UACS Code',
                 'Expense (UACS Name)',
@@ -221,7 +223,9 @@ class _SettingsTable extends StatelessWidget {
     required this.columns,
     required this.widths,
     required this.rows,
+    this.centeredColumns = const {},
   });
+  final Set<int> centeredColumns;
   final List<String> columns;
   final Map<int, TableColumnWidth> widths;
   final List<List<Widget>> rows;
@@ -249,9 +253,12 @@ class _SettingsTable extends StatelessWidget {
     child: Text(text, style: style, textAlign: align),
   );
 
-  Widget _padded(Widget child) => Padding(
-    padding: const EdgeInsets.fromLTRB(12, 8, 8, 8),
-    child: DefaultTextStyle(style: _body, child: child),
+  Widget _padded(Widget child, {bool center = false}) => Padding(
+    padding: EdgeInsets.fromLTRB(center ? 8 : 12, 8, 8, 8),
+    child: DefaultTextStyle(
+      style: _body,
+      child: center ? Center(child: child) : child,
+    ),
   );
 
   TableRow _row(List<Widget> cells, Color color) => TableRow(
@@ -299,8 +306,18 @@ class _SettingsTable extends StatelessWidget {
         else
           for (var i = 0; i < rows.length; i++)
             _row([
-              _text('${i + 1}', style: _number),
-              for (final cell in rows[i]) _padded(cell),
+              _text(
+                '${i + 1}',
+                style: _number,
+                align: centeredColumns.contains(0)
+                    ? TextAlign.center
+                    : TextAlign.left,
+              ),
+              for (var column = 0; column < rows[i].length; column++)
+                _padded(
+                  rows[i][column],
+                  center: centeredColumns.contains(column + 1),
+                ),
             ], i.isOdd ? const Color(0xfff7f9fc) : Colors.white),
       ],
     );
