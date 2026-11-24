@@ -37,7 +37,7 @@ Sa parehong `theme.dart`:
 | `lib/features/reports_page.dart` | Report filters, preview, exports, history |
 | `lib/features/audit_page.dart` | Audit table and filters |
 | `lib/features/settings_page.dart` | Separate Programs and UACS Reference pages, sharing the existing management forms |
-| `lib/features/account_page.dart` | Single-column My Account dialog opened from the profile button above Logout, with inline validation and one plain Save action |
+| `lib/features/account_page.dart` | Single-column My Account dialog opened from the profile button above Logout, with inline validation and lower-right Cancel / plain Save actions |
 | `lib/ui/common.dart` | Reusable panels, tables, dropdowns, and pagination |
 | `lib/data/finance_store.dart` | Database operations and finance rules |
 
