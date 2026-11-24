@@ -28,7 +28,7 @@ Sa parehong `theme.dart`:
 
 | File | Laman |
 | --- | --- |
-| `lib/features/login_page.dart` | Login form, branding, local first-account setup |
+| `lib/features/login_page.dart` | Login-only interface and branding (no sign-up or forgot-password) |
 | `lib/ui/login_backdrop.dart` | Original senior photo and background composition |
 | `lib/ui/app_shell.dart` | Sidebar and signed-in header |
 | `lib/features/dashboard_page.dart` | Metrics, item filter, donut, rates |
@@ -36,7 +36,8 @@ Sa parehong `theme.dart`:
 | `lib/features/import_page.dart` | Excel worksheet preview and import |
 | `lib/features/reports_page.dart` | Report filters, preview, exports, history |
 | `lib/features/audit_page.dart` | Audit table and filters |
-| `lib/features/settings_page.dart` | Programs and UACS reference forms |
+| `lib/features/settings_page.dart` | Separate Programs and UACS Reference pages, sharing the existing management forms |
+| `lib/features/account_page.dart` | My Account page reached through the profile button above Logout |
 | `lib/ui/common.dart` | Reusable panels, tables, dropdowns, and pagination |
 | `lib/data/finance_store.dart` | Database operations and finance rules |
 
