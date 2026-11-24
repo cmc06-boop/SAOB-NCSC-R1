@@ -186,11 +186,7 @@ class _BudgetPageState extends State<BudgetPage> {
               ? null
               : () {
                   if (chosen == null) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Select a record to edit.'),
-                      ),
-                    );
+                    showMessage(context, 'Select a record to edit.');
                     return;
                   }
                   edit(chosen);
@@ -205,11 +201,7 @@ class _BudgetPageState extends State<BudgetPage> {
               ? null
               : () {
                   if (chosen == null) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Select a record to delete.'),
-                      ),
-                    );
+                    showMessage(context, 'Select a record to delete.');
                     return;
                   }
                   remove(chosen);
