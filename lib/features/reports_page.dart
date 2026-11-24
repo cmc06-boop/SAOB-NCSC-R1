@@ -383,12 +383,21 @@ class _ReportsPageState extends State<ReportsPage> {
             ),
           ),
           const SizedBox(height: 7),
-          Row(
-            children: [
-              _formatOption('PDF', Icons.picture_as_pdf_outlined, red),
-              const SizedBox(width: 8),
-              _formatOption('Excel', Icons.table_chart_outlined, const Color(0xff198754)),
-            ],
+          Center(
+            key: const ValueKey('reports-format-group'),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                _formatOption('PDF', Icons.picture_as_pdf_rounded, red),
+                const SizedBox(width: 10),
+                _formatOption(
+                  'Excel',
+                  Icons.table_chart_rounded,
+                  const Color(0xff198754),
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -405,8 +414,8 @@ class _ReportsPageState extends State<ReportsPage> {
         backgroundColor: selected ? const Color(0xffedf3ff) : Colors.white,
         side: BorderSide(color: selected ? blue : line, width: selected ? 1.5 : 1),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 9),
-        minimumSize: const Size(0, 36),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+        minimumSize: const Size(0, 44),
         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
         visualDensity: VisualDensity.compact,
       ),
@@ -415,13 +424,16 @@ class _ReportsPageState extends State<ReportsPage> {
         children: [
           Icon(
             selected ? Icons.radio_button_checked : Icons.radio_button_unchecked,
-            size: 16,
+            size: 18,
             color: selected ? blue : muted,
           ),
-          const SizedBox(width: 5),
-          Icon(fileIcon, size: 16, color: iconColor),
-          const SizedBox(width: 5),
-          Text(format, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+          const SizedBox(width: 6),
+          Icon(fileIcon, size: 22, color: iconColor),
+          const SizedBox(width: 6),
+          Text(
+            format,
+            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+          ),
         ],
       ),
     );
