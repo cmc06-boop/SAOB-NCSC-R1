@@ -180,7 +180,7 @@ void main() {
     expect(sheet, contains('<f>SUM(B11:B11)</f>'));
     expect(sheet, contains('<f>B12-C12</f>'));
     // Cache initial result without replacing the editable formula.
-    expect(sheet, matches(RegExp(r'<f>B5-C5</f><v>400(\\.0)?</v>')));
+    expect(sheet, matches(RegExp(r'<f>B5-C5</f><v>400(\.0)?</v>')));
   });
 
   test('Summary Excel fiscal year is dynamic, not hard-coded to 2026', () {
