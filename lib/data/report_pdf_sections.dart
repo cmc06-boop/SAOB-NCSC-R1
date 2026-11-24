@@ -69,18 +69,16 @@ Future<Uint8List> pdfSaobSummaryReport(
           pw.Column(
             crossAxisAlignment: pw.CrossAxisAlignment.stretch,
             children: [
-              pw.Container(
-                padding: const pw.EdgeInsets.symmetric(
-                  horizontal: 9,
-                  vertical: 7,
-                ),
-                color: const PdfColor.fromInt(0xff173c80),
-                child: pw.Text(
-                  section.title,
-                  style: pw.TextStyle(
-                    fontSize: 10,
-                    fontWeight: pw.FontWeight.bold,
-                    color: PdfColors.white,
+              pw.Padding(
+                padding: const pw.EdgeInsets.symmetric(vertical: 8),
+                child: pw.Center(
+                  child: pw.Text(
+                    section.title,
+                    textAlign: pw.TextAlign.center,
+                    style: pw.TextStyle(
+                      fontSize: 11,
+                      fontWeight: pw.FontWeight.bold,
+                    ),
                   ),
                 ),
               ),
@@ -161,9 +159,12 @@ pw.Widget _letterhead(pw.MemoryImage logo, int year, String heading) =>
           ],
         ),
         pw.SizedBox(height: 8),
-        pw.Text(
-          heading,
-          style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold),
+        pw.Center(
+          child: pw.Text(
+            heading,
+            textAlign: pw.TextAlign.center,
+            style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold),
+          ),
         ),
         pw.SizedBox(height: 2),
         pw.Text(
