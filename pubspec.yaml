@@ -11,6 +11,7 @@ dependencies:
   flutter:
     sdk: flutter
   material_ui: ^1.1.0
+  flutter_svg: ^2.5.0
   archive: ^3.6.1
   cryptography: ^2.7.0
   excel: ^4.0.6
@@ -30,6 +31,7 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   assets:
+    - assets/icons/
     - assets/login-reference-background.png
     - assets/login-senior.png
     - assets/ncsc-logo-transparent.png
