@@ -354,7 +354,10 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('nav-account')));
     await tester.pumpAndSettle();
     expect(find.byType(AlertDialog), findsOneWidget);
-    final accountTitle = find.text('My Account');
+    // The sidebar profile label may also be "My Account".
+    // Target the dialog heading itself, not all matching text widgets.
+    final accountTitle = find.byKey(const ValueKey('account-title'));
+    expect(accountTitle, findsOneWidget);
     expect(tester.widget<Text>(accountTitle).textAlign, TextAlign.center);
     expect(
       (tester.getCenter(accountTitle).dx -
