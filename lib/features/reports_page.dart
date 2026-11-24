@@ -73,6 +73,7 @@ class _ReportsPageState extends State<ReportsPage> {
   static const _reportType = 'Budget Utilization Report';
   int year = manilaNow().year;
   String program = '';
+  String reportFormat = 'PDF';
   bool busy = false, preview = false;
   void change(VoidCallback fn) => setState(fn);
   void openPreview() {
@@ -372,42 +373,73 @@ class _ReportsPageState extends State<ReportsPage> {
             ],
             onChanged: busy ? null : (v) => change(() => program = v),
           ),
+          const SizedBox(height: 18),
+          const Text(
+            'Report Format',
+            style: TextStyle(
+              color: ink,
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 7),
+          Row(
+            children: [
+              _formatOption('PDF', Icons.picture_as_pdf_outlined, red),
+              const SizedBox(width: 8),
+              _formatOption('Excel', Icons.table_chart_outlined, const Color(0xff198754)),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _formatOption(String format, IconData fileIcon, Color iconColor) {
+    final selected = reportFormat == format;
+    return OutlinedButton(
+      key: ValueKey('reports-format-${format.toLowerCase()}'),
+      onPressed: busy ? null : () => setState(() => reportFormat = format),
+      style: OutlinedButton.styleFrom(
+        foregroundColor: ink,
+        backgroundColor: selected ? const Color(0xffedf3ff) : Colors.white,
+        side: BorderSide(color: selected ? blue : line, width: selected ? 1.5 : 1),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 9),
+        minimumSize: const Size(0, 36),
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        visualDensity: VisualDensity.compact,
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            selected ? Icons.radio_button_checked : Icons.radio_button_unchecked,
+            size: 16,
+            color: selected ? blue : muted,
+          ),
+          const SizedBox(width: 5),
+          Icon(fileIcon, size: 16, color: iconColor),
+          const SizedBox(width: 5),
+          Text(format, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
         ],
       ),
     );
   }
 
   Widget _exportButton(List<BudgetRecord> records) {
-    return PopupMenuButton<String>(
+    return FilledButton.icon(
       key: const ValueKey('reports-export'),
-      onSelected: records.isEmpty ? null : generate,
-      enabled: !busy && records.isNotEmpty,
-      itemBuilder: (context) => const [
-        PopupMenuItem(value: 'PDF', child: Text('Export PDF')),
-        PopupMenuItem(value: 'Excel', child: Text('Export Excel')),
-      ],
-      child: Container(
+      onPressed: busy || records.isEmpty ? null : () => generate(reportFormat),
+      style: FilledButton.styleFrom(
+        backgroundColor: blue,
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        decoration: BoxDecoration(
-          color: blue,
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: const Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.download_outlined, size: 18, color: Colors.white),
-            SizedBox(width: 8),
-            Text(
-              'Export',
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            Icon(Icons.arrow_drop_down, color: Colors.white),
-          ],
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        visualDensity: VisualDensity.compact,
       ),
+      icon: const Icon(Icons.download_outlined, size: 18),
+      label: const Text('Export'),
     );
   }
 
@@ -422,7 +454,17 @@ class _ReportsPageState extends State<ReportsPage> {
                 key: const ValueKey('reports-back'),
                 tooltip: 'Back to Reports',
                 onPressed: busy ? null : () => setState(() => preview = false),
-                icon: const Icon(Icons.arrow_back, size: 20),
+                iconSize: 16,
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints.tightFor(width: 32, height: 32),
+                style: IconButton.styleFrom(
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  side: const BorderSide(color: line),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                icon: const Icon(Icons.arrow_back),
               ),
               const SizedBox(width: 10),
               const Expanded(
