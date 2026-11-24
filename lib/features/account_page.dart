@@ -225,17 +225,10 @@ class _AccountDialogState extends State<AccountDialog> {
               ),
               const SizedBox(height: 10),
             ],
-            FilledButton.icon(
+            FilledButton(
               key: const ValueKey('account-save'),
               onPressed: _saving ? null : _saveChanges,
-              icon: _saving
-                  ? const SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Icon(Icons.save_outlined, size: 18),
-              label: const Text('Save Changes'),
+              child: const Text('Save'),
             ),
           ],
         ),
