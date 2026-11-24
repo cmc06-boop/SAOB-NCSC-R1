@@ -168,7 +168,7 @@ class _LoginPageState extends State<LoginPage> {
                 _bagongMark(logoSize),
               ],
             ),
-            SizedBox(height: compact ? 14 : 20)
+            SizedBox(height: compact ? 14 : 20),
             Text(
               'National Commission of Senior Citizens',
               textAlign: TextAlign.center,
@@ -381,7 +381,7 @@ class _LoginPageState extends State<LoginPage> {
                   height: 1.1,
                 ),
               ),
-              SizedBox(height: compact ? 14 : 20)
+              SizedBox(height: compact ? 14 : 20),
               if (needsProvisioning) ...[
                 const Text(
                   'No Admin account is configured on this computer. '
