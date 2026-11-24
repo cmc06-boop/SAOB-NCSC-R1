@@ -4,6 +4,7 @@ import 'package:material_ui/material_ui.dart';
 
 import '../core/format.dart';
 import '../data/models.dart';
+import 'svg_icon.dart';
 import 'theme.dart';
 
 class PageFrame extends StatelessWidget {
@@ -253,8 +254,8 @@ class AppDropdown<T> extends StatelessWidget {
                   const SizedBox(width: 6),
                   const Padding(
                     padding: EdgeInsets.only(right: 8),
-                    child: Icon(
-                      Icons.keyboard_arrow_down_rounded,
+                    child: AppSvgIcon(
+                      'chevron-down',
                       size: 18,
                       color: muted,
                     ),
@@ -311,7 +312,7 @@ class SearchBox extends StatelessWidget {
       onChanged: onChanged,
       decoration: InputDecoration(
         hintText: hint,
-        prefixIcon: const Icon(Icons.search, size: 20),
+        prefixIcon: const AppSvgIcon('search', size: 20),
       ),
     ),
   );
@@ -334,8 +335,8 @@ class EmptyState extends StatelessWidget {
               color: const Color(0xffe8eef8),
               borderRadius: BorderRadius.circular(18),
             ),
-            child: const Icon(
-              Icons.folder_open_outlined,
+            child: const AppSvgIcon(
+              'folder-open',
               size: 30,
               color: blue,
             ),
@@ -861,13 +862,13 @@ class Pager extends StatelessWidget {
           IconButton(
             tooltip: 'Previous page',
             onPressed: p > 1 ? () => onChanged(p - 1) : null,
-            icon: const Icon(Icons.chevron_left),
+            icon: const AppSvgIcon('chevron-left'),
           ),
           Text('$p / $maxPage'),
           IconButton(
             tooltip: 'Next page',
             onPressed: p < maxPage ? () => onChanged(p + 1) : null,
-            icon: const Icon(Icons.chevron_right),
+            icon: const AppSvgIcon('chevron-right'),
           ),
         ],
       ),
@@ -946,7 +947,7 @@ Future<bool> confirm(
               key: const ValueKey('confirm-close'),
               tooltip: 'Close confirmation',
               onPressed: () => Navigator.pop(ctx, false),
-              icon: const Icon(Icons.close),
+              icon: const AppSvgIcon('x'),
             ),
           ],
         ),
