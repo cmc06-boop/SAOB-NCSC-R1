@@ -888,20 +888,58 @@ String friendlyError(Object error) => error is FinanceError
     ? error.message
     : 'The operation could not be completed. Close any other copy of the app and try again.';
 
-Future<bool> confirm(BuildContext context, String title, String detail) async =>
+Future<bool> confirm(
+  BuildContext context,
+  String title,
+  String detail, {
+  String confirmLabel = 'Confirm',
+}) async =>
     await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(title),
-        content: Text(detail),
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.transparent,
+        titlePadding: const EdgeInsets.fromLTRB(24, 16, 16, 8),
+        title: Row(
+          children: [
+            Expanded(
+              child: Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                  color: ink,
+                ),
+              ),
+            ),
+            IconButton(
+              key: const ValueKey('confirm-close'),
+              tooltip: 'Close confirmation',
+              onPressed: () => Navigator.pop(ctx, false),
+              icon: const Icon(Icons.close),
+            ),
+          ],
+        ),
+        contentPadding: const EdgeInsets.fromLTRB(24, 8, 24, 0),
+        content: SizedBox(
+          width: 400,
+          child: Text(
+            detail,
+            style: const TextStyle(fontSize: 14, color: ink),
+          ),
+        ),
+        actionsPadding: const EdgeInsets.fromLTRB(24, 12, 24, 18),
+        actionsAlignment: MainAxisAlignment.center,
         actions: [
-          TextButton(
+          OutlinedButton(
+            key: const ValueKey('confirm-cancel'),
             onPressed: () => Navigator.pop(ctx, false),
             child: const Text('Cancel'),
           ),
           FilledButton(
+            key: const ValueKey('confirm-accept'),
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Confirm'),
+            child: Text(confirmLabel),
           ),
         ],
       ),
