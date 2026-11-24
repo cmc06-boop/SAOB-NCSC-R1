@@ -354,6 +354,15 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('nav-account')));
     await tester.pumpAndSettle();
     expect(find.byType(AlertDialog), findsOneWidget);
+    final accountTitle = find.text('My Account');
+    expect(tester.widget<Text>(accountTitle).textAlign, TextAlign.center);
+    expect(
+      (tester.getCenter(accountTitle).dx -
+              tester.getCenter(find.byType(AlertDialog)).dx)
+          .abs(),
+      lessThan(8),
+    );
+    expect(find.byKey(const ValueKey('account-close')), findsOneWidget);
     expect(find.text('Personal Information'), findsNothing);
     for (final key in [
       'account-name',
