@@ -406,6 +406,22 @@ void main() {
         (formatButtonsMidpoint - tester.getCenter(formatGroup).dx).abs(),
         lessThan(3),
       );
+      // Both buttons must remain inside the 238 px Report Parameters panel.
+      expect(
+        tester.getTopLeft(pdfFormat).dx,
+        greaterThanOrEqualTo(tester.getTopLeft(formatGroup).dx - 1),
+      );
+      expect(
+        tester.getTopRight(excelFormat).dx,
+        lessThanOrEqualTo(tester.getTopRight(formatGroup).dx + 1),
+      );
+      expect(
+        (tester.getSize(pdfFormat).width -
+                tester.getSize(excelFormat).width)
+            .abs(),
+        lessThan(2),
+      );
+      expect(tester.takeException(), isNull);
       expect(tester.getSize(pdfFormat).height, greaterThanOrEqualTo(40));
       expect(tester.getSize(excelFormat).height, greaterThanOrEqualTo(40));
       expect(
