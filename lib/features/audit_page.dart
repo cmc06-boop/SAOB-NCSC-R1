@@ -335,7 +335,7 @@ String auditDetailSentence(
       parts.every((part) => amount.hasMatch(part))) {
     if (parts.length == 1) {
       final item = parts.single;
-      return item.endsWith('.') ? item : '${item}.';
+      return item.endsWith('.') ? item : '$item.';
     }
     final labels = [
       for (final part in parts) amount.firstMatch(part)!.group(1)!,
@@ -369,7 +369,7 @@ String auditDetailSentence(
   if (withoutAction.isEmpty) {
     return 'No additional details.';
   }
-  return withoutAction.endsWith('.') ? withoutAction : '${withoutAction}.';
+  return withoutAction.endsWith('.') ? withoutAction : '$withoutAction.';
 }
 
 class _AuditFilter<T> extends StatelessWidget {
