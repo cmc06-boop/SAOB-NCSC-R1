@@ -141,12 +141,15 @@ class _AccountDialogState extends State<AccountDialog> {
   Widget build(BuildContext context) => AlertDialog(
     backgroundColor: Colors.white,
     surfaceTintColor: Colors.transparent,
-    titlePadding: const EdgeInsets.fromLTRB(24, 16, 16, 8),
-    title: Row(
+    titlePadding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
+    title: Stack(
+      alignment: Alignment.center,
       children: [
-        const Expanded(
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 44),
           child: Text(
             'My Account',
+            textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.w700,
@@ -154,11 +157,14 @@ class _AccountDialogState extends State<AccountDialog> {
             ),
           ),
         ),
-        IconButton(
-          key: const ValueKey('account-close'),
-          tooltip: 'Close account',
-          onPressed: _saving ? null : () => Navigator.of(context).pop(),
-          icon: const Icon(Icons.close),
+        Align(
+          alignment: Alignment.centerRight,
+          child: IconButton(
+            key: const ValueKey('account-close'),
+            tooltip: 'Close account',
+            onPressed: _saving ? null : () => Navigator.of(context).pop(),
+            icon: const Icon(Icons.close),
+          ),
         ),
       ],
     ),
