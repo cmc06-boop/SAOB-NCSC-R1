@@ -291,6 +291,19 @@ void main() {
       await tester.tap(find.text('Add Record'));
       await tester.pumpAndSettle();
       expect(find.text('Add Budget Record'), findsOneWidget);
+      expect(find.byKey(const ValueKey('budget-record-dialog')), findsOneWidget);
+      final recordScroll = tester.widget<SingleChildScrollView>(
+        find.byKey(const ValueKey('budget-record-dialog-scroll')),
+      );
+      final recordPadding = recordScroll.padding! as EdgeInsets;
+      expect(recordPadding.bottom, 24);
+      final recordMinSize = tester.widget<ConstrainedBox>(
+        find.descendant(
+          of: find.byKey(const ValueKey('budget-record-dialog')),
+          matching: find.byType(ConstrainedBox),
+        ).first,
+      );
+      expect(recordMinSize.constraints.minHeight, 500);
       expect(find.widgetWithText(FilledButton, 'Save'), findsOneWidget);
       expect(find.text('Save Record'), findsNothing);
       expect(tester.takeException(), isNull);
