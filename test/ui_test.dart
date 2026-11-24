@@ -7,9 +7,13 @@ import 'package:ncsc_region1_finance/data/models.dart';
 import 'package:ncsc_region1_finance/data/report_summary.dart';
 import 'package:ncsc_region1_finance/main.dart';
 import 'package:ncsc_region1_finance/ui/common.dart';
+import 'package:ncsc_region1_finance/ui/svg_icon.dart';
 
 void main() {
   final binding = TestWidgetsFlutterBinding.ensureInitialized();
+  Finder svgIcon(String name) => find.byWidgetPredicate(
+    (widget) => widget is AppSvgIcon && widget.name == name,
+  );
   FinanceStore createStore() {
     final db = FinanceDatabase.open(path: ':memory:');
     db.connection.execute(
@@ -138,7 +142,7 @@ void main() {
       );
       expect(password.obscureText, isTrue);
       // TooltipVisibility is disabled globally; locate the actual icon.
-      await tester.tap(find.byIcon(Icons.visibility_off_outlined));
+      await tester.tap(svgIcon('eye-off'));
       await tester.pump();
       expect(
         tester
@@ -269,6 +273,16 @@ void main() {
         ),
         isFalse,
       );
+      // The sidebar agency logo has no solid white circular backing.
+      final sidebarLogo = find.byKey(const ValueKey('sidebar-logo'));
+      expect(sidebarLogo, findsOneWidget);
+      expect(tester.widget<SizedBox>(sidebarLogo).width, 45);
+      // Navigation uses SVG assets rather than Material icon font glyphs.
+      final dashboardNav = find.byKey(const ValueKey('nav-dashboard'));
+      expect(
+        find.descendant(of: dashboardNav, matching: svgIcon('layout-dashboard')),
+        findsOneWidget,
+      );
       // Sidebar Logout has no filled background at wide or compact widths.
       expect(find.byKey(const ValueKey('sidebar-logout')), findsOneWidget);
       expect(
@@ -370,11 +384,11 @@ void main() {
       // Hover labels are hidden, so use visible action icons instead.
       final edit = find.descendant(
         of: programsTable,
-        matching: find.byIcon(Icons.edit_outlined),
+        matching: svgIcon('pencil'),
       ).first;
       final delete = find.descendant(
         of: programsTable,
-        matching: find.byIcon(Icons.delete_outline),
+        matching: svgIcon('trash-2'),
       ).first;
       final actionsCenter =
           (tester.getCenter(edit).dx + tester.getCenter(delete).dx) / 2;
@@ -528,14 +542,14 @@ void main() {
       expect(
         find.descendant(
           of: pdfFormat,
-          matching: find.byIcon(Icons.radio_button_checked),
+          matching: svgIcon('circle-dot'),
         ),
         findsOneWidget,
       );
       expect(
         find.descendant(
           of: excelFormat,
-          matching: find.byIcon(Icons.radio_button_unchecked),
+          matching: svgIcon('circle'),
         ),
         findsOneWidget,
       );
@@ -544,14 +558,14 @@ void main() {
       expect(
         find.descendant(
           of: excelFormat,
-          matching: find.byIcon(Icons.radio_button_checked),
+          matching: svgIcon('circle-dot'),
         ),
         findsOneWidget,
       );
       expect(
         find.descendant(
           of: pdfFormat,
-          matching: find.byIcon(Icons.radio_button_unchecked),
+          matching: svgIcon('circle'),
         ),
         findsOneWidget,
       );
@@ -854,7 +868,7 @@ void main() {
     expect(find.byType(AlertDialog), findsNothing);
     expect(find.text('Log Out?'), findsOneWidget);
     expect(find.text('Are you sure you want to log out?'), findsOneWidget);
-    expect(find.byIcon(Icons.logout_rounded), findsOneWidget);
+    expect(find.descendant(of: dialog, matching: svgIcon('log-out')), findsOneWidget);
     expect(find.byKey(const ValueKey('logout-cancel')), findsOneWidget);
     expect(find.byKey(const ValueKey('logout-accept')), findsOneWidget);
     expect(
