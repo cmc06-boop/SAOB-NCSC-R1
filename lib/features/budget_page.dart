@@ -755,7 +755,7 @@ class _RecordEditorState extends State<RecordEditor> {
                         visualDensity: VisualDensity.compact,
                       ),
                       onPressed: program.isEmpty ? null : save,
-                      child: const Text('Save Record'),
+                      child: const Text('Save'),
                     ),
                   ],
                 ),
