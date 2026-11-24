@@ -422,8 +422,10 @@ void main() {
         lessThan(2),
       );
       expect(tester.takeException(), isNull);
-      expect(tester.getSize(pdfFormat).height, greaterThanOrEqualTo(40));
-      expect(tester.getSize(excelFormat).height, greaterThanOrEqualTo(40));
+      // These controls use standard visual density, so the intended
+      // 44 px minimum height must not shrink to 36 px on Windows.
+      expect(tester.getSize(pdfFormat).height, greaterThanOrEqualTo(44));
+      expect(tester.getSize(excelFormat).height, greaterThanOrEqualTo(44));
       // The report formats have custom recognizable document artwork
       // (PDF lettering and Excel X/grid), rather than generic Material icons.
       final pdfFileIcon = find.byKey(const ValueKey('reports-file-icon-pdf'));
