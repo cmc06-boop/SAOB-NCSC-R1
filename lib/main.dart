@@ -65,15 +65,20 @@ class _FinanceAppState extends State<FinanceApp> {
   }
 
   @override
-  Widget build(BuildContext context) => MaterialApp(
-    title: windowTitle,
-    debugShowCheckedModeBanner: false,
-    theme: appTheme(),
-    home: ListenableBuilder(
-      listenable: widget.store,
-      builder: (ctx, child) => widget.store.user == null
-          ? LoginPage(store: widget.store)
-          : AppShell(store: widget.store),
+  Widget build(BuildContext context) => TooltipVisibility(
+    // Suppress hover popups throughout the desktop UI. Keep the existing
+    // tooltip descriptions on controls for accessibility.
+    visible: false,
+    child: MaterialApp(
+      title: windowTitle,
+      debugShowCheckedModeBanner: false,
+      theme: appTheme(),
+      home: ListenableBuilder(
+        listenable: widget.store,
+        builder: (ctx, child) => widget.store.user == null
+            ? LoginPage(store: widget.store)
+            : AppShell(store: widget.store),
+      ),
     ),
   );
 }
