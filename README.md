@@ -63,15 +63,11 @@ Wala nang Settings item sa sidebar. Ang **Programs** at **UACS Reference** ay ma
 
 Kapag bagong calendar year sa Manila, automatically ginagawa ang bagong fiscal year. Mananatili ang lumang records. Walang automatic na pag-copy ng budget amounts sa bagong taon.
 
-## Welcome screen at Login UI
+## Pag-edit ng UI
 
-Unang lumalabas ang full-screen Welcome page na may NCSC at Bagong Pilipinas branding at **Sign in** button. Gamitin ang button o pindutin ang **Enter** para buksan ang centered login card. Parehong screen ang gumagamit ng blurred group photo at blue-to-red gradient. Existing local AO username/password ang gagamitin; walang Sign Up module.
+Basahin ang [docs/UI_GUIDE.md](docs/UI_GUIDE.md). Nasa `lib/ui/theme.dart` ang login card width, padding, radius, field height, at main colors. Puwedeng i-Hot Reload ang maraming UI changes.
 
-Nasa `lib/features/login_page.dart` ang Welcome/form layouts at nasa `lib/ui/login_backdrop.dart` ang shared background/gradient. Gamitin ang source image na **Group portrait with Philippine flags(1).png** sa root `assets/` folder. Awtomatikong nahahanap ng app ang larawan kung may `group`, `portrait` o `flags` sa filename. May lightweight, blurred copy na `assets/login-group-photo.jpg` sa GitHub para gumana agad ang bagong background sa clean installations. Kapag naka-save sa local `assets/` ang full-resolution file na `Group portrait with Philippine flags(1).png`, iyon ang unang pipiliin ng app para mas malinaw ang result. Para magamit din sa ibang computer, i-commit ang image asset sa `Experiment` branch. Ang official Bagong Pilipinas logo ay automatic ring pipiliin kung may image file sa `assets/` na may `bagong` sa filename; kung wala, may illustrated fallback.
-
-Pagkatapos magdagdag o magpalit ng image sa `assets/`, i-stop ang running app at mag-full restart gamit ang `flutter pub get` at `flutter run -d windows` para ma-refresh ang asset bundle. Tingnan ang [docs/UI_GUIDE.md](docs/UI_GUIDE.md) para sa iba pang UI details.
-
-Nasa native Windows title bar ang full agency/system title, walang logo o red underline sa title bar.
+Gamit pa rin ang original `assets/login-senior.png`. Separate widgets ang logo at text. Nasa native Windows title bar ang full agency/system title, walang logo o red underline sa title bar.
 
 ## Validation
 
