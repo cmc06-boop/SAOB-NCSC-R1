@@ -4,6 +4,7 @@ import '../core/format.dart';
 import '../data/finance_store.dart';
 import '../ui/common.dart';
 import '../ui/login_backdrop.dart';
+import '../ui/svg_icon.dart';
 import '../ui/theme.dart';
 
 class LoginPage extends StatefulWidget {
@@ -49,7 +50,7 @@ class _LoginPageState extends State<LoginPage> {
 
   Widget _field(
     String label,
-    IconData icon,
+    String icon,
     TextEditingController controller, {
     bool password = false,
   }) => SizedBox(
@@ -65,15 +66,13 @@ class _LoginPageState extends State<LoginPage> {
       onSubmitted: (_) => _submit(),
       decoration: InputDecoration(
         hintText: label,
-        prefixIcon: Icon(icon, size: 20, color: navy),
+        prefixIcon: AppSvgIcon(icon, size: 20, color: navy),
         suffixIcon: password
             ? IconButton(
                 tooltip: _showPassword ? 'Hide password' : 'Show password',
                 onPressed: () => setState(() => _showPassword = !_showPassword),
-                icon: Icon(
-                  _showPassword
-                      ? Icons.visibility_outlined
-                      : Icons.visibility_off_outlined,
+                icon: AppSvgIcon(
+                  _showPassword ? 'eye' : 'eye-off',
                   size: 20,
                   color: navy,
                 ),
@@ -134,7 +133,7 @@ class _LoginPageState extends State<LoginPage> {
                             child: CircleAvatar(
                               radius: 32,
                               backgroundColor: Color(0xffe2e9fa),
-                              child: Icon(Icons.person, size: 40, color: navy),
+                              child: AppSvgIcon('user-round', size: 40, color: navy),
                             ),
                           ),
                         ),
@@ -167,9 +166,9 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                       const SizedBox(height: 12),
                     ],
-                    _field('Username', Icons.person, _username),
+                    _field('Username', 'user-round', _username),
                     const SizedBox(height: 12),
-                    _field('Password', Icons.lock, _password, password: true),
+                    _field('Password', 'lock', _password, password: true),
                     if (_error != null)
                       Padding(
                         padding: const EdgeInsets.only(top: 12),
@@ -196,7 +195,7 @@ class _LoginPageState extends State<LoginPage> {
                                   strokeWidth: 2,
                                 ),
                               )
-                            : const Icon(Icons.login, size: 22),
+                            : const AppSvgIcon('log-in', size: 22),
                         label: const Text(
                           'Login',
                           style: TextStyle(
