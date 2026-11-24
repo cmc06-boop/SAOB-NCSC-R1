@@ -368,8 +368,8 @@ void main() {
       expect((uacsSubtitle.dy - searchPosition.dy).abs(), lessThan(34));
       expect(searchPosition.dx, greaterThan(uacsSubtitle.dx));
 
-      // Preview export is at the bottom of Report Parameters. The old
-      // export location is now an icon-only back control.
+      // The back arrow precedes Report Preview, and Export occupies
+      // the previous back-arrow position at the far right of the heading.
       await tester.tap(find.byKey(const ValueKey('nav-reports')));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Generate Report'));
@@ -382,14 +382,18 @@ void main() {
       );
       expect(find.byKey(const ValueKey('reports-export')), findsOneWidget);
       expect(find.byKey(const ValueKey('reports-back')), findsOneWidget);
-      expect(
-        tester.getCenter(find.byKey(const ValueKey('reports-export'))).dy,
-        greaterThan(tester.getCenter(find.text('Report Parameters')).dy + 60),
+      final backPosition = tester.getCenter(
+        find.byKey(const ValueKey('reports-back')),
       );
-      expect(
-        tester.getCenter(find.byKey(const ValueKey('reports-export'))).dx,
-        lessThan(tester.getCenter(find.text('Report Preview')).dx),
+      final previewTitlePosition = tester.getCenter(find.text('Report Preview'));
+      final exportPosition = tester.getCenter(
+        find.byKey(const ValueKey('reports-export')),
       );
+      expect(backPosition.dx, lessThan(previewTitlePosition.dx));
+      expect(exportPosition.dx, greaterThan(previewTitlePosition.dx));
+      expect((backPosition.dy - previewTitlePosition.dy).abs(), lessThan(24));
+      expect((exportPosition.dy - previewTitlePosition.dy).abs(), lessThan(24));
+      expect(exportPosition.dx, greaterThan(tester.getCenter(find.text('Report Parameters')).dx));
       await tester.tap(find.byKey(const ValueKey('reports-back')));
       await tester.pumpAndSettle();
       expect(find.text('Generate Report'), findsOneWidget);
