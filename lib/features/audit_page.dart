@@ -86,7 +86,7 @@ class _AuditPageState extends State<AuditPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           title,
-          const SizedBox(height: 8),
+          const SizedBox(height: 5),
           LayoutBuilder(
             builder: (context, constraints) {
               // Keep filters beside the subtitle when there's enough room.
