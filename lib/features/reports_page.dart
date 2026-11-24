@@ -220,7 +220,6 @@ class _ReportsPageState extends State<ReportsPage> {
     }
     setState(() => busy = true);
     try {
-      final data = reportData(selectedType, rows);
       final extension = fmt == 'PDF' ? 'pdf' : 'xlsx';
       // Choose only the destination folder. The app generates a unique
       // filename, avoiding the Windows Save As overwrite confirmation.
@@ -230,17 +229,12 @@ class _ReportsPageState extends State<ReportsPage> {
       );
       if (folderPath == null) return;
       lastExportFolder = folderPath;
+      // All Programs and one selected program share the exact same PDF
+      // renderer, including letterhead, columns, TOTAL row and spacing.
       final bytes = fmt == 'PDF'
           ? isSummary
               ? await pdfSaobSummaryReport(rows, year: selectedYear)
-              : selectedProgram.isEmpty
-              ? await pdfAllProgramsReport(rows, year: selectedYear)
-              : await pdfReport(
-                  data,
-                  title: selectedType,
-                  year: selectedYear,
-                  program: selectedProgram,
-                )
+              : await pdfAllProgramsReport(rows, year: selectedYear)
           : isSummary
           ? excelSaobSummaryReport(rows, year: selectedYear)
           : excelReport(
