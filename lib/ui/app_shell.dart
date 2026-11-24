@@ -28,6 +28,15 @@ class AppShell extends StatefulWidget {
 
 class _AppShellState extends State<AppShell> {
   String selected = 'dashboard';
+
+  Future<void> openAccount() async {
+    if (!widget.store.user!.can('settings')) return;
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) => AccountDialog(store: widget.store),
+    );
+  }
+
   Future<void> logout() async {
     if (await confirm(context, 'Log out?', 'Return to the login screen?')) {
       widget.store.signOut();
@@ -45,7 +54,6 @@ class _AppShellState extends State<AppShell> {
       'audit': AuditPage(store: widget.store),
       'programs': ProgramsPage(store: widget.store),
       'uacs': UacsReferencePage(store: widget.store),
-      'account': AccountPage(store: widget.store),
     };
     return Scaffold(
       body: LayoutBuilder(
@@ -58,17 +66,10 @@ class _AppShellState extends State<AppShell> {
               Padding(
                 padding: EdgeInsets.only(left: sideWidth),
                 child: IndexedStack(
-                  index: selected == 'account' && user.can('settings')
-                      ? visible.length
-                      : visible.indexWhere((m) => m.$1 == selected),
+                  index: visible.indexWhere((m) => m.$1 == selected),
                   children: [
                     for (final m in visible)
                       KeyedSubtree(key: ValueKey(m.$1), child: widgets[m.$1]!),
-                    if (user.can('settings'))
-                      KeyedSubtree(
-                        key: const ValueKey('account'),
-                        child: widgets['account']!,
-                      ),
                   ],
                 ),
               ),
@@ -224,15 +225,12 @@ class _AppShellState extends State<AppShell> {
                             child: Tooltip(
                               message: 'My Account',
                               child: Material(
-                                color: selected == 'account'
-                                    ? Colors.white.withValues(alpha: 0.16)
-                                    : Colors.white.withValues(alpha: 0.08),
+                                color: Colors.white.withValues(alpha: 0.08),
                                 borderRadius: BorderRadius.circular(12),
                                 child: InkWell(
                                   key: const ValueKey('nav-account'),
                                   borderRadius: BorderRadius.circular(12),
-                                  onTap: () =>
-                                      setState(() => selected = 'account'),
+                                  onTap: openAccount,
                                   child: Padding(
                                     padding: const EdgeInsets.symmetric(
                                       horizontal: 10,
