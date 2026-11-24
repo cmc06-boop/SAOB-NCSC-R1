@@ -124,6 +124,12 @@ void main() {
       await tester.pumpAndSettle();
       // Users first see the full-screen NCSC Welcome page.
       expect(find.byKey(const ValueKey('login-welcome')), findsOneWidget);
+      expect(
+        tester.getSize(
+          find.byKey(const ValueKey('login-welcome-sign-in')),
+        ).height,
+        lessThanOrEqualTo(68),
+      );
       expect(find.text('National Commission of Senior Citizens'), findsOneWidget);
       expect(find.text('Region I'), findsOneWidget);
       expect(find.text(productTitle), findsOneWidget);
@@ -134,6 +140,8 @@ void main() {
       await tester.tap(find.byKey(const ValueKey('login-welcome-sign-in')));
       await tester.pumpAndSettle();
       expect(find.byKey(const ValueKey('login-form')), findsOneWidget);
+      expect(tester.getSize(find.byKey(const ValueKey('login-form'))).width, lessThanOrEqualTo(430));
+      expect(tester.getSize(find.byKey(const ValueKey('login-submit'))).height, 54);
       expect(find.text('NCSC-R1'), findsOneWidget);
       expect(find.text('Username'), findsOneWidget);
       final password = tester.widget<TextField>(
