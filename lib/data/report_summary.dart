@@ -157,7 +157,8 @@ Uint8List excelSaobSummaryReport(
       row(entry.program, entry.totals);
     }
     row('TOTAL', section.totals, total: true);
-    at += 2;
+    // One blank row between sections, like the source SUMMARY worksheet.
+    at += 1;
   }
   book.setDefaultSheet('SUMMARY');
   final encoded = book.encode();
