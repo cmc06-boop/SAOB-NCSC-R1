@@ -164,12 +164,13 @@ class _ReferenceManagementPageState extends State<_ReferenceManagementPage> {
             child: _SettingsTable(
               key: const ValueKey('uacs-table'),
               centeredColumns: const {0, 1},
+              numberColumnWidth: 80,
               columns: const [
                 'UACS Code',
                 'Expense (UACS Name)',
               ],
               widths: const {
-                0: FixedColumnWidth(140),
+                0: FixedColumnWidth(240),
                 1: FlexColumnWidth(),
               },
               rows: [
@@ -224,8 +225,10 @@ class _SettingsTable extends StatelessWidget {
     required this.widths,
     required this.rows,
     this.centeredColumns = const {},
+    this.numberColumnWidth = 48,
   });
   final Set<int> centeredColumns;
+  final double numberColumnWidth;
   final List<String> columns;
   final Map<int, TableColumnWidth> widths;
   final List<List<Widget>> rows;
@@ -244,7 +247,7 @@ class _SettingsTable extends StatelessWidget {
   );
 
   Map<int, TableColumnWidth> get _widths => {
-    0: const FixedColumnWidth(48),
+    0: FixedColumnWidth(numberColumnWidth),
     for (final e in widths.entries) e.key + 1: e.value,
   };
 
