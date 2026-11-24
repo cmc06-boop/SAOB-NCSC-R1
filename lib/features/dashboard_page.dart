@@ -280,6 +280,12 @@ class _DashboardPageState extends State<DashboardPage> {
                               ('program', 'By Program'),
                             ],
                             onChanged: (v) => setState(() => donutMode = v),
+                            decoration: const InputDecoration(
+                              filled: true,
+                              fillColor: Colors.white,
+                              isDense: true,
+                              contentPadding: EdgeInsets.fromLTRB(12, 11, 0, 11),
+                            ),
                           ),
                         ),
                       ],
