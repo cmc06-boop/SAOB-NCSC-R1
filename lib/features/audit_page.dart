@@ -236,7 +236,13 @@ class _AuditTableState extends State<_AuditTable> {
 }
 
 class _AuditCell extends StatelessWidget {
-  const _AuditCell(this.text, {this.style, this.tip = false, this.tooltip, this.align = TextAlign.left});
+  const _AuditCell(
+    this.text, {
+    this.style,
+    this.tip = false,
+    this.tooltip,
+    this.align = TextAlign.left,
+  });
   final String text;
   final TextStyle? style;
   final bool tip;
@@ -262,7 +268,9 @@ String auditDetailSentence(
   String program = '',
 }) {
   final detail = raw.trim();
-  if (detail.isEmpty) return 'No additional details.';
+  if (detail.isEmpty) {
+    return 'No additional details.';
+  }
   final kind = action.trim().toLowerCase();
 
   // One successful Excel workbook import produces one audit entry.
@@ -299,8 +307,12 @@ String auditDetailSentence(
     return 'Imported budget records.';
   }
 
-  if (detail == 'Account profile updated') return 'Updated account profile.';
-  if (detail == 'Account password changed') return 'Changed account password.';
+  if (detail == 'Account profile updated') {
+    return 'Updated account profile.';
+  }
+  if (detail == 'Account password changed') {
+    return 'Changed account password.';
+  }
 
   // Budget amount changes preserve a full detail tooltip, but one
   // short human-readable sentence is shown in the table.
