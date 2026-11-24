@@ -119,7 +119,7 @@ class _AccountDialogState extends State<AccountDialog> {
             horizontal: 12,
             vertical: 11,
           ),
-          hintText: label,
+          hintText: '••••••••',
           suffixIcon: password
               ? IconButton(
                   tooltip: visible ? 'Hide $label' : 'Show $label',
@@ -170,15 +170,6 @@ class _AccountDialogState extends State<AccountDialog> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text(
-              'Personal Information',
-              style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w700,
-                color: ink,
-              ),
-            ),
-            const SizedBox(height: 12),
             _field('Full Name', _name, key: const ValueKey('account-name')),
             const SizedBox(height: 12),
             _field(
@@ -187,8 +178,6 @@ class _AccountDialogState extends State<AccountDialog> {
               key: const ValueKey('account-username'),
             ),
             const SizedBox(height: 14),
-            const Divider(color: line),
-            const SizedBox(height: 12),
             _field(
               'Current Password',
               _currentPassword,
