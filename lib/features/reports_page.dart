@@ -624,7 +624,6 @@ class _ReportsPageState extends State<ReportsPage> {
                       ),
                     )
                   : _ReportSheet(
-                      title: _reportType,
                       year: year,
                       programLabel: programLabel,
                       table: _previewTable(records),
@@ -678,13 +677,12 @@ class _PreviewTable {
 
 class _ReportSheet extends StatefulWidget {
   const _ReportSheet({
-    required this.title,
     required this.year,
     required this.programLabel,
     required this.table,
     required this.totals,
   });
-  final String title, programLabel;
+  final String programLabel;
   final int year;
   final _PreviewTable table;
   final Totals totals;
@@ -839,15 +837,6 @@ class _ReportSheetState extends State<_ReportSheet> {
                 ],
               ),
               const SizedBox(height: 10),
-              Text(
-                widget.title,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-              const SizedBox(height: 4),
               Text(
                 'Program: ${widget.programLabel}  |  Fiscal Year: ${widget.year}',
                 style: const TextStyle(color: muted),
