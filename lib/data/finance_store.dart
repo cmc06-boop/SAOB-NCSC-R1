@@ -548,7 +548,8 @@ class FinanceStore extends ChangeNotifier {
     required int year,
   }) {
     require('import');
-    final file = filename.trim().isEmpty ? 'workbook.xlsx' : filename.trim();
+    final cleaned = filename.trim().replaceAll('\\', '/').split('/').last;
+    final file = cleaned.isEmpty ? 'workbook.xlsx' : cleaned;
     _audit(
       'Imported',
       '',
