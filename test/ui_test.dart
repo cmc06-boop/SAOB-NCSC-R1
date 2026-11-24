@@ -159,7 +159,8 @@ void main() {
     final store = createStore()
       ..user = const LocalUser(1, 'Finance AO', 'ao', 'Admin');
     store.db.connection.execute(
-      "INSERT INTO programs(code,name,active) VALUES ('GAS','GAS',1)",
+      "INSERT INTO programs(code,name,active) VALUES ('GAS','GAS',1),"
+      "('ATOP_Continuing','ATOP_Continuing',1)",
     );
     store.saveRecord(
       BudgetRecord(
@@ -170,6 +171,18 @@ void main() {
         allotment: 100000,
         obligation: 25000,
         disbursement: 5000,
+      ),
+    );
+    // Imported Continuing records still use CURRENT as the DB fund source.
+    store.saveRecord(
+      BudgetRecord(
+        year: manilaNow().year,
+        program: 'ATOP_Continuing',
+        code: '5020102000',
+        name: 'Traveling Expenses - Foreign',
+        allotment: 4997973,
+        obligation: 4799000,
+        disbursement: 0,
       ),
     );
 
@@ -195,7 +208,12 @@ void main() {
 
     expect(find.text('SUMMARY'), findsOneWidget);
     expect(find.text('CURRENT APPRO'), findsOneWidget);
+    expect(find.text('CONTINUING APPRO'), findsOneWidget);
     expect(find.byKey(const ValueKey('summary-table-current')), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('summary-table-continuing')),
+      findsOneWidget,
+    );
     expect(find.text('PAP'), findsOneWidget);
     expect(find.text('TOTAL'), findsOneWidget);
     expect(find.byKey(const ValueKey('reports-export')), findsOneWidget);
