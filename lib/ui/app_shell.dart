@@ -351,6 +351,7 @@ class _AppShellState extends State<AppShell> {
                                               children: [
                                                 Text(
                                                   user.name,
+                                                  key: const ValueKey('sidebar-account-name'),
                                                   maxLines: 1,
                                                   overflow:
                                                       TextOverflow.ellipsis,
@@ -362,9 +363,12 @@ class _AppShellState extends State<AppShell> {
                                                   ),
                                                 ),
                                                 const SizedBox(height: 3),
-                                                const Text(
-                                                  'My Account',
-                                                  style: TextStyle(
+                                                Text(
+                                                  user.username,
+                                                  key: const ValueKey('sidebar-account-username'),
+                                                  maxLines: 1,
+                                                  overflow: TextOverflow.ellipsis,
+                                                  style: const TextStyle(
                                                     color: Color(0xffc5d4ef),
                                                     fontSize: 11,
                                                   ),
