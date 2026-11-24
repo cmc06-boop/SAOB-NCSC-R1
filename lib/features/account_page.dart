@@ -86,6 +86,7 @@ class _AccountDialogState extends State<AccountDialog> {
     String label,
     TextEditingController controller, {
     required Key key,
+    String? hint,
     bool password = false,
     bool visible = false,
     VoidCallback? toggleVisibility,
@@ -119,7 +120,8 @@ class _AccountDialogState extends State<AccountDialog> {
             horizontal: 12,
             vertical: 11,
           ),
-          hintText: '••••••••',
+          hintText: password ? '••••••••' : hint,
+          hintStyle: const TextStyle(color: Color(0xff888888)),
           suffixIcon: password
               ? IconButton(
                   tooltip: visible ? 'Hide $label' : 'Show $label',
@@ -177,12 +179,18 @@ class _AccountDialogState extends State<AccountDialog> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            _field('Full Name', _name, key: const ValueKey('account-name')),
+            _field(
+              'Full Name',
+              _name,
+              key: const ValueKey('account-name'),
+              hint: 'Juan Dela Cruz',
+            ),
             const SizedBox(height: 12),
             _field(
               'Username',
               _username,
               key: const ValueKey('account-username'),
+              hint: 'juandelacruz',
             ),
             const SizedBox(height: 14),
             _field(
