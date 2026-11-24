@@ -62,7 +62,7 @@ class _LoginBackdropState extends State<LoginBackdrop> {
     fit: StackFit.expand,
     children: [
       ImageFiltered(
-        imageFilter: ui.ImageFilter.blur(sigmaX: 4.0, sigmaY: 4.0),
+        imageFilter: ui.ImageFilter.blur(sigmaX: 2.2, sigmaY: 2.2),
         child: Image.asset(
           _photo,
           fit: BoxFit.cover,
@@ -77,12 +77,12 @@ class _LoginBackdropState extends State<LoginBackdrop> {
           gradient: LinearGradient(
             begin: Alignment.centerLeft,
             end: Alignment.centerRight,
-            stops: [0, 0.37, 0.61, 1],
+            stops: [0, 0.36, 0.65, 1],
             colors: [
-              Color(0xee022b9d),
-              Color(0xcd132e82),
-              Color(0xca632261),
-              Color(0xf0b4003c),
+              Color(0x82022b9d),
+              Color(0x5e132e82),
+              Color(0x54632261),
+              Color(0x86b4003c),
             ],
           ),
         ),
@@ -92,7 +92,7 @@ class _LoginBackdropState extends State<LoginBackdrop> {
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [Color(0x330b1847), Color(0x1a3b1744), Color(0x440b1857)],
+            colors: [Color(0x160b1847), Color(0x0b3b1744), Color(0x1c0b1857)],
           ),
         ),
       ),
