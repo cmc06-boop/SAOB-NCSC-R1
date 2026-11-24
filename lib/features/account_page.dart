@@ -5,7 +5,7 @@ import '../data/finance_store.dart';
 import '../ui/common.dart';
 import '../ui/theme.dart';
 
-/// Dedicated profile page reached from the profile control above Logout.
+/// Accessible from the profile button above Logout.
 class AccountPage extends StatelessWidget {
   const AccountPage({super.key, required this.store});
   final FinanceStore store;
@@ -51,13 +51,11 @@ class _AccountSettingsState extends State<_AccountSettings> {
   final _currentPassword = TextEditingController();
   final _newPassword = TextEditingController();
   final _confirmPassword = TextEditingController();
-  bool _savingProfile = false;
-  bool _savingPassword = false;
+  bool _saving = false;
   bool _showCurrent = false;
   bool _showNew = false;
   bool _showConfirm = false;
-  String? _profileError;
-  String? _passwordError;
+  String? _error;
 
   @override
   void initState() {
@@ -81,50 +79,40 @@ class _AccountSettingsState extends State<_AccountSettings> {
     super.dispose();
   }
 
-  Future<void> _saveProfile() async {
-    if (_savingProfile || _savingPassword) return;
+  Future<void> _saveChanges() async {
+    if (_saving) return;
     setState(() {
-      _savingProfile = true;
-      _profileError = null;
+      _saving = true;
+      _error = null;
     });
     try {
-      widget.store.updateMyProfile(_name.text, _username.text);
-      if (mounted) showMessage(context, 'Account profile updated.');
-    } catch (e) {
-      if (mounted) setState(() => _profileError = friendlyError(e));
-    } finally {
-      if (mounted) setState(() => _savingProfile = false);
-    }
-  }
-
-  Future<void> _savePassword() async {
-    if (_savingPassword || _savingProfile) return;
-    setState(() {
-      _savingPassword = true;
-      _passwordError = null;
-    });
-    try {
-      if (_newPassword.text != _confirmPassword.text) {
-        throw const FinanceError('New passwords do not match.');
-      }
-      await widget.store.changeMyPassword(
-        _currentPassword.text,
-        _newPassword.text,
+      final changed = await widget.store.saveMyAccount(
+        name: _name.text,
+        username: _username.text,
+        currentPassword: _currentPassword.text,
+        newPassword: _newPassword.text,
+        confirmPassword: _confirmPassword.text,
       );
-      _currentPassword.clear();
-      _newPassword.clear();
-      _confirmPassword.clear();
-      if (mounted) showMessage(context, 'Password changed successfully.');
+      if (!mounted) return;
+      if (changed) {
+        _name.text = widget.store.user!.name;
+        _username.text = widget.store.user!.username;
+        _currentPassword.clear();
+        _newPassword.clear();
+        _confirmPassword.clear();
+      }
+      showMessage(context, changed ? 'Account changes saved.' : 'No changes to save.');
     } catch (e) {
-      if (mounted) setState(() => _passwordError = friendlyError(e));
+      if (mounted) setState(() => _error = friendlyError(e));
     } finally {
-      if (mounted) setState(() => _savingPassword = false);
+      if (mounted) setState(() => _saving = false);
     }
   }
 
   Widget _field(
     String label,
     TextEditingController controller, {
+    required Key key,
     bool password = false,
     bool visible = false,
     VoidCallback? toggleVisibility,
@@ -141,13 +129,18 @@ class _AccountSettingsState extends State<_AccountSettings> {
       ),
       const SizedBox(height: 6),
       TextField(
+        key: key,
         controller: controller,
-        enabled: !_savingProfile && !_savingPassword,
+        enabled: !_saving,
         obscureText: password && !visible,
         autocorrect: !password,
         enableSuggestions: !password,
         decoration: InputDecoration(
           isDense: true,
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 12,
+            vertical: 12,
+          ),
           hintText: label,
           suffixIcon: password
               ? IconButton(
@@ -166,106 +159,110 @@ class _AccountSettingsState extends State<_AccountSettings> {
     ],
   );
 
+  Widget _personalInformation() => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      const Text(
+        'Personal Information',
+        style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: ink),
+      ),
+      const SizedBox(height: 18),
+      _field('Full Name', _name, key: const ValueKey('account-name')),
+      const SizedBox(height: 16),
+      _field('Username', _username, key: const ValueKey('account-username')),
+    ],
+  );
+
+  Widget _passwordInformation() => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      const Text(
+        'Change Password',
+        style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: ink),
+      ),
+      const SizedBox(height: 7),
+      const Text(
+        'Leave these fields blank if you are only updating your profile.',
+        style: TextStyle(fontSize: 12, color: muted),
+      ),
+      const SizedBox(height: 16),
+      _field(
+        'Current Password',
+        _currentPassword,
+        key: const ValueKey('account-current-password'),
+        password: true,
+        visible: _showCurrent,
+        toggleVisibility: () => setState(() => _showCurrent = !_showCurrent),
+      ),
+      const SizedBox(height: 13),
+      _field(
+        'New Password',
+        _newPassword,
+        key: const ValueKey('account-new-password'),
+        password: true,
+        visible: _showNew,
+        toggleVisibility: () => setState(() => _showNew = !_showNew),
+      ),
+      const SizedBox(height: 13),
+      _field(
+        'Confirm New Password',
+        _confirmPassword,
+        key: const ValueKey('account-confirm-password'),
+        password: true,
+        visible: _showConfirm,
+        toggleVisibility: () => setState(() => _showConfirm = !_showConfirm),
+      ),
+      const SizedBox(height: 10),
+      const Text(
+        'Use at least 12 characters for a new password.',
+        style: TextStyle(fontSize: 12, color: muted),
+      ),
+    ],
+  );
+
   @override
   Widget build(BuildContext context) => Panel(
-    child: SingleChildScrollView(
-      child: Align(
-        alignment: Alignment.topLeft,
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 560),
-          child: Column(
+    padding: 24,
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Expanded(
+          child: Row(
+            key: const ValueKey('account-two-columns'),
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Row(
-                children: [
-                  Icon(Icons.manage_accounts_outlined, color: blue, size: 23),
-                  SizedBox(width: 9),
-                  Text(
-                    'My Account',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 6),
-              const Text(
-                'Update your administrator profile and password.',
-                style: TextStyle(color: muted, fontSize: 13),
-              ),
-              const SizedBox(height: 22),
-              const Text(
-                'Personal Information',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: ink),
-              ),
-              const SizedBox(height: 12),
-              _field('Full Name', _name),
-              const SizedBox(height: 14),
-              _field('Username', _username),
-              if (_profileError != null) ...[
-                const SizedBox(height: 10),
-                Text(_profileError!, style: const TextStyle(color: red)),
-              ],
-              const SizedBox(height: 16),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: FilledButton.icon(
-                  onPressed: _savingProfile || _savingPassword ? null : _saveProfile,
-                  icon: const Icon(Icons.save_outlined, size: 18),
-                  label: const Text('Save Profile Changes'),
-                ),
-              ),
-              const SizedBox(height: 26),
-              const Divider(),
-              const SizedBox(height: 18),
-              const Text(
-                'Change Password',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: ink),
-              ),
-              const SizedBox(height: 6),
-              const Text(
-                'Enter your current password and a new password of at least 12 characters.',
-                style: TextStyle(color: muted, fontSize: 13),
-              ),
-              const SizedBox(height: 14),
-              _field(
-                'Current Password',
-                _currentPassword,
-                password: true,
-                visible: _showCurrent,
-                toggleVisibility: () => setState(() => _showCurrent = !_showCurrent),
-              ),
-              const SizedBox(height: 14),
-              _field(
-                'New Password',
-                _newPassword,
-                password: true,
-                visible: _showNew,
-                toggleVisibility: () => setState(() => _showNew = !_showNew),
-              ),
-              const SizedBox(height: 14),
-              _field(
-                'Confirm New Password',
-                _confirmPassword,
-                password: true,
-                visible: _showConfirm,
-                toggleVisibility: () => setState(() => _showConfirm = !_showConfirm),
-              ),
-              if (_passwordError != null) ...[
-                const SizedBox(height: 10),
-                Text(_passwordError!, style: const TextStyle(color: red)),
-              ],
-              const SizedBox(height: 16),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: FilledButton.icon(
-                  onPressed: _savingPassword || _savingProfile ? null : _savePassword,
-                  icon: const Icon(Icons.lock_reset_outlined, size: 18),
-                  label: const Text('Update Password'),
-                ),
-              ),
+              Expanded(child: _personalInformation()),
+              const SizedBox(width: 28),
+              Container(width: 1, color: line),
+              const SizedBox(width: 28),
+              Expanded(child: _passwordInformation()),
             ],
           ),
         ),
-      ),
+        if (_error != null) ...[
+          const SizedBox(height: 8),
+          Text(
+            _error!,
+            textAlign: TextAlign.center,
+            style: const TextStyle(color: red, fontSize: 12),
+          ),
+        ],
+        const SizedBox(height: 12),
+        Center(
+          child: FilledButton.icon(
+            key: const ValueKey('account-save'),
+            onPressed: _saving ? null : _saveChanges,
+            icon: _saving
+                ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.save_outlined, size: 18),
+            label: const Text('Save Changes'),
+          ),
+        ),
+      ],
     ),
   );
 }
