@@ -87,9 +87,33 @@ class _AuditPageState extends State<AuditPage> {
         children: [
           title,
           const SizedBox(height: 8),
-          subtitle,
-          const SizedBox(height: 12),
-          Align(alignment: Alignment.centerRight, child: filters),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              // Keep filters beside the subtitle when there's enough room.
+              // Compact layouts wrap the controls to prevent horizontal overflow.
+              if (constraints.maxWidth < 980) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    subtitle,
+                    const SizedBox(height: 12),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: filters,
+                    ),
+                  ],
+                );
+              }
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Expanded(child: subtitle),
+                  const SizedBox(width: 16),
+                  filters,
+                ],
+              );
+            },
+          ),
           const SizedBox(height: 22),
           Expanded(
             child: Panel(padding: 0, child: _AuditTable(rows: rows)),
