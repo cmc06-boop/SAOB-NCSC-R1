@@ -528,6 +528,16 @@ void main() {
     expect(find.byKey(const ValueKey('reference-editor-close')), findsOneWidget);
     expect(find.byKey(const ValueKey('reference-editor-code')), findsOneWidget);
     expect(find.byKey(const ValueKey('reference-editor-name')), findsOneWidget);
+    final codeField = tester.widget<TextField>(
+      find.byKey(const ValueKey('reference-editor-code')),
+    );
+    final nameField = tester.widget<TextField>(
+      find.byKey(const ValueKey('reference-editor-name')),
+    );
+    expect(codeField.decoration?.hintText, 'e.g. GAS');
+    expect(nameField.decoration?.hintText, 'e.g. General Administrative Services');
+    expect(codeField.controller?.text, isEmpty);
+    expect(nameField.controller?.text, isEmpty);
     expect(find.byKey(const ValueKey('reference-editor-cancel')), findsOneWidget);
     expect(find.byKey(const ValueKey('reference-editor-save')), findsOneWidget);
     final programDialog = tester.widget<AlertDialog>(find.byType(AlertDialog));
