@@ -185,6 +185,41 @@ void main() {
     );
   });
 
+  test('Generated audit entries match the report history names', () {
+    expect(generatedReportName('GAS', 'PDF'), 'GAS_Current (PDF)');
+    expect(generatedReportName('ECA', 'Excel'), 'ECA_Current (Excel)');
+    expect(generatedReportName('', 'PDF'), 'All_Current (PDF)');
+    expect(generatedReportName('', 'XLSX'), 'All_Current (Excel)');
+    expect(
+      auditDetailSentence('Budget Utilization Report (PDF)',
+          action: 'Generated', program: 'GAS'),
+      'GAS_Current (PDF)',
+    );
+    expect(
+      auditDetailSentence('Budget Utilization Report (Excel)',
+          action: 'Generated'),
+      'All_Current (Excel)',
+    );
+    store.logReport('Budget Utilization Report', manilaNow().year, 'GAS', 'PDF');
+    store.logReport('Budget Utilization Report', manilaNow().year, '', 'Excel');
+    final audits = db.rows(
+      "SELECT detail FROM audit_log WHERE action='Generated' ORDER BY id DESC",
+    );
+    expect(audits, hasLength(2));
+    expect(audits[0]['detail'], 'All_Current (Excel)');
+    expect(audits[1]['detail'], 'GAS_Current (PDF)');
+    final history = store.reportHistory;
+    for (var i = 0; i < history.length; i++) {
+      expect(
+        audits[i]['detail'],
+        generatedReportName(
+          history[i]['program'] as String,
+          history[i]['format'] as String,
+        ),
+      );
+    }
+  });
+
   test('Excel workbook import logs just its basename, not its sheets', () {
     store.importRecords([record()], updateExisting: true);
     store.importRecords(
