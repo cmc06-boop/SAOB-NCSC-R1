@@ -6,6 +6,7 @@ import '../core/format.dart';
 import '../data/finance_store.dart';
 import '../data/models.dart';
 import '../ui/common.dart';
+import '../ui/svg_icon.dart';
 import '../ui/theme.dart';
 
 const chartColors = [
@@ -157,10 +158,10 @@ class _DashboardPageState extends State<DashboardPage> {
                   ? 2
                   : 1;
               const metrics = [
-                ('Total Allotment', Icons.storage_outlined),
-                ('Total Obligation', Icons.assignment_turned_in_outlined),
-                ('Total Disbursement', Icons.account_balance_wallet_outlined),
-                ('Remaining Balance', Icons.bar_chart_rounded),
+                ('Total Allotment', 'database'),
+                ('Total Obligation', 'clipboard-check'),
+                ('Total Disbursement', 'wallet'),
+                ('Remaining Balance', 'chart-no-axes-column-increasing'),
               ];
               final amounts = [
                 t.allotment,
@@ -185,7 +186,7 @@ class _DashboardPageState extends State<DashboardPage> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Icon(metrics[i].$2, size: 32, color: blue),
+                            AppSvgIcon(metrics[i].$2, size: 32, color: blue),
                             const SizedBox(height: 18),
                             Text(
                               metrics[i].$1,
