@@ -89,7 +89,7 @@ class _ReferenceManagementPageState extends State<_ReferenceManagementPage> {
             child: Panel(
               padding: 0,
               child: _SettingsTable(
-                key: const ValueKey('programs'),
+                key: const ValueKey('programs-table'),
                 columns: const ['Code', 'Program Name', 'Actions'],
                 widths: const {
                   0: FixedColumnWidth(200),
@@ -204,7 +204,7 @@ class _ReferenceManagementPageState extends State<_ReferenceManagementPage> {
                     child: Padding(
                       padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                       child: _SettingsTable(
-                        key: const ValueKey('uacs'),
+                        key: const ValueKey('uacs-table'),
                         columns: const [
                           'UACS Code',
                           'Expense (UACS Name)',
