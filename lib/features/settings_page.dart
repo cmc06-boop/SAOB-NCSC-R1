@@ -4,6 +4,7 @@ import '../core/format.dart';
 import '../data/finance_store.dart';
 import '../data/models.dart';
 import '../ui/common.dart';
+import '../ui/svg_icon.dart';
 import '../ui/theme.dart';
 
 /// Two independent sidebar pages sharing the existing management forms.
@@ -79,7 +80,7 @@ class _ReferenceManagementPageState extends State<_ReferenceManagementPage> {
         expand: true,
         besideSubtitle: FilledButton.icon(
           onPressed: () => editProgram(),
-          icon: const Icon(Icons.add, size: 18),
+          icon: const AppSvgIcon('plus', size: 18),
           label: const Text('Add Program'),
         ),
         children: [
@@ -111,14 +112,14 @@ class _ReferenceManagementPageState extends State<_ReferenceManagementPage> {
                           _boxedIcon(
                             tooltip: 'Edit',
                             color: blue,
-                            icon: Icons.edit_outlined,
+                            icon: 'pencil',
                             onPressed: () => editProgram(p),
                           ),
                           const SizedBox(width: 8),
                           _boxedIcon(
                             tooltip: 'Delete',
                             color: red,
-                            icon: Icons.delete_outline,
+                            icon: 'trash-2',
                             onPressed: () => removeProgram(p),
                           ),
                         ],
@@ -151,7 +152,7 @@ class _ReferenceManagementPageState extends State<_ReferenceManagementPage> {
               horizontal: 12,
               vertical: 12,
             ),
-            prefixIcon: Icon(Icons.search, size: 18),
+            prefixIcon: AppSvgIcon('search', size: 18),
           ),
         ),
       ),
@@ -196,7 +197,7 @@ class _ReferenceManagementPageState extends State<_ReferenceManagementPage> {
 Widget _boxedIcon({
   required String tooltip,
   required Color color,
-  required IconData icon,
+  required String icon,
   required VoidCallback onPressed,
 }) => Tooltip(
   message: tooltip,
@@ -212,7 +213,7 @@ Widget _boxedIcon({
       child: SizedBox(
         width: 34,
         height: 34,
-        child: Icon(icon, size: 18, color: color),
+        child: AppSvgIcon(icon, size: 18, color: color),
       ),
     ),
   ),
@@ -500,7 +501,7 @@ class _ReferenceEditorState extends State<ReferenceEditor> {
               key: const ValueKey('reference-editor-close'),
               tooltip: 'Close editor',
               onPressed: () => Navigator.pop(context),
-              icon: const Icon(Icons.close),
+              icon: const AppSvgIcon('x'),
             ),
           ),
         ],
