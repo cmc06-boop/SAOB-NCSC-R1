@@ -1,4 +1,5 @@
 import 'package:material_ui/material_ui.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ncsc_region1_finance/core/format.dart';
 import 'package:ncsc_region1_finance/data/database.dart';
@@ -121,10 +122,18 @@ void main() {
       final store = createStore();
       await tester.pumpWidget(FinanceApp(store: store));
       await tester.pumpAndSettle();
-      expect(find.text('System Login'), findsOneWidget);
+      // Users first see the full-screen NCSC Welcome page.
+      expect(find.byKey(const ValueKey('login-welcome')), findsOneWidget);
+      expect(find.text('National Commission of Senior Citizens'), findsOneWidget);
+      expect(find.text('Region I'), findsOneWidget);
+      expect(find.text(productTitle), findsOneWidget);
+      expect(find.byKey(const ValueKey('login-form')), findsNothing);
       expect(find.text('Set Up Account'), findsNothing);
       expect(find.text('Create Account'), findsNothing);
       expect(find.text('Forgot Password?'), findsNothing);
+      await tester.tap(find.byKey(const ValueKey('login-welcome-sign-in')));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const ValueKey('login-form')), findsOneWidget);
       expect(find.text('NCSC-R1'), findsOneWidget);
       expect(find.text('Username'), findsOneWidget);
       final password = tester.widget<TextField>(
@@ -150,6 +159,22 @@ void main() {
       await tester.pumpWidget(const SizedBox());
     });
   }
+
+  testWidgets('Pressing Enter on Welcome opens Log in form', (tester) async {
+    await binding.setSurfaceSize(const Size(1366, 720));
+    addTearDown(() => binding.setSurfaceSize(null));
+    final store = createStore();
+    await tester.pumpWidget(FinanceApp(store: store));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('login-welcome')), findsOneWidget);
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('login-form')), findsOneWidget);
+    expect(find.byKey(const ValueKey('Username')), findsOneWidget);
+    expect(find.byKey(const ValueKey('Password')), findsOneWidget);
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox());
+  });
 
   testWidgets('Generate Report allows Summary and previews workbook-style totals', (
     tester,
@@ -630,7 +655,10 @@ void main() {
     final store = FinanceStore(FinanceDatabase.open(path: ':memory:'));
     await tester.pumpWidget(FinanceApp(store: store));
     await tester.pumpAndSettle();
-    expect(find.text('System Login'), findsOneWidget);
+    expect(find.byKey(const ValueKey('login-welcome')), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('login-welcome-sign-in')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('login-form')), findsOneWidget);
     expect(
       find.textContaining('No Admin account is configured'),
       findsOneWidget,
@@ -638,7 +666,7 @@ void main() {
     expect(find.text('Create Account'), findsNothing);
     expect(find.text('Forgot Password?'), findsNothing);
     final login = tester.widget<FilledButton>(
-      find.widgetWithText(FilledButton, 'Login'),
+      find.byKey(const ValueKey('login-submit')),
     );
     expect(login.onPressed, isNull);
     expect(tester.takeException(), isNull);
@@ -892,7 +920,8 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('logout-accept')));
     await tester.pumpAndSettle();
     expect(store.user, isNull);
-    expect(find.text('System Login'), findsOneWidget);
+    expect(find.byKey(const ValueKey('login-welcome')), findsOneWidget);
+    expect(find.byKey(const ValueKey('login-form')), findsNothing);
     expect(tester.takeException(), isNull);
     await tester.pumpWidget(const SizedBox());
   });
