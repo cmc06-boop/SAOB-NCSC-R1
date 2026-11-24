@@ -1,0 +1,241 @@
+import 'dart:typed_data';
+
+import 'package:flutter/services.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+
+import '../core/format.dart';
+import 'models.dart';
+import 'report_io.dart';
+import 'report_summary.dart';
+
+/// For All Programs, create a single PDF with a new page for each program.
+/// Each program contains separate CURRENT/CONTINUING tables and its own total.
+Future<Uint8List> pdfAllProgramsReport(
+  List<BudgetRecord> records, {
+  required int year,
+  PdfPageFormat pageFormat = PdfPageFormat.a4,
+}) async {
+  final assets = await _loadAssets();
+  final doc = pw.Document();
+  final groups = <String, Map<String, List<BudgetRecord>>>{};
+  for (final row in records) {
+    groups
+        .putIfAbsent(row.program, () => {})
+        .putIfAbsent(row.fund, () => [])
+        .add(row);
+  }
+  final programs = groups.keys.toList()..sort();
+  for (final program in programs) {
+    final funds = groups[program]!;
+    final fundNames = [
+      for (final fund in ['CURRENT', 'CONTINUING'])
+        if (funds.containsKey(fund)) fund,
+    ];
+    final totals = Totals([
+      for (final fund in fundNames) ...funds[fund]!,
+    ]);
+    doc.addPage(
+      pw.MultiPage(
+        pageFormat: pageFormat.landscape,
+        margin: const pw.EdgeInsets.all(24),
+        maxPages: 2000,
+        theme: pw.ThemeData.withFont(base: assets.$1, bold: assets.$2),
+        header: (_) => _letterhead(assets.$3, year, 'Program: $program'),
+        footer: _footer,
+        build: (_) => [
+          for (final fund in fundNames) ...[
+            pw.Text(
+              '$fund APPROPRIATION - $program',
+              style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold),
+            ),
+            pw.SizedBox(height: 6),
+            _programTable(
+              reportData('Budget Utilization Report', funds[fund]!),
+              program,
+              fund,
+              assets.$2,
+            ),
+            pw.SizedBox(height: 14),
+          ],
+          pw.Container(
+            padding: const pw.EdgeInsets.all(9),
+            decoration: const pw.BoxDecoration(
+              color: PdfColor.fromInt(0xffe7eefc),
+            ),
+            child: pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: [
+                pw.Text(
+                  'TOTAL - $program' +
+                      (fundNames.length > 1 ? ' (ALL FUNDS)' : ''),
+                  style: pw.TextStyle(
+                    fontSize: 10,
+                    fontWeight: pw.FontWeight.bold,
+                  ),
+                ),
+                pw.SizedBox(height: 4),
+                pw.Text(
+                  'Allotment: ' + money(totals.allotment) +
+                      '   Obligation: ' + money(totals.obligation) +
+                      '   Unobligated: ' + money(totals.balance) +
+                      '   Disbursement: ' + money(totals.disbursement),
+                  style: const pw.TextStyle(fontSize: 8),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+  return doc.save();
+}
+
+/// Summary PDF mirrors the uploaded workbook's CURRENT APPRO and CONTINUING
+/// APPRO sections, with a TOTAL line for each section.
+Future<Uint8List> pdfSaobSummaryReport(
+  List<BudgetRecord> records, {
+  required int year,
+  PdfPageFormat pageFormat = PdfPageFormat.a4,
+}) async {
+  final assets = await _loadAssets();
+  final doc = pw.Document();
+  doc.addPage(
+    pw.MultiPage(
+      pageFormat: pageFormat.landscape,
+      margin: const pw.EdgeInsets.all(24),
+      maxPages: 2000,
+      theme: pw.ThemeData.withFont(base: assets.$1, bold: assets.$2),
+      header: (_) => _letterhead(assets.$3, year, 'SUMMARY'),
+      footer: _footer,
+      build: (_) => [
+        for (final section in saobSummarySections(records)) ...[
+          pw.Text(
+            section.title,
+            style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold),
+          ),
+          pw.SizedBox(height: 6),
+          pw.TableHelper.fromTextArray(
+            headers: summaryHeaders,
+            data: [
+              for (final row in section.rows)
+                summaryDisplayRow(row.program, row.totals),
+              summaryDisplayRow('TOTAL', section.totals),
+            ],
+            headerStyle: pw.TextStyle(
+              font: assets.$2,
+              fontSize: 8,
+              color: PdfColors.white,
+            ),
+            headerDecoration: const pw.BoxDecoration(
+              color: PdfColor.fromInt(0xff173c80),
+            ),
+            cellStyle: const pw.TextStyle(fontSize: 8),
+            cellPadding: const pw.EdgeInsets.all(6),
+            cellAlignments: {
+              for (var i = 1; i < summaryHeaders.length; i++)
+                i: pw.Alignment.centerRight,
+            },
+            oddRowDecoration: const pw.BoxDecoration(
+              color: PdfColor.fromInt(0xfff0f4fb),
+            ),
+            border: pw.TableBorder.all(
+              color: PdfColors.blueGrey200,
+              width: 0.3,
+            ),
+          ),
+          pw.SizedBox(height: 18),
+        ],
+      ],
+    ),
+  );
+  return doc.save();
+}
+
+Future<(pw.Font, pw.Font, pw.MemoryImage)> _loadAssets() async {
+  final data = await Future.wait([
+    rootBundle.load('assets/fonts/DejaVuSans.ttf'),
+    rootBundle.load('assets/fonts/DejaVuSans-Bold.ttf'),
+    rootBundle.load('assets/ncsc-logo-transparent.png'),
+  ]);
+  return (
+    pw.Font.ttf(data[0]),
+    pw.Font.ttf(data[1]),
+    pw.MemoryImage(data[2].buffer.asUint8List()),
+  );
+}
+
+pw.Widget _letterhead(pw.MemoryImage logo, int year, String heading) =>
+    pw.Column(
+      children: [
+        pw.Row(
+          mainAxisAlignment: pw.MainAxisAlignment.center,
+          children: [
+            pw.Image(logo, width: 42, height: 42),
+            pw.SizedBox(width: 10),
+            pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: [
+                pw.Text(
+                  'NATIONAL COMMISSION OF SENIOR CITIZENS',
+                  style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold),
+                ),
+                pw.Text(
+                  'REGION I',
+                  style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold),
+                ),
+              ],
+            ),
+          ],
+        ),
+        pw.SizedBox(height: 8),
+        pw.Text(
+          heading,
+          style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold),
+        ),
+        pw.SizedBox(height: 2),
+        pw.Text(
+          'Fiscal Year: $year',
+          style: const pw.TextStyle(fontSize: 9, color: PdfColors.blueGrey700),
+        ),
+        pw.SizedBox(height: 10),
+      ],
+    );
+
+pw.Widget _footer(pw.Context context) => pw.Align(
+  alignment: pw.Alignment.centerRight,
+  child: pw.Text(
+    'Page ' + context.pageNumber.toString() + ' of ' +
+        context.pagesCount.toString(),
+    style: const pw.TextStyle(fontSize: 8),
+  ),
+);
+
+pw.Widget _programTable(
+  ReportData data,
+  String program,
+  String fund,
+  pw.Font bold,
+) => pw.TableHelper.fromTextArray(
+  headers: data.headers,
+  data: [
+    for (final row in data.rows)
+      [
+        for (var col = 0; col < row.length; col++)
+          row.length > 2 && row[2].toString() == 'Total' && col == 2
+              ? 'TOTAL ($program - $fund)'
+              : data.display(row[col], col),
+      ],
+  ],
+  headerStyle: pw.TextStyle(font: bold, fontSize: 7, color: PdfColors.white),
+  headerDecoration: const pw.BoxDecoration(color: PdfColor.fromInt(0xff173c80)),
+  cellStyle: const pw.TextStyle(fontSize: 7),
+  cellPadding: const pw.EdgeInsets.all(4),
+  cellAlignments: {
+    for (final col in {...data.moneyColumns, ...data.rateColumns})
+      col: pw.Alignment.centerRight,
+  },
+  oddRowDecoration: const pw.BoxDecoration(color: PdfColor.fromInt(0xfff0f4fb)),
+  border: pw.TableBorder.all(color: PdfColors.blueGrey200, width: 0.3),
+);
