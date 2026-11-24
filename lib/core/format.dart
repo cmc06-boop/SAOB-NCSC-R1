@@ -14,6 +14,19 @@ String money(int cents) => NumberFormat.currency(
 ).format(cents / 100);
 String rate(int amount, int base) =>
     base == 0 ? '—' : '${(amount * 100 / base).toStringAsFixed(2)}%';
+/// Report label shared by Generated Reports and Audit Trail.
+/// Keeps the existing "Program_Current (Format)" naming convention.
+String generatedReportName(String program, String format) {
+  final name = program.trim().isEmpty ? 'All' : program.trim();
+  final storedFormat = format.trim();
+  final label = switch (storedFormat.toUpperCase()) {
+    'PDF' => 'PDF',
+    'EXCEL' || 'XLSX' => 'Excel',
+    _ => storedFormat,
+  };
+  return '${name}_Current ($label)';
+}
+
 String codeKey(Object? value) =>
     (value ?? '').toString().trim().replaceAll(RegExp(r'[\s-]+'), '');
 String displayCode(String value) => value.length == 10
