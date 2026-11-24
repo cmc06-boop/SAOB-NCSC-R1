@@ -8,6 +8,7 @@ import 'package:pdf/widgets.dart' as pw;
 
 import '../core/format.dart';
 import 'models.dart';
+import 'report_summary.dart';
 
 const reportTypes = [
   'Budget Utilization Report',
@@ -570,7 +571,7 @@ void _writeSaobSummarySheet(
         sheet,
         dart,
         0,
-        TextCellValue(group.program),
+        TextCellValue(summaryProgramAndFund(group.program, group.fund).$1),
         _saobStyle(bold: true),
       );
       void ref(int col, String cell, num value, CellStyle look) {
@@ -673,11 +674,34 @@ void _writeSaobSummarySheet(
     );
   }
 
-  final current = groups.where((g) => g.fund == 'CURRENT').toList();
-  final continuing = groups.where((g) => g.fund == 'CONTINUING').toList();
-  writeSection('CURRENT APPRO', current, 0);
+  // Imported *_Continuing worksheets use fund_source=CURRENT internally.
+  // Classify by the encoded program suffix, as in standalone Summary reports.
+  const sourceOrder = ['GAS', 'PPD', 'SECADNA', 'ECA', 'ATOP'];
+  int programRank(_SaobGroup group) {
+    final name = summaryProgramAndFund(group.program, group.fund).$1;
+    final index = sourceOrder.indexOf(name.toUpperCase());
+    return index < 0 ? sourceOrder.length : index;
+  }
+
+  List<_SaobGroup> sorted(String fund) =>
+      groups
+          .where((g) => summaryProgramAndFund(g.program, g.fund).$2 == fund)
+          .toList()
+        ..sort((a, b) {
+          final rank = programRank(a).compareTo(programRank(b));
+          return rank != 0 ? rank : a.program.compareTo(b.program);
+        });
+  final current = sorted('CURRENT');
+  final continuing = sorted('CONTINUING');
+  if (current.isNotEmpty) {
+    writeSection('CURRENT APPRO', current, 0);
+  }
   if (continuing.isNotEmpty) {
-    writeSection('CONTINUING APPRO', continuing, current.length + 5);
+    writeSection(
+      'CONTINUING APPRO',
+      continuing,
+      current.isEmpty ? 0 : current.length + 5,
+    );
   }
 }
 
