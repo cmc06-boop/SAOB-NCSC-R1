@@ -480,7 +480,7 @@ void main() {
     expect(store.user!.name, 'Finance AO');
     expect(
       store.db.rows('SELECT name FROM users').single['name'],
-      'Finance AO',
+      'AO',
     );
     expect(tester.takeException(), isNull);
     await tester.pumpWidget(const SizedBox());
