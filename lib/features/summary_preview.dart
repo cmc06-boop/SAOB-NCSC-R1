@@ -71,7 +71,7 @@ class SummaryPreview extends StatelessWidget {
               child: SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 child: SizedBox(
-                  width: math.max(940, available.maxWidth),
+                  width: math.max(940.0, available.maxWidth),
                   child: Padding(
                     padding: const EdgeInsets.all(16),
                     child: Column(
