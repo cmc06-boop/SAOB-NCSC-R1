@@ -389,12 +389,16 @@ class _ReportsPageState extends State<ReportsPage> {
               mainAxisSize: MainAxisSize.min,
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                _formatOption('PDF', Icons.picture_as_pdf_rounded, red),
-                const SizedBox(width: 10),
-                _formatOption(
-                  'Excel',
-                  Icons.table_chart_rounded,
-                  const Color(0xff198754),
+                Expanded(
+                  child: _formatOption('PDF', Icons.picture_as_pdf_rounded, red),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _formatOption(
+                    'Excel',
+                    Icons.table_chart_rounded,
+                    const Color(0xff198754),
+                  ),
                 ),
               ],
             ),
@@ -414,25 +418,35 @@ class _ReportsPageState extends State<ReportsPage> {
         backgroundColor: selected ? const Color(0xffedf3ff) : Colors.white,
         side: BorderSide(color: selected ? blue : line, width: selected ? 1.5 : 1),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 10),
         minimumSize: const Size(0, 44),
         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
         visualDensity: VisualDensity.compact,
       ),
       child: Row(
-        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(
             selected ? Icons.radio_button_checked : Icons.radio_button_unchecked,
             size: 18,
             color: selected ? blue : muted,
           ),
-          const SizedBox(width: 6),
+          const SizedBox(width: 4),
           Icon(fileIcon, size: 22, color: iconColor),
-          const SizedBox(width: 6),
-          Text(
-            format,
-            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+          const SizedBox(width: 4),
+          Flexible(
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: Text(
+                format,
+                maxLines: 1,
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
           ),
         ],
       ),
