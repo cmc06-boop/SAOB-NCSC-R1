@@ -10,9 +10,9 @@ import '../ui/theme.dart';
 
 const chartColors = [
   blue,
-  Color(0xffe5a400),
-  red,
+  Color(0xff80a6e1),
   navy,
+  red,
   Color(0xff527dcc),
   Color(0xff6878b2),
 ];
@@ -50,27 +50,11 @@ class _DashboardPageState extends State<DashboardPage> {
           return item == '${r.program}\u0001${r.code}';
         }).toList(),
         t = Totals(rows);
-    // A status donut requires non-overlapping portions of the allotment.
-    // Imported SAOB lines may have obligations/disbursements without allotment,
-    // so use the original program breakdown if the totals do not reconcile.
-    final canShowStatus =
-        t.allotment >= 0 &&
-        t.disbursement >= 0 &&
-        t.disbursement <= t.obligation &&
-        t.obligation <= t.allotment;
-    final shares = canShowStatus
-        ? <String, int>{
-            'Disbursed': t.disbursement,
-            'Obligated, not disbursed': t.obligation - t.disbursement,
-            'Unobligated Balance': t.allotment - t.obligation,
-          }
-        : <String, int>{
-            for (final p in widget.store.programs) p.code: 0,
-          };
-    if (!canShowStatus) {
-      for (final r in rows) {
-        shares[r.program] = (shares[r.program] ?? 0) + r.allotment;
-      }
+    final shares = <String, int>{
+      for (final p in widget.store.programs) p.code: 0,
+    };
+    for (final r in rows) {
+      shares[r.program] = (shares[r.program] ?? 0) + r.allotment;
     }
     final filters = Wrap(
       spacing: 16,
@@ -241,10 +225,10 @@ class _DashboardPageState extends State<DashboardPage> {
               final cardWidth = sideBySide
                   ? (c.maxWidth - gap) / 2
                   : c.maxWidth;
-              const donutSize = 190.0;
+              const donutSize = 220.0;
               final legendWidth = math.max(
                 96.0,
-                cardWidth - 52 - donutSize - 12,
+                cardWidth - 52 - donutSize - 20,
               );
               final amountWidth = math.min(168.0, legendWidth * 0.58);
               final nameWidth = math.max(
@@ -257,21 +241,12 @@ class _DashboardPageState extends State<DashboardPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
-                      canShowStatus
-                          ? 'Budget Allocation Status'
-                          : 'Allotment by Program',
+                      'Utilization by Program',
                       style: TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.w800,
                         color: navy,
                       ),
-                    ),
-                    const SizedBox(height: 10),
-                    Text(
-                      canShowStatus
-                          ? 'Breakdown of allotment without double-counting obligations and disbursements.'
-                          : 'Some amounts do not reconcile (disbursement ≤ obligation ≤ allotment). Showing allotments by program instead.',
-                      style: const TextStyle(fontSize: 12, color: muted),
                     ),
                     const SizedBox(height: 22),
                     Builder(
@@ -382,7 +357,7 @@ class _DashboardPageState extends State<DashboardPage> {
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
                             donut,
-                            const SizedBox(width: 12),
+                            const SizedBox(width: 20),
                             SizedBox(width: legendWidth, child: legend),
                           ],
                         );
