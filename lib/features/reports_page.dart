@@ -1343,16 +1343,19 @@ class _HistoryCardState extends State<_HistoryCard> {
     List<Widget> cells,
     Color color, {
     bool center = false,
+    Set<int> centeredColumns = const {},
   }) => TableRow(
     decoration: BoxDecoration(color: color),
     children: [
-      for (final cell in cells)
+      for (final (index, cell) in cells.indexed)
         TableCell(
           verticalAlignment: TableCellVerticalAlignment.middle,
           child: ConstrainedBox(
             constraints: const BoxConstraints(minHeight: 48),
             child: Align(
-              alignment: center ? Alignment.center : Alignment.centerLeft,
+              alignment: center || centeredColumns.contains(index)
+                  ? Alignment.center
+                  : Alignment.centerLeft,
               child: cell,
             ),
           ),
@@ -1433,9 +1436,10 @@ class _HistoryCardState extends State<_HistoryCard> {
                               _row([
                                 _cell('${i + 1}', number: true),
                                 _cell(_reportName(widget.history[i])),
-                                _cell('${widget.history[i]['year']}'),
-                                _cell(dateLabel(widget.history[i]['at'])),
-                              ], i.isOdd ? const Color(0xfff7f9fc) : Colors.white),
+                                _cell('${widget.history[i]['year']}', center: true),
+                                _cell(dateLabel(widget.history[i]['at']), center: true),
+                              ], i.isOdd ? const Color(0xfff7f9fc) : Colors.white,
+                                  centeredColumns: const {2, 3}),
                         ],
                       ),
                     ),
