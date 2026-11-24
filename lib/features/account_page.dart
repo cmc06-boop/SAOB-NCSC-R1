@@ -48,7 +48,9 @@ class _AccountDialogState extends State<AccountDialog> {
   }
 
   Future<void> _saveChanges() async {
-    if (_saving) return;
+    if (_saving) {
+      return;
+    }
     setState(() {
       _saving = true;
       _error = null;
@@ -61,16 +63,22 @@ class _AccountDialogState extends State<AccountDialog> {
         newPassword: _newPassword.text,
         confirmPassword: _confirmPassword.text,
       );
-      if (!mounted) return;
+      if (!mounted) {
+        return;
+      }
       showMessage(
         context,
         changed ? 'Account changes saved.' : 'No changes to save.',
       );
       Navigator.of(context).pop();
     } catch (e) {
-      if (mounted) setState(() => _error = friendlyError(e));
+      if (mounted) {
+        setState(() => _error = friendlyError(e));
+      }
     } finally {
-      if (mounted) setState(() => _saving = false);
+      if (mounted) {
+        setState(() => _saving = false);
+      }
     }
   }
 
@@ -101,7 +109,9 @@ class _AccountDialogState extends State<AccountDialog> {
         autocorrect: !password,
         enableSuggestions: !password,
         onChanged: (_) {
-          if (_error != null) setState(() => _error = null);
+          if (_error != null) {
+            setState(() => _error = null);
+          }
         },
         decoration: InputDecoration(
           isDense: true,
