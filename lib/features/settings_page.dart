@@ -419,8 +419,11 @@ class _ReferenceEditorState extends State<ReferenceEditor> {
           original: widget.reference?['code'] as String?,
         );
       }
+      showMessage(
+        context,
+        widget.isProgram ? 'Program saved.' : 'UACS reference saved.',
+      );
       Navigator.pop(context);
-      showMessage(context, 'Reference saved.');
     } catch (e) {
       setState(() => error = friendlyError(e));
     }
