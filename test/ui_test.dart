@@ -21,7 +21,7 @@ void main() {
     'Select a record to edit.',
     'This is a longer instruction explaining that a valid record must be selected before an action can be completed in the finance system.',
   ]) {
-    testWidgets('notifications stay compact at the lower right: $message', (
+    testWidgets('notifications are white, wider, and raised at lower right: $message', (
       tester,
     ) async {
       await binding.setSurfaceSize(const Size(1366, 720));
@@ -44,21 +44,58 @@ void main() {
       final margin = toast.margin! as EdgeInsets;
       final toastWidth = 1366 - margin.left - margin.right;
       expect(toast.behavior, SnackBarBehavior.floating);
-      expect(margin.right, 16);
-      expect(margin.bottom, 16);
-      expect(toastWidth, lessThanOrEqualTo(500));
-      expect(toast.padding, const EdgeInsets.symmetric(horizontal: 14, vertical: 11));
+      expect(toast.backgroundColor, Colors.white);
+      expect(toast.elevation, 5);
+      expect(margin.right, 72);
+      expect(margin.bottom, 48);
+      expect(toastWidth, inInclusiveRange(320, 540));
+      expect(
+        toast.padding,
+        const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+      );
+      final content = toast.content as Text;
+      expect(content.style?.color, const Color(0xff132951));
       if (message == 'Select a record to edit.') {
-        expect(toastWidth, lessThan(260));
-        expect(margin.left, greaterThan(1000));
+        expect(toastWidth, 320);
+        expect(margin.left, 974);
       } else {
-        expect(toastWidth, greaterThan(350));
-        expect(margin.left, greaterThan(700));
+        expect(toastWidth, greaterThan(400));
+        expect(margin.left, lessThan(900));
       }
       expect(tester.takeException(), isNull);
       await tester.pumpWidget(const SizedBox());
     });
   }
+
+  testWidgets('notification uses compact side spacing on narrower windows', (
+    tester,
+  ) async {
+    await binding.setSurfaceSize(const Size(400, 640));
+    addTearDown(() => binding.setSurfaceSize(null));
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Builder(
+            builder: (context) => TextButton(
+              onPressed: () => showMessage(context, 'Please select a record.', error: true),
+              child: const Text('Show error'),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('Show error'));
+    await tester.pump();
+    final toast = tester.widget<SnackBar>(find.byType(SnackBar));
+    final margin = toast.margin! as EdgeInsets;
+    expect(margin.left, greaterThanOrEqualTo(16));
+    expect(margin.right, 20);
+    expect(margin.bottom, 48);
+    expect(toast.backgroundColor, Colors.white);
+    expect((toast.content as Text).style?.color, const Color(0xffd42035));
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox());
+  });
 
   for (final size in const [
     Size(1000, 620),
