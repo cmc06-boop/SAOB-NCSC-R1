@@ -37,7 +37,7 @@ Sa parehong `theme.dart`:
 | `lib/features/reports_page.dart` | Report filters, preview, exports, history |
 | `lib/features/audit_page.dart` | Audit table and filters |
 | `lib/features/settings_page.dart` | Separate Programs and UACS Reference pages, sharing the existing management forms |
-| `lib/features/account_page.dart` | Single-column My Account dialog opened from the profile button above Logout, with inline validation and one Save Changes action |
+| `lib/features/account_page.dart` | Single-column My Account dialog opened from the profile button above Logout, with inline validation and one plain Save action |
 | `lib/ui/common.dart` | Reusable panels, tables, dropdowns, and pagination |
 | `lib/data/finance_store.dart` | Database operations and finance rules |
 
@@ -48,3 +48,5 @@ Hot Reload para sa maraming Dart/UI edits. Kapag dependencies, `main()`, o nativ
 ## Native title bar
 
 Ang title text ay nasa `windows/runner/main.cpp`. Ang native title-bar icon handling at minimum window size ay nasa `windows/runner/flutter_window.cpp`. Ang light gray caption color ay nasa `windows/runner/win32_window.cpp`. Kailangan ng full Windows rebuild para sa mga ito.
+
+The Logout confirmation follows the centered, pale-blue gradient reference design. Add/Edit Program shows its centered title and bottom-right Cancel/Save actions; Save buttons use plain **Save** text without icons.
