@@ -244,9 +244,9 @@ class _SettingsTable extends StatelessWidget {
     for (final e in widths.entries) e.key + 1: e.value,
   };
 
-  Widget _text(String text, {TextStyle style = _body}) => Padding(
+  Widget _text(String text, {TextStyle style = _body, TextAlign align = TextAlign.left}) => Padding(
     padding: const EdgeInsets.fromLTRB(12, 8, 8, 8),
-    child: Text(text, style: style),
+    child: Text(text, style: style, textAlign: align),
   );
 
   Widget _padded(Widget child) => Padding(
@@ -273,8 +273,9 @@ class _SettingsTable extends StatelessWidget {
       defaultVerticalAlignment: TableCellVerticalAlignment.middle,
       children: [
         _row([
-          _text('#', style: _header),
-          for (final name in columns) _text(name, style: _header),
+          _text('#', style: _header, align: TextAlign.center),
+          for (final name in columns)
+            _text(name, style: _header, align: TextAlign.center),
         ], const Color(0xffeef3fb)),
       ],
     );
