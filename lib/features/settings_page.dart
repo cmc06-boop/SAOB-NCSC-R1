@@ -132,108 +132,58 @@ class _ReferenceManagementPageState extends State<_ReferenceManagementPage> {
     }
 
     final referenceRows = widget.store.references(query);
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(28, 30, 28, 28),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'UACS Reference',
-            style: TextStyle(
-              fontSize: 28,
-              fontWeight: FontWeight.w700,
-              color: ink,
-              height: 1,
+    return PageFrame(
+      title: 'UACS Reference',
+      subtitle: 'Browse and search UACS reference codes and expense names.',
+      accent: false,
+      expand: true,
+      besideSubtitle: SizedBox(
+        width: 320,
+        child: TextField(
+          key: const ValueKey('uacs-search'),
+          onChanged: (v) => setState(() => query = v),
+          style: const TextStyle(fontSize: 14, color: ink),
+          decoration: const InputDecoration(
+            hintText: 'Search UACS Code or Expense…',
+            isDense: true,
+            contentPadding: EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 12,
             ),
+            prefixIcon: Icon(Icons.search, size: 18),
           ),
-          const SizedBox(height: 8),
-          const Text(
-            'Browse and search UACS reference codes and expense names.',
-            style: TextStyle(fontSize: 14, color: muted, height: 1.35),
-          ),
-          const SizedBox(height: 22),
-          Expanded(
-            child: Panel(
-              padding: 0,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
-                    child: Row(
-                      children: [
-                        const Icon(
-                          Icons.menu_book_outlined,
-                          color: blue,
-                          size: 20,
-                        ),
-                        const SizedBox(width: 8),
-                        const Text(
-                          'UACS Reference',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        const Spacer(),
-                        SizedBox(
-                          width: 320,
-                          height: 40,
-                          child: TextField(
-                            onChanged: (v) => setState(() => query = v),
-                            style: const TextStyle(fontSize: 14, color: ink),
-                            decoration: const InputDecoration(
-                              hintText: 'Search UACS Code or Expense…',
-                              isDense: true,
-                              contentPadding: EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 8,
-                              ),
-                              prefixIcon: Icon(Icons.search, size: 18),
-                              prefixIconConstraints: BoxConstraints(
-                                minWidth: 40,
-                                minHeight: 36,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                      child: _SettingsTable(
-                        key: const ValueKey('uacs-table'),
-                        columns: const [
-                          'UACS Code',
-                          'Expense (UACS Name)',
-                        ],
-                        widths: const {
-                          0: FixedColumnWidth(140),
-                          1: FlexColumnWidth(),
-                        },
-                        rows: [
-                          for (final r in referenceRows)
-                            [
-                              Text(
-                                displayCode(r['code'] as String),
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                              Text('${r['name']}'),
-                            ],
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
+        ),
       ),
+      children: [
+        Expanded(
+          // The table starts directly in the same full-height panel
+          // used by Budget Utilization, with no duplicate page heading.
+          child: Panel(
+            padding: 0,
+            child: _SettingsTable(
+              key: const ValueKey('uacs-table'),
+              columns: const [
+                'UACS Code',
+                'Expense (UACS Name)',
+              ],
+              widths: const {
+                0: FixedColumnWidth(140),
+                1: FlexColumnWidth(),
+              },
+              rows: [
+                for (final r in referenceRows)
+                  [
+                    Text(
+                      displayCode(r['code'] as String),
+                      style: const TextStyle(fontWeight: FontWeight.w700),
+                    ),
+                    Text('${r['name']}'),
+                  ],
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 
