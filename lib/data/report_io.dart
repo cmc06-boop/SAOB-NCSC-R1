@@ -264,7 +264,7 @@ Uint8List excelReport(
       book.rename('Sheet1', group.sheet);
       renamed = true;
     }
-    _writeSaobProgramSheet(book[group.sheet], group, title, year, cache);
+    _writeSaobProgramSheet(book[group.sheet], group, year, cache);
   }
   if (program.isEmpty && sheets.isNotEmpty) {
     _writeSaobSummarySheet(book['SUMMARY'], sheets, cache);
@@ -283,7 +283,6 @@ Uint8List excelReport(
 void _writeSaobProgramSheet(
   Sheet sheet,
   _SaobGroup group,
-  String title,
   int year,
   Map<String, Map<String, String>> cache,
 ) {
@@ -356,8 +355,6 @@ void _writeSaobProgramSheet(
     IntCellValue(year),
     _saobStyle(border: false),
   );
-  _writeCell(sheet, 1, 2, TextCellValue(title), _saobStyle(border: false));
-
   for (var c = 0; c < headers.length; c++) {
     final numeric = money.contains(c) || rates.contains(c);
     _writeCell(
@@ -788,12 +785,7 @@ Future<Uint8List> pdfReport(
             ],
           ),
           pw.SizedBox(height: 8),
-          pw.Text(
-            title,
-            textAlign: pw.TextAlign.center,
-            style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold),
-          ),
-          pw.SizedBox(height: 2),
+          // The obsolete Report Type title is deliberately not shown.
           pw.Text(
             'Program: ${_programLabel(program)}  |  Fiscal Year: $year',
             style: const pw.TextStyle(fontSize: 9, color: PdfColors.blueGrey700),
