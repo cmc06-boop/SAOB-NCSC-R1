@@ -78,17 +78,17 @@ class SummaryPreview extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         for (final section in sections) ...[
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 10,
-                            ),
-                            color: navy,
-                            child: Text(
-                              section.title,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w800,
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 10),
+                            child: Center(
+                              child: Text(
+                                section.title,
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  color: ink,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w800,
+                                ),
                               ),
                             ),
                           ),
