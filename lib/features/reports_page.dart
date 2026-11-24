@@ -6,6 +6,7 @@ import 'package:intl/intl.dart' hide TextDirection;
 import 'package:material_ui/material_ui.dart';
 
 import '../core/format.dart';
+import '../data/export_file.dart';
 import '../data/finance_store.dart';
 import '../data/models.dart';
 import '../data/report_io.dart';
@@ -186,6 +187,7 @@ class _ReportsPageState extends State<ReportsPage> {
   int year = manilaNow().year;
   String program = '';
   String reportFormat = 'PDF';
+  String? lastExportFolder;
   bool busy = false, preview = false;
   void change(VoidCallback fn) => setState(fn);
   void openPreview() {
@@ -210,14 +212,14 @@ class _ReportsPageState extends State<ReportsPage> {
     try {
       final data = reportData(selectedType, rows);
       final extension = fmt == 'PDF' ? 'pdf' : 'xlsx';
-      final location = await getSaveLocation(
-        suggestedName:
-            'NCSC-R1-$selectedYear-${selectedProgram.isEmpty ? 'All' : selectedProgram}.$extension',
-        acceptedTypeGroups: [
-          XTypeGroup(label: fmt, extensions: [extension]),
-        ],
+      // Choose only the destination folder. The app generates a unique
+      // filename, avoiding the Windows Save As overwrite confirmation.
+      final folderPath = await getDirectoryPath(
+        initialDirectory: lastExportFolder,
+        confirmButtonText: 'Export Here',
       );
-      if (location == null) return;
+      if (folderPath == null) return;
+      lastExportFolder = folderPath;
       final bytes = fmt == 'PDF'
           ? await pdfReport(
               data,
@@ -234,10 +236,13 @@ class _ReportsPageState extends State<ReportsPage> {
       if (bytes.isEmpty) {
         throw const FinanceError('The report file could not be created.');
       }
-      final destination = location.path.toLowerCase().endsWith('.$extension')
-          ? location.path
-          : '${location.path}.$extension';
-      await File(destination).writeAsBytes(bytes, flush: true);
+      final fileName =
+          'NCSC-R1-$selectedYear-${selectedProgram.isEmpty ? 'All' : selectedProgram}.$extension';
+      final destination = await saveExportCopy(
+        folderPath: folderPath,
+        fileName: fileName,
+        bytes: bytes,
+      );
       if (mounted) {
         showMessage(
           context,
