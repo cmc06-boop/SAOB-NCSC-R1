@@ -53,7 +53,7 @@ Kapag unang run at wala pang Flutter database, hahanapin nito yung existing Pyth
 | Budget Utilization | Current/continuing funds; UACS search and lookup; add, edit, delete; automatic balance and rate calculations; pagination |
 | Import Records | `.xlsx` selection, worksheet preview, fiscal year/program/fund selection, duplicate detection, invalid-row details, optional updates to matching lines |
 | Reports | Budget Utilization, Obligation Status, at Program Budget reports; preview, Excel export, PDF export, native printing; generated report history |
-| Audit Trail | Short readable Details sentences, one filename-only audit entry per successfully imported Excel workbook, and year/program/action filters; no user column |
+| Audit Trail | Short Details without repeating the Action column, generated report names matching the Generated Reports table (such as GAS_Current (PDF) and All_Current (Excel)), and one filename-only entry per successful Excel workbook import; no user column |
 | Programs | Separate sidebar page to add, edit, and delete programs |
 | UACS Reference | Separate sidebar page to browse and search expense names and UACS codes |
 | My Account (profile button above Logout) | Opens a compact, single-column pop-up with Full Name, Username, and password fields; one Save Changes button; red validation errors only when needed |
