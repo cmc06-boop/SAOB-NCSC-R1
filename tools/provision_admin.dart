@@ -1,8 +1,8 @@
 import 'dart:io';
 
-import '../lib/core/format.dart';
-import '../lib/data/database.dart';
-import '../lib/data/passwords.dart';
+import 'package:ncsc_region1_finance/core/format.dart';
+import 'package:ncsc_region1_finance/data/database.dart';
+import 'package:ncsc_region1_finance/data/passwords.dart';
 
 // Maintainer-only tool. Run with Dart/Flutter installed on the target Windows
 // account BEFORE handing the desktop application to its administrator.
