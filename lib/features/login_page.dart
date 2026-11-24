@@ -1,3 +1,6 @@
+import 'dart:math' as math;
+
+import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../core/format.dart';
@@ -9,21 +12,69 @@ import '../ui/theme.dart';
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key, required this.store});
   final FinanceStore store;
+
   @override
   State<LoginPage> createState() => _LoginPageState();
 }
 
 class _LoginPageState extends State<LoginPage> {
-  final _username = TextEditingController(),
-      _password = TextEditingController();
-  bool _showPassword = false, _busy = false;
+  final _username = TextEditingController();
+  final _password = TextEditingController();
+  final _usernameFocus = FocusNode();
+  final _passwordFocus = FocusNode();
+
+  bool _showForm = false;
+  bool _showPassword = false;
+  bool _busy = false;
   String? _error;
+  String? _bagongAsset;
+
+  @override
+  void initState() {
+    super.initState();
+    _findBagongPilipinasLogo();
+  }
+
+  Future<void> _findBagongPilipinasLogo() async {
+    try {
+      final manifest = await AssetManifest.loadFromAssetBundle(rootBundle);
+      final matches = manifest.listAssets().where((path) {
+        final lower = path.toLowerCase();
+        return lower.startsWith('assets/') &&
+            lower.contains('bagong') &&
+            (lower.endsWith('.png') ||
+                lower.endsWith('.jpg') ||
+                lower.endsWith('.webp'));
+      }).toList()
+        ..sort();
+      if (mounted && matches.isNotEmpty) {
+        setState(() => _bagongAsset = matches.first);
+      }
+    } catch (_) {
+      // Use the small illustrated fallback when no logo asset is available.
+    }
+  }
+
   @override
   void dispose() {
-    for (final c in [_username, _password]) {
-      c.dispose();
-    }
+    _username.dispose();
+    _password.dispose();
+    _usernameFocus.dispose();
+    _passwordFocus.dispose();
     super.dispose();
+  }
+
+  void _openForm() {
+    if (_showForm) return;
+    setState(() {
+      _showForm = true;
+      _error = null;
+    });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && !widget.store.needsAccount) {
+        _usernameFocus.requestFocus();
+      }
+    });
   }
 
   Future<void> _submit() async {
@@ -47,164 +98,135 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
-  Widget _field(
-    String label,
-    IconData icon,
-    TextEditingController controller, {
-    bool password = false,
-  }) => SizedBox(
-    height: LoginLayout.fieldHeight,
-    child: TextField(
-      key: ValueKey(label),
-      controller: controller,
-      enabled: !_busy && !widget.store.needsAccount,
-      obscureText: password && !_showPassword,
-      autofillHints: label == 'Username'
-          ? const [AutofillHints.username]
-          : null,
-      onSubmitted: (_) => _submit(),
-      decoration: InputDecoration(
-        hintText: label,
-        prefixIcon: Icon(icon, size: 20, color: navy),
-        suffixIcon: password
-            ? IconButton(
-                tooltip: _showPassword ? 'Hide password' : 'Show password',
-                onPressed: () => setState(() => _showPassword = !_showPassword),
-                icon: Icon(
-                  _showPassword
-                      ? Icons.visibility_outlined
-                      : Icons.visibility_off_outlined,
-                  size: 20,
-                  color: navy,
-                ),
-              )
-            : null,
-      ),
-    ),
-  );
-
-  Widget _card() {
-    final needsProvisioning = widget.store.needsAccount;
-    return Container(
-      width: LoginLayout.cardWidth,
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.97),
-        borderRadius: BorderRadius.circular(LoginLayout.cardRadius),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x2e061c52),
-            blurRadius: 32,
-            offset: Offset(0, 14),
+  Widget _bagongMark(double size) {
+    if (_bagongAsset != null) {
+      return Image.asset(
+        _bagongAsset!,
+        width: size * 1.33,
+        height: size * 1.16,
+        fit: BoxFit.contain,
+      );
+    }
+    return SizedBox(
+      width: size * 1.4,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SizedBox(
+            width: size,
+            height: size * 0.85,
+            child: CustomPaint(painter: const _BagongMarkPainter()),
+          ),
+          const SizedBox(height: 2),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              'BAGONG PILIPINAS',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: size * 0.115,
+                fontWeight: FontWeight.w800,
+                fontStyle: FontStyle.italic,
+                letterSpacing: 0.2,
+              ),
+            ),
           ),
         ],
       ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(LoginLayout.cardRadius),
+    );
+  }
+
+  Widget _welcomeContent(double width, double height) {
+    final compact = height < 730 || width < 1000;
+    final verySmall = width < 590;
+    final logoSize = verySmall ? 82.0 : compact ? 120.0 : 180.0;
+    final brandSize = verySmall ? 23.0 : compact ? 32.0 : 43.0;
+    final titleSize = verySmall ? 27.0 : compact ? 38.0 : 54.0;
+
+    return ConstrainedBox(
+      key: const ValueKey('login-welcome'),
+      constraints: const BoxConstraints(maxWidth: 1200),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const SizedBox(
-              height: 5,
-              width: double.infinity,
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(colors: [navy, blue, red]),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Image.asset(
+                  'assets/ncsc-logo-transparent.png',
+                  width: logoSize,
+                  height: logoSize,
+                  fit: BoxFit.contain,
+                  semanticLabel: 'National Commission of Senior Citizens logo',
                 ),
+                SizedBox(width: verySmall ? 16 : compact ? 34 : 52),
+                _bagongMark(logoSize),
+              ],
+            ),
+            SizedBox(height: compact ? 17 : 25),
+            Text(
+              'National Commission of Senior Citizens',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w800,
+                fontSize: brandSize,
+                height: 1.13,
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.all(LoginLayout.cardPadding),
-              child: AutofillGroup(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
+            SizedBox(height: compact ? 3 : 8),
+            Text(
+              'Region I',
+              style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.93),
+                fontWeight: FontWeight.w400,
+                fontSize: brandSize * 0.86,
+              ),
+            ),
+            SizedBox(height: compact ? 29 : 49),
+            Text(
+              productTitle,
+              maxLines: 3,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: titleSize,
+                fontWeight: FontWeight.w800,
+                height: 1.18,
+              ),
+            ),
+            SizedBox(height: compact ? 36 : 62),
+            SizedBox(
+              width: verySmall ? 250 : compact ? 300 : 410,
+              height: compact ? 63 : 90,
+              child: FilledButton(
+                key: const ValueKey('login-welcome-sign-in'),
+                onPressed: _openForm,
+                style: FilledButton.styleFrom(
+                  foregroundColor: const Color(0xff082c87),
+                  backgroundColor: Colors.white,
+                  elevation: 7,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(25),
+                  ),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Row(
-                      children: [
-                        Expanded(child: Divider()),
-                        SizedBox(width: 22),
-                        DecoratedBox(
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            border: Border.fromBorderSide(
-                              BorderSide(color: Color(0xffd5e1f5), width: 3),
-                            ),
-                          ),
-                          child: Padding(
-                            padding: EdgeInsets.all(3),
-                            child: CircleAvatar(
-                              radius: 32,
-                              backgroundColor: Color(0xffe2e9fa),
-                              child: Icon(Icons.person, size: 40, color: navy),
-                            ),
-                          ),
-                        ),
-                        SizedBox(width: 22),
-                        Expanded(child: Divider()),
-                      ],
-                    ),
-                    const SizedBox(height: 14),
-                    const Text(
-                      'System Login',
+                    Text(
+                      'Sign in',
                       style: TextStyle(
-                        fontSize: 30,
+                        fontSize: compact ? 24 : 37,
                         fontWeight: FontWeight.w800,
-                        color: navy,
                       ),
                     ),
-                    const SizedBox(height: 8),
-                    const Text(
-                      'Access your account to continue',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 14, color: muted),
-                    ),
-                    const SizedBox(height: 20),
-                    if (needsProvisioning) ...[
-                      const Text(
-                        'No Admin account is configured on this computer. '
-                        'Please contact the system maintainer before signing in.',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(fontSize: 13, color: red),
-                      ),
-                      const SizedBox(height: 12),
-                    ],
-                    _field('Username', Icons.person, _username),
-                    const SizedBox(height: 12),
-                    _field('Password', Icons.lock, _password, password: true),
-                    if (_error != null)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 12),
-                        child: Text(
-                          _error!,
-                          style: const TextStyle(color: red, fontSize: 12),
-                        ),
-                      ),
-                    const SizedBox(height: 14),
-                    SizedBox(
-                      width: double.infinity,
-                      height: 48,
-                      child: FilledButton.icon(
-                        style: FilledButton.styleFrom(
-                          backgroundColor: navy,
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                        ),
-                        onPressed: _busy || needsProvisioning ? null : _submit,
-                        icon: _busy
-                            ? const SizedBox(
-                                width: 18,
-                                height: 18,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                ),
-                              )
-                            : const Icon(Icons.login, size: 22),
-                        label: const Text(
-                          'Login',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
+                    const SizedBox(width: 12),
+                    Icon(
+                      Icons.arrow_forward,
+                      size: compact ? 28 : 38,
                     ),
                   ],
                 ),
@@ -216,79 +238,219 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  Widget _brand({bool compact = false}) => LayoutBuilder(
-    builder: (context, c) {
-      final small = c.maxWidth < 490;
-      return Row(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Image.asset(
-            'assets/ncsc-logo-transparent.png',
-            width: compact
-                ? 76
-                : small
-                ? 118
-                : 160,
-            semanticLabel: 'National Commission of Senior Citizens logo',
-          ),
-          Container(
-            width: 2,
-            height: compact ? 85 : 172,
-            color: navy,
-            margin: const EdgeInsets.symmetric(horizontal: 18),
-          ),
-          Expanded(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                FittedBox(
-                  fit: BoxFit.scaleDown,
-                  child: Text(
-                    'NCSC-R1',
-                    style: TextStyle(
+  Widget _field(
+    String label,
+    String hint,
+    IconData icon,
+    TextEditingController controller,
+    FocusNode focusNode, {
+    bool password = false,
+  }) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(
+        label,
+        style: const TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.w700,
+          color: Color(0xff102458),
+        ),
+      ),
+      const SizedBox(height: 7),
+      SizedBox(
+        height: 58,
+        child: TextField(
+          key: ValueKey(label),
+          focusNode: focusNode,
+          controller: controller,
+          enabled: !_busy && !widget.store.needsAccount,
+          obscureText: password && !_showPassword,
+          autofillHints: label == 'Username'
+              ? const [AutofillHints.username]
+              : const [AutofillHints.password],
+          textInputAction: password ? TextInputAction.done : TextInputAction.next,
+          onSubmitted: (_) {
+            if (password) {
+              _submit();
+            } else {
+              _passwordFocus.requestFocus();
+            }
+          },
+          style: const TextStyle(fontSize: 16, color: Color(0xff102458)),
+          decoration: InputDecoration(
+            hintText: hint,
+            hintStyle: const TextStyle(
+              color: Color(0xff69748d),
+              fontSize: 15,
+            ),
+            filled: true,
+            fillColor: const Color(0xfff5f7fc),
+            prefixIcon: Icon(icon, size: 24, color: navy),
+            suffixIcon: password
+                ? IconButton(
+                    tooltip: _showPassword ? 'Hide password' : 'Show password',
+                    onPressed: () =>
+                        setState(() => _showPassword = !_showPassword),
+                    icon: Icon(
+                      _showPassword
+                          ? Icons.visibility_outlined
+                          : Icons.visibility_off_outlined,
                       color: navy,
-                      fontSize: compact
-                          ? 36
-                          : small
-                          ? 46
-                          : 62,
-                      fontWeight: FontWeight.w800,
-                      height: 1.1,
+                      size: 23,
                     ),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  productTitle,
-                  style: TextStyle(
-                    color: navy,
-                    fontSize: compact
-                        ? 16
-                        : small
-                        ? 19
-                        : 24,
-                    fontWeight: FontWeight.w600,
-                    height: 1.25,
-                  ),
-                ),
-                const SizedBox(height: 14),
-                Container(
-                  width: 130,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: red,
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                ),
-              ],
+                  )
+                : null,
+            border: OutlineInputBorder(
+              borderSide: const BorderSide(color: Color(0xffa9b9d6)),
+              borderRadius: BorderRadius.circular(13),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderSide: const BorderSide(
+                color: Color(0xffa9b9d6),
+                width: 1.5,
+              ),
+              borderRadius: BorderRadius.circular(13),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderSide: const BorderSide(color: blue, width: 2),
+              borderRadius: BorderRadius.circular(13),
+            ),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 15,
             ),
           ),
-        ],
-      );
-    },
+        ),
+      ),
+    ],
   );
+
+  Widget _loginCard(double height) {
+    final compact = height < 730;
+    final needsProvisioning = widget.store.needsAccount;
+    return Container(
+      key: const ValueKey('login-form'),
+      width: 530,
+      decoration: BoxDecoration(
+        color: const Color(0xfffbfcff).withValues(alpha: 0.98),
+        borderRadius: BorderRadius.circular(28),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x55051846),
+            blurRadius: 34,
+            offset: Offset(0, 14),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(
+          compact ? 30 : 40,
+          compact ? 20 : 28,
+          compact ? 30 : 40,
+          compact ? 28 : 40,
+        ),
+        child: AutofillGroup(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Image.asset(
+                'assets/ncsc-logo-transparent.png',
+                width: compact ? 120 : 165,
+                height: compact ? 120 : 165,
+                fit: BoxFit.contain,
+                semanticLabel: 'NCSC logo',
+              ),
+              SizedBox(height: compact ? 5 : 8),
+              const Text(
+                'NCSC-R1',
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w800,
+                  color: navy,
+                ),
+              ),
+              const SizedBox(height: 1),
+              Text(
+                'Log in',
+                style: TextStyle(
+                  fontSize: compact ? 39 : 49,
+                  fontWeight: FontWeight.w800,
+                  color: const Color(0xff092766),
+                  height: 1.1,
+                ),
+              ),
+              SizedBox(height: compact ? 17 : 25),
+              if (needsProvisioning) ...[
+                const Text(
+                  'No Admin account is configured on this computer. '
+                  'Please contact the system maintainer before signing in.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 12, color: red),
+                ),
+                const SizedBox(height: 12),
+              ],
+              _field(
+                'Username',
+                'Enter your username',
+                Icons.person_outline,
+                _username,
+                _usernameFocus,
+              ),
+              SizedBox(height: compact ? 16 : 22),
+              _field(
+                'Password',
+                'Enter your password',
+                Icons.lock_outline,
+                _password,
+                _passwordFocus,
+                password: true,
+              ),
+              if (_error != null) ...[
+                const SizedBox(height: 12),
+                Text(
+                  _error!,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: red, fontSize: 12),
+                ),
+              ],
+              SizedBox(height: compact ? 24 : 32),
+              SizedBox(
+                width: double.infinity,
+                height: 63,
+                child: FilledButton(
+                  key: const ValueKey('login-submit'),
+                  onPressed: _busy || needsProvisioning ? null : _submit,
+                  style: FilledButton.styleFrom(
+                    backgroundColor: const Color(0xff073ab6),
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  ),
+                  child: _busy
+                      ? const SizedBox(
+                          height: 23,
+                          width: 23,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2.5,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Text(
+                          'Log in',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w800,
+                            fontSize: 22,
+                          ),
+                        ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) => Scaffold(
@@ -296,54 +458,127 @@ class _LoginPageState extends State<LoginPage> {
       children: [
         const Positioned.fill(child: LoginBackdrop()),
         Positioned.fill(
-          child: LayoutBuilder(
-            builder: (context, c) {
-              if (c.maxWidth < 1040) {
-                return SingleChildScrollView(
-                  child: ConstrainedBox(
-                    constraints: BoxConstraints(minHeight: c.maxHeight),
-                    child: Padding(
-                      padding: const EdgeInsets.all(28),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          ConstrainedBox(
-                            constraints: const BoxConstraints(maxWidth: 460),
-                            child: _brand(compact: true),
+          child: SafeArea(
+            child: LayoutBuilder(
+              builder: (context, dimensions) => SingleChildScrollView(
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    minHeight: dimensions.maxHeight,
+                  ),
+                  child: Center(
+                    child: _showForm
+                        ? Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 20,
+                            ),
+                            child: _loginCard(dimensions.maxHeight),
+                          )
+                        : Focus(
+                            autofocus: true,
+                            onKeyEvent: (node, event) {
+                              if (event is KeyDownEvent &&
+                                  (event.logicalKey == LogicalKeyboardKey.enter ||
+                                      event.logicalKey ==
+                                          LogicalKeyboardKey.numpadEnter)) {
+                                _openForm();
+                                return KeyEventResult.handled;
+                              }
+                              return KeyEventResult.ignored;
+                            },
+                            child: _welcomeContent(
+                              dimensions.maxWidth,
+                              dimensions.maxHeight,
+                            ),
                           ),
-                          const SizedBox(height: 26),
-                          _card(),
-                          const SizedBox(height: 26),
-                        ],
-                      ),
-                    ),
                   ),
-                );
-              }
-              return Row(
-                children: [
-                  Expanded(
-                    child: Padding(
-                      padding: EdgeInsets.only(
-                        left: c.maxWidth * 0.22,
-                        right: 28,
-                      ),
-                      child: _brand(),
-                    ),
-                  ),
-                  SingleChildScrollView(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 24),
-                      child: _card(),
-                    ),
-                  ),
-                  SizedBox(width: c.maxWidth * 0.055),
-                ],
-              );
-            },
+                ),
+              ),
+            ),
           ),
         ),
       ],
     ),
   );
+}
+
+/// A small decorative fallback. When an official Bagong Pilipinas logo asset
+/// exists in assets, that image is displayed instead of this illustration.
+class _BagongMarkPainter extends CustomPainter {
+  const _BagongMarkPainter();
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    canvas.save();
+    canvas.scale(size.width / 160, size.height / 145);
+    const gold = Color(0xffffd30a);
+    final ray = Paint()
+      ..color = gold
+      ..strokeWidth = 5
+      ..strokeCap = StrokeCap.round;
+    for (var i = 0; i < 9; i++) {
+      final theta = math.pi + (i * math.pi / 8);
+      final x1 = 80 + math.cos(theta) * 34;
+      final y1 = 77 + math.sin(theta) * 34;
+      final x2 = 80 + math.cos(theta) * 62;
+      final y2 = 77 + math.sin(theta) * 62;
+      canvas.drawLine(Offset(x1, y1), Offset(x2, y2), ray);
+    }
+    canvas.drawCircle(
+      const Offset(80, 77),
+      27,
+      Paint()..color = gold,
+    );
+    final blueRibbon = Path()
+      ..moveTo(18, 80)
+      ..cubicTo(15, 133, 66, 158, 125, 130)
+      ..cubicTo(103, 131, 63, 116, 43, 91);
+    canvas.drawPath(
+      blueRibbon,
+      Paint()
+        ..color = const Color(0xff0732df)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 19
+        ..strokeCap = StrokeCap.round,
+    );
+    final redRibbon = Path()
+      ..moveTo(142, 82)
+      ..cubicTo(148, 119, 115, 148, 55, 135)
+      ..cubicTo(93, 137, 118, 119, 121, 92);
+    canvas.drawPath(
+      redRibbon,
+      Paint()
+        ..color = const Color(0xffec1234)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 17
+        ..strokeCap = StrokeCap.round,
+    );
+
+    void star(double x, double y) {
+      final p = Path();
+      for (var j = 0; j < 10; j++) {
+        final angle = -math.pi / 2 + j * math.pi / 5;
+        final radius = j.isEven ? 8.0 : 3.7;
+        final pt = Offset(
+          x + math.cos(angle) * radius,
+          y + math.sin(angle) * radius,
+        );
+        if (j == 0) {
+          p.moveTo(pt.dx, pt.dy);
+        } else {
+          p.lineTo(pt.dx, pt.dy);
+        }
+      }
+      p.close();
+      canvas.drawPath(p, Paint()..color = gold);
+    }
+
+    star(31, 22);
+    star(80, 7);
+    star(130, 22);
+    canvas.restore();
+  }
+
+  @override
+  bool shouldRepaint(covariant _BagongMarkPainter oldDelegate) => false;
 }
