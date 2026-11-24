@@ -330,7 +330,7 @@ class _ReportsPageState extends State<ReportsPage> {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                SizedBox(width: 280, child: _parameterCard(records)),
+                SizedBox(width: 280, child: _parameterCard()),
                 const SizedBox(width: 16),
                 Expanded(child: _previewCard(records, programLabel)),
               ],
@@ -341,7 +341,7 @@ class _ReportsPageState extends State<ReportsPage> {
     );
   }
 
-  Widget _parameterCard(List<BudgetRecord> records) {
+  Widget _parameterCard() {
     return Panel(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -372,49 +372,41 @@ class _ReportsPageState extends State<ReportsPage> {
             ],
             onChanged: busy ? null : (v) => change(() => program = v),
           ),
-          const Spacer(),
-          Align(
-            alignment: Alignment.bottomCenter,
-            child: PopupMenuButton<String>(
-                key: const ValueKey('reports-export'),
-                onSelected: records.isEmpty ? null : generate,
-                enabled: !busy && records.isNotEmpty,
-                itemBuilder: (context) => const [
-                  PopupMenuItem(value: 'PDF', child: Text('Export PDF')),
-                  PopupMenuItem(value: 'Excel', child: Text('Export Excel')),
-                ],
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 10,
-                  ),
-                  decoration: BoxDecoration(
-                    color: blue,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: const Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.download_outlined,
-                        size: 18,
-                        color: Colors.white,
-                      ),
-                      SizedBox(width: 8),
-                      Text(
-                        'Export',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      Icon(Icons.arrow_drop_down, color: Colors.white),
-                    ],
-                  ),
-                ),
-            ),
-          ),
         ],
+      ),
+    );
+  }
+
+  Widget _exportButton(List<BudgetRecord> records) {
+    return PopupMenuButton<String>(
+      key: const ValueKey('reports-export'),
+      onSelected: records.isEmpty ? null : generate,
+      enabled: !busy && records.isNotEmpty,
+      itemBuilder: (context) => const [
+        PopupMenuItem(value: 'PDF', child: Text('Export PDF')),
+        PopupMenuItem(value: 'Excel', child: Text('Export Excel')),
+      ],
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        decoration: BoxDecoration(
+          color: blue,
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: const Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.download_outlined, size: 18, color: Colors.white),
+            SizedBox(width: 8),
+            Text(
+              'Export',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            Icon(Icons.arrow_drop_down, color: Colors.white),
+          ],
+        ),
       ),
     );
   }
@@ -426,18 +418,20 @@ class _ReportsPageState extends State<ReportsPage> {
         children: [
           Row(
             children: [
-              const Expanded(
-                child: Text(
-                  'Report Preview',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
-                ),
-              ),
               IconButton.outlined(
                 key: const ValueKey('reports-back'),
                 tooltip: 'Back to Reports',
                 onPressed: busy ? null : () => setState(() => preview = false),
                 icon: const Icon(Icons.arrow_back, size: 20),
               ),
+              const SizedBox(width: 10),
+              const Expanded(
+                child: Text(
+                  'Report Preview',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                ),
+              ),
+              _exportButton(records),
             ],
           ),
           const SizedBox(height: 14),
