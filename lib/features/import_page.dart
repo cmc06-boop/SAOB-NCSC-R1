@@ -165,8 +165,10 @@ class ImportController extends ChangeNotifier {
           XTypeGroup(label: 'Excel Workbook', extensions: ['xlsx']),
         ],
       );
-      if (file == null || !context.mounted) return;
-      await importFile(context, await file.readAsBytes(), file.name);
+      if (file == null) return;
+      final bytes = await file.readAsBytes();
+      if (!context.mounted) return;
+      await importFile(context, bytes, file.name);
     } catch (e) {
       if (context.mounted) {
         showMessage(
@@ -192,7 +194,9 @@ class ImportController extends ChangeNotifier {
       return;
     }
     try {
-      await importFile(context, await file.readAsBytes(), file.name);
+      final bytes = await file.readAsBytes();
+      if (!context.mounted) return;
+      await importFile(context, bytes, file.name);
     } catch (e) {
       if (context.mounted) {
         showMessage(
