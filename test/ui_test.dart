@@ -119,6 +119,39 @@ void main() {
       await tester.tap(find.byKey(const ValueKey('nav-uacs')));
       await tester.pumpAndSettle();
       expect(find.byKey(const ValueKey('uacs-table')), findsOneWidget);
+      expect(find.byKey(const ValueKey('uacs-search')), findsOneWidget);
+      final uacsSubtitle = tester.getCenter(
+        find.text('Browse and search UACS reference codes and expense names.'),
+      );
+      final searchPosition = tester.getCenter(
+        find.byKey(const ValueKey('uacs-search')),
+      );
+      expect((uacsSubtitle.dy - searchPosition.dy).abs(), lessThan(34));
+      expect(searchPosition.dx, greaterThan(uacsSubtitle.dx));
+
+      // Preview export is at the bottom of Report Parameters. The old
+      // export location is now an icon-only back control.
+      await tester.tap(find.byKey(const ValueKey('nav-reports')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Generate Report'));
+      await tester.pumpAndSettle();
+      expect(find.text('Report Parameters'), findsOneWidget);
+      expect(find.text('Report Preview'), findsOneWidget);
+      expect(find.byKey(const ValueKey('reports-export')), findsOneWidget);
+      expect(find.byKey(const ValueKey('reports-back')), findsOneWidget);
+      expect(
+        tester.getCenter(find.byKey(const ValueKey('reports-export'))).dy,
+        greaterThan(tester.getCenter(find.text('Report Parameters')).dy + 60),
+      );
+      expect(
+        tester.getCenter(find.byKey(const ValueKey('reports-export'))).dx,
+        lessThan(tester.getCenter(find.text('Report Preview')).dx),
+      );
+      await tester.tap(find.byKey(const ValueKey('reports-back')));
+      await tester.pumpAndSettle();
+      expect(find.text('Generate Report'), findsOneWidget);
+      expect(find.byKey(const ValueKey('reports-export')), findsNothing);
+
       await tester.tap(find.byKey(const ValueKey('nav-budget')));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Add Record'));
