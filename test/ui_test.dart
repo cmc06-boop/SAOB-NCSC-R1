@@ -4,6 +4,7 @@ import 'package:ncsc_region1_finance/core/format.dart';
 import 'package:ncsc_region1_finance/data/database.dart';
 import 'package:ncsc_region1_finance/data/finance_store.dart';
 import 'package:ncsc_region1_finance/data/models.dart';
+import 'package:ncsc_region1_finance/data/report_summary.dart';
 import 'package:ncsc_region1_finance/main.dart';
 import 'package:ncsc_region1_finance/ui/common.dart';
 
@@ -149,6 +150,58 @@ void main() {
       await tester.pumpWidget(const SizedBox());
     });
   }
+
+  testWidgets('Generate Report allows Summary and previews workbook-style totals', (
+    tester,
+  ) async {
+    await binding.setSurfaceSize(const Size(1366, 720));
+    addTearDown(() => binding.setSurfaceSize(null));
+    final store = createStore()
+      ..user = const LocalUser(1, 'Finance AO', 'ao', 'Admin');
+    store.db.connection.execute(
+      "INSERT INTO programs(code,name,active) VALUES ('GAS','GAS',1)",
+    );
+    store.saveRecord(
+      BudgetRecord(
+        year: manilaNow().year,
+        program: 'GAS',
+        code: '5020101000',
+        name: 'Traveling Expenses - Local',
+        allotment: 100000,
+        obligation: 25000,
+        disbursement: 5000,
+      ),
+    );
+
+    await tester.pumpWidget(FinanceApp(store: store));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('nav-reports')));
+    await tester.pumpAndSettle();
+
+    final mainProgramField = tester
+        .widgetList<AppDropdown<String>>(find.byType(AppDropdown<String>))
+        .firstWhere(
+          (dropdown) =>
+              dropdown.items.any((item) => item.$1 == summarySelection),
+        );
+    expect(
+      mainProgramField.items,
+      contains((summarySelection, 'Summary')),
+    );
+    mainProgramField.onChanged!(summarySelection);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Generate Report'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('SUMMARY'), findsOneWidget);
+    expect(find.text('CURRENT APPRO'), findsOneWidget);
+    expect(find.byKey(const ValueKey('summary-table-current')), findsOneWidget);
+    expect(find.text('PAP'), findsOneWidget);
+    expect(find.text('TOTAL'), findsOneWidget);
+    expect(find.byKey(const ValueKey('reports-export')), findsOneWidget);
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox());
+  });
 
   for (final size in const [
     Size(1000, 650),
