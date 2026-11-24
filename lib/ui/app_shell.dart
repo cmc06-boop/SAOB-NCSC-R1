@@ -302,7 +302,8 @@ class _AppShellState extends State<AppShell> {
                         Padding(
                           padding: const EdgeInsets.fromLTRB(12, 0, 12, 16),
                           child: Material(
-                            color: Colors.white.withValues(alpha: 0.08),
+                            key: const ValueKey('sidebar-logout'),
+                            color: Colors.transparent,
                             borderRadius: BorderRadius.circular(12),
                             child: InkWell(
                               borderRadius: BorderRadius.circular(12),
