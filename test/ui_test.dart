@@ -209,6 +209,14 @@ void main() {
     expect(find.text('SUMMARY'), findsOneWidget);
     expect(find.text('CURRENT APPRO'), findsOneWidget);
     expect(find.text('CONTINUING APPRO'), findsOneWidget);
+    expect(
+      tester.widget<Text>(find.text('CURRENT APPRO')).textAlign,
+      TextAlign.center,
+    );
+    expect(
+      tester.widget<Text>(find.text('CONTINUING APPRO')).textAlign,
+      TextAlign.center,
+    );
     expect(find.byKey(const ValueKey('summary-table-current')), findsOneWidget);
     expect(
       find.byKey(const ValueKey('summary-table-continuing')),
