@@ -625,28 +625,28 @@ class _BudgetTableState extends State<BudgetTable> {
           defaultVerticalAlignment: TableCellVerticalAlignment.middle,
           children: [
             _row([
-              _BudgetCell('#', style: header),
-              _BudgetCell('UACS Code', style: header),
-              _BudgetCell('Expense (UACS Name)', style: header),
-              _BudgetCell('Allotment', align: TextAlign.right, style: header),
-              _BudgetCell('Obligation', align: TextAlign.right, style: header),
+              _BudgetCell('#', align: TextAlign.center, style: header),
+              _BudgetCell('UACS Code', align: TextAlign.center, style: header),
+              _BudgetCell('Expense (UACS Name)', align: TextAlign.center, style: header),
+              _BudgetCell('Allotment', align: TextAlign.center, style: header),
+              _BudgetCell('Obligation', align: TextAlign.center, style: header),
               _BudgetCell(
                 'Obligation Rate',
-                align: TextAlign.right,
+                align: TextAlign.center,
                 style: header,
               ),
-              _BudgetCell('Balance', align: TextAlign.right, style: header),
+              _BudgetCell('Balance', align: TextAlign.center, style: header),
               _BudgetCell(
                 'Disbursement',
-                align: TextAlign.right,
+                align: TextAlign.center,
                 style: header,
               ),
               _BudgetCell(
                 'Disbursement Rate',
-                align: TextAlign.right,
+                align: TextAlign.center,
                 style: header,
               ),
-              _BudgetCell('Remarks', style: header),
+              _BudgetCell('Remarks', align: TextAlign.center, style: header),
             ], const Color(0xffeef3fb)),
           ],
         );
