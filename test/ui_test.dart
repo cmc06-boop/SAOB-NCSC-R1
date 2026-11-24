@@ -391,6 +391,41 @@ void main() {
       final excelFormat = find.byKey(const ValueKey('reports-format-excel'));
       expect(pdfFormat, findsOneWidget);
       expect(excelFormat, findsOneWidget);
+      final formatGroup = find.byKey(const ValueKey('reports-format-group'));
+      expect(tester.widget<Center>(formatGroup).child, isA<Row>());
+      final formatRow = tester.widget<Row>(
+        find.descendant(of: formatGroup, matching: find.byType(Row)).first,
+      );
+      expect(formatRow.mainAxisSize, MainAxisSize.min);
+      expect(formatRow.mainAxisAlignment, MainAxisAlignment.center);
+      final formatButtonsMidpoint = (
+        tester.getTopLeft(pdfFormat).dx +
+        tester.getTopRight(excelFormat).dx
+      ) / 2;
+      expect(
+        (formatButtonsMidpoint - tester.getCenter(formatGroup).dx).abs(),
+        lessThan(3),
+      );
+      expect(tester.getSize(pdfFormat).height, greaterThanOrEqualTo(40));
+      expect(tester.getSize(excelFormat).height, greaterThanOrEqualTo(40));
+      expect(
+        tester.widget<Icon>(
+          find.descendant(
+            of: pdfFormat,
+            matching: find.byIcon(Icons.picture_as_pdf_rounded),
+          ),
+        ).size,
+        22,
+      );
+      expect(
+        tester.widget<Icon>(
+          find.descendant(
+            of: excelFormat,
+            matching: find.byIcon(Icons.table_chart_rounded),
+          ),
+        ).size,
+        22,
+      );
       expect(
         find.descendant(
           of: pdfFormat,
