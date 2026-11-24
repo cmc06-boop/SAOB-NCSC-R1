@@ -514,7 +514,7 @@ class _ReferenceEditorState extends State<ReferenceEditor> {
                 widget.isProgram ? 'Program Code' : 'UACS Code',
                 code,
                 const ValueKey('reference-editor-code'),
-                example: widget.isProgram ? 'e.g. GAS' : null,
+                example: widget.isProgram ? 'GAS' : null,
               ),
               const SizedBox(height: 14),
               field(
@@ -522,7 +522,7 @@ class _ReferenceEditorState extends State<ReferenceEditor> {
                 name,
                 const ValueKey('reference-editor-name'),
                 example: widget.isProgram
-                    ? 'e.g. General Administrative Services'
+                    ? 'General Administrative Services'
                     : null,
               ),
               if (error != null) ...[
