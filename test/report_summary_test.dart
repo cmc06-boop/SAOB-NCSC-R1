@@ -4,6 +4,7 @@ import 'package:archive/archive.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ncsc_region1_finance/data/models.dart';
 import 'package:ncsc_region1_finance/data/report_pdf_sections.dart';
+import 'package:ncsc_region1_finance/data/report_io.dart';
 import 'package:ncsc_region1_finance/data/report_summary.dart';
 
 void main() {
@@ -104,6 +105,23 @@ void main() {
     expect(sharedStrings, contains('CURRENT APPRO'));
     expect(sharedStrings, contains('CONTINUING APPRO'));
     expect(sharedStrings, isNot(contains('ATOP_Continuing')));
+
+    // All Programs Excel includes a SUMMARY sheet too; it must not place
+    // imported ATOP_Continuing under CURRENT just because DB fund is CURRENT.
+    final allPrograms = excelReport(
+      imported,
+      title: 'Budget Utilization Report',
+      year: 2026,
+      program: '',
+    );
+    final allZip = ZipDecoder().decodeBytes(allPrograms);
+    final allStrings = utf8.decode(
+      allZip.files
+          .firstWhere((f) => f.name == 'xl/sharedStrings.xml')
+          .content as List<int>,
+    );
+    expect(allStrings, contains('CURRENT APPRO'));
+    expect(allStrings, contains('CONTINUING APPRO'));
   });
 
   test('Summary-only Excel has one sheet and both appropriation sections', () {
