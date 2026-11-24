@@ -730,7 +730,7 @@ class FinanceStore extends ChangeNotifier {
       _audit(
         'Generated',
         '',
-        '$type ($format)',
+        generatedReportName(program, format),
         year: year,
         program: program,
       );
