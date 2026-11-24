@@ -214,8 +214,8 @@ void main() {
       find.byKey(const ValueKey('summary-table-continuing')),
       findsOneWidget,
     );
-    expect(find.text('PAP'), findsOneWidget);
-    expect(find.text('TOTAL'), findsOneWidget);
+    expect(find.text('PAP'), findsNWidgets(2));
+    expect(find.text('TOTAL'), findsNWidgets(2));
     expect(find.byKey(const ValueKey('reports-export')), findsOneWidget);
     expect(tester.takeException(), isNull);
     await tester.pumpWidget(const SizedBox());
