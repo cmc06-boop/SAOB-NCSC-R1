@@ -173,10 +173,10 @@ class _AuditTableState extends State<_AuditTable> {
       defaultVerticalAlignment: TableCellVerticalAlignment.middle,
       children: [
         _row([
-          const _AuditCell('Date', style: header),
-          const _AuditCell('Time', style: header),
-          const _AuditCell('Action', style: header),
-          const _AuditCell('Details', style: header),
+          const _AuditCell('Date', style: header, align: TextAlign.center),
+          const _AuditCell('Time', style: header, align: TextAlign.center),
+          const _AuditCell('Action', style: header, align: TextAlign.center),
+          const _AuditCell('Details', style: header, align: TextAlign.center),
         ], const Color(0xffeef3fb)),
       ],
     );
@@ -205,12 +205,14 @@ class _AuditTableState extends State<_AuditTable> {
               _AuditCell(timeOnly(r['at']), style: body),
               _AuditCell('${r['action']}', style: body),
               _AuditCell(
-                _auditDetailText(
+                auditDetailSentence(
                   '${r['detail'] ?? ''}',
                   action: '${r['action'] ?? ''}',
+                  program: '${r['program'] ?? ''}',
                 ),
                 style: body,
                 tip: true,
+                tooltip: '${r['detail'] ?? ''}',
               ),
             ], i.isOdd ? const Color(0xfff7f9fc) : Colors.white),
       ],
@@ -234,77 +236,123 @@ class _AuditTableState extends State<_AuditTable> {
 }
 
 class _AuditCell extends StatelessWidget {
-  const _AuditCell(this.text, {this.style, this.tip = false});
+  const _AuditCell(this.text, {this.style, this.tip = false, this.tooltip, this.align = TextAlign.left});
   final String text;
   final TextStyle? style;
   final bool tip;
+  final String? tooltip;
+  final TextAlign align;
   @override
   Widget build(BuildContext context) {
-    final label = Text(text, softWrap: true, style: style);
+    final label = Text(text, textAlign: align, softWrap: true, style: style);
     return Padding(
       padding: const EdgeInsets.fromLTRB(12, 8, 8, 8),
       child: tip && text.isNotEmpty
-          ? Tooltip(message: text, child: label)
+          ? Tooltip(message: tooltip ?? text, child: label)
           : label,
     );
   }
 }
 
-/// Display-only cleanup for older audit rows. New rows already store short details.
-String _auditDetailText(String raw, {String action = ''}) {
-  var text = raw.trim();
-  if (text.isEmpty) return '';
+/// A short display sentence; the original audit detail stays in SQLite and
+/// remains available from the Details tooltip for accounting traceability.
+String auditDetailSentence(
+  String raw, {
+  String action = '',
+  String program = '',
+}) {
+  final detail = raw.trim();
+  if (detail.isEmpty) return 'No additional details.';
+  final kind = action.trim().toLowerCase();
 
-  // Filename only (current import format), or extract from older long import text.
-  final fileOnly = RegExp(r'^([^\\/:*?"<>|]+\.xlsx)$', caseSensitive: false);
-  if (fileOnly.hasMatch(text)) return text;
-  final fileInText = RegExp(
-    r'([^\\/:*?"<>|\s,]+\.xlsx)',
+  // One successful Excel workbook import produces one audit entry.
+  // Display the filename, never a list of workbook sheets.
+  if (kind == 'imported') {
+    final matches = RegExp(
+      r'([^\\/:;,"<>|\r\n]+\.xlsx)\b',
+      caseSensitive: false,
+    ).allMatches(detail).toList();
+    if (matches.isNotEmpty) {
+      var file = matches.last.group(1)!.trim();
+      file = file.replaceFirst(
+        RegExp(
+          r'^(?:Imported\b.*?\bfrom|Workbook\s*:?|File\s*:?)\s+',
+          caseSensitive: false,
+        ),
+        '',
+      );
+      return file;
+    }
+    // Older per-sheet rows may not contain a filename: do not invent one.
+    return 'Imported budget records.';
+  }
+
+  if (detail == 'Account profile updated') return 'Updated account profile.';
+  if (detail == 'Account password changed') return 'Changed account password.';
+
+  // Budget amount changes preserve a full detail tooltip, but one
+  // short human-readable sentence is shown in the table.
+  final amount = RegExp(
+    r'^(Allotment|Obligation|Disbursement)\s+from\s+',
     caseSensitive: false,
-  ).firstMatch(text);
-  if (fileInText != null && action == 'Imported') {
-    return fileInText.group(1)!;
-  }
-
-  // Old import without filename: "29 records (ATOPCONTINUING)" / "29 lines · ATOP Current"
-  final oldRecords = RegExp(
-    r'^(\d+)\s+records\s+\(([^)]+)\)$',
-  ).firstMatch(text);
-  if (oldRecords != null) {
-    return programLabel(oldRecords.group(2)!);
-  }
-  final oldLines = RegExp(
-    r'^(\d+)\s+lines?\s*[·;]\s*(.+)$',
-  ).firstMatch(text);
-  if (oldLines != null) {
-    return oldLines.group(2)!.trim();
-  }
-
-  // Old program rows: "ATOPCONTINUING · ATOP-REG_CONT · Active"
-  final prog = RegExp(
-    r'^([A-Z0-9]{2,32})\s[·;]\s(.+?)(?:\s[·;]\s(Active|Inactive))?$',
-  ).firstMatch(text);
-  if (prog != null) {
-    final label = programLabel(prog.group(1)!, prog.group(2));
-    return prog.group(3) == 'Inactive' ? '$label (Inactive)' : label;
-  }
-
-  // Old report: "TYPE · CODE (PDF)"
-  final report = RegExp(r'^(.+?)\s·\s(.+?)\s\(([^)]+)\)$').firstMatch(text);
-  if (report != null) {
-    return '${report.group(1)} (${report.group(3)})';
-  }
-
-  text = text.replaceAllMapped(
-    RegExp(
-      r'\b(Allotment|Obligation|Disbursement):\s*(₱[^\s·;]+)(?:\s*→\s*(₱[^\s·;]+))?',
-    ),
-    (m) {
-      if (m[3] != null) return '${m[1]} from ${m[2]} to ${m[3]}';
-      return '${m[1]} ${m[2]}';
-    },
   );
-  return text;
+  final parts = detail.split(';').map((part) => part.trim()).toList();
+  if (kind == 'updated' &&
+      parts.isNotEmpty &&
+      parts.every((part) => amount.hasMatch(part))) {
+    if (parts.length == 1) {
+      final item = parts.single;
+      return 'Updated ' + item[0].toLowerCase() + item.substring(1) + '.';
+    }
+    final labels = [
+      for (final part in parts) amount.firstMatch(part)!.group(1)!.toLowerCase(),
+    ];
+    return 'Updated ' + labels.join(', ') + ' amounts.';
+  }
+
+  if (kind == 'updated' &&
+      RegExp(r'\b(Allotment|Obligation|Disbursement):').hasMatch(detail)) {
+    return 'Updated budget amounts.';
+  }
+
+  // The original record detail includes its UACS code and long expense name.
+  final record = RegExp(
+    r'^(\d{8}(?:\s?\d{0,6}))\s+-\s+.+$',
+  ).firstMatch(detail);
+  if (record != null) {
+    final code = codeKey(record.group(1));
+    final verb = switch (kind) {
+      'added' => 'Added',
+      'updated' => 'Updated',
+      'deleted' => 'Deleted',
+      _ => 'Changed',
+    };
+    return verb + ' UACS ' + displayCode(code) + '.';
+  }
+
+  if (kind == 'generated') {
+    return detail.endsWith('.') ? 'Generated ' + detail : 'Generated ' + detail + '.';
+  }
+
+  // Program operations also preserve their longer original details.
+  if (program.isNotEmpty &&
+      (kind == 'added' || kind == 'updated' || kind == 'deleted')) {
+    final verb = switch (kind) {
+      'added' => 'Added',
+      'updated' => 'Updated',
+      _ => 'Deleted',
+    };
+    return verb + ' program ' + programLabel(program) + '.';
+  }
+
+  final verb = switch (kind) {
+    'added' => 'Added',
+    'updated' => 'Updated',
+    'deleted' => 'Deleted',
+    _ => '',
+  };
+  final sentence = verb.isEmpty ? detail : verb + ' ' + detail;
+  return sentence.endsWith('.') ? sentence : sentence + '.';
 }
 
 class _AuditFilter<T> extends StatelessWidget {
