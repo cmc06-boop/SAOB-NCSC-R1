@@ -434,7 +434,12 @@ class _ReferenceEditorState extends State<ReferenceEditor> {
     final heading = widget.isProgram
         ? (widget.program == null ? 'Add Program' : 'Edit Program')
         : (widget.reference == null ? 'Add UACS Reference' : 'Edit UACS Reference');
-    Widget field(String label, TextEditingController controller, Key key) =>
+    Widget field(
+      String label,
+      TextEditingController controller,
+      Key key, {
+      String? example,
+    }) =>
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -456,7 +461,7 @@ class _ReferenceEditorState extends State<ReferenceEditor> {
                 }
               },
               decoration: InputDecoration(
-                hintText: label,
+                hintText: example ?? label,
                 isDense: true,
                 contentPadding: const EdgeInsets.symmetric(
                   horizontal: 12,
@@ -509,12 +514,16 @@ class _ReferenceEditorState extends State<ReferenceEditor> {
                 widget.isProgram ? 'Program Code' : 'UACS Code',
                 code,
                 const ValueKey('reference-editor-code'),
+                example: widget.isProgram ? 'e.g. GAS' : null,
               ),
               const SizedBox(height: 14),
               field(
                 widget.isProgram ? 'Program Name' : 'Expense (UACS Name)',
                 name,
                 const ValueKey('reference-editor-name'),
+                example: widget.isProgram
+                    ? 'e.g. General Administrative Services'
+                    : null,
               ),
               if (error != null) ...[
                 const SizedBox(height: 12),
