@@ -32,20 +32,56 @@ class SaobSummarySection {
   String get title => fund == 'CONTINUING' ? 'CONTINUING APPRO' : 'CURRENT APPRO';
 }
 
-/// Matches the uploaded SAOB SUMMARY sheet: current/continuing groups,
-/// one PAP row per program, then a TOTAL for each appropriation type.
+/// A worksheet such as ATOP-REG_CONT is imported as program
+/// ATOP_Continuing while keeping fund_source=CURRENT for DB compatibility.
+/// For summaries, the program suffix is the authoritative appropriation type.
+/// Manually encoded programs without that suffix still use their fund source.
+(String, String) _summaryCodeAndFund(BudgetRecord row) {
+  final readable = readableProgramCode(row.program);
+  if (readable == null) return (row.program, row.fund);
+  if (readable.endsWith('_Continuing')) {
+    return (
+      readable.substring(0, readable.length - '_Continuing'.length),
+      'CONTINUING',
+    );
+  }
+  return (
+    readable.substring(0, readable.length - '_Current'.length),
+    'CURRENT',
+  );
+}
+
+/// Matches the reference workbook: one CURRENT APPRO table and one
+/// CONTINUING APPRO table, each with its own PAP rows and subtotal.
 List<SaobSummarySection> saobSummarySections(
   Iterable<BudgetRecord> records,
 ) {
+  final byFund = <String, Map<String, List<BudgetRecord>>>{
+    'CURRENT': {},
+    'CONTINUING': {},
+  };
+  for (final record in records) {
+    final (code, fund) = _summaryCodeAndFund(record);
+    if (!byFund.containsKey(fund)) continue;
+    byFund[fund]!.putIfAbsent(code, () => []).add(record);
+  }
+
+  // Follow the PAP order in the uploaded SUMMARY worksheet.
+  const sourceOrder = ['GAS', 'PPD', 'SECADNA', 'ECA', 'ATOP'];
+  int rank(String code) {
+    final pos = sourceOrder.indexOf(code.toUpperCase());
+    return pos < 0 ? sourceOrder.length : pos;
+  }
+
   final sections = <SaobSummarySection>[];
-  final source = records.toList();
   for (final fund in ['CURRENT', 'CONTINUING']) {
-    final programs = <String, List<BudgetRecord>>{};
-    for (final row in source.where((row) => row.fund == fund)) {
-      programs.putIfAbsent(row.program, () => []).add(row);
-    }
+    final programs = byFund[fund]!;
     if (programs.isEmpty) continue;
-    final codes = programs.keys.toList()..sort();
+    final codes = programs.keys.toList()
+      ..sort((a, b) {
+        final order = rank(a).compareTo(rank(b));
+        return order != 0 ? order : a.compareTo(b);
+      });
     sections.add(
       SaobSummarySection(
         fund,
