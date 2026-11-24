@@ -147,7 +147,7 @@ void main() {
     );
     expect(
       auditDetailSentence('29 records (ATOPCONTINUING)', action: 'Imported'),
-      'Imported budget records.',
+      'Budget records.'
     );
     expect(
       auditDetailSentence(
@@ -155,33 +155,33 @@ void main() {
         action: 'Added',
         program: 'GAS',
       ),
-      'Added UACS 50201010 00.',
+      'UACS 50201010 00.'
     );
     expect(
       auditDetailSentence(
         'Obligation from ₱100.00 to ₱200.00',
         action: 'Updated',
       ),
-      'Updated obligation from ₱100.00 to ₱200.00.',
+      'Obligation from ₱100.00 to ₱200.00.'
     );
     expect(
       auditDetailSentence(
         'Allotment from ₱100.00 to ₱200.00; Obligation from ₱50.00 to ₱70.00',
         action: 'Updated',
       ),
-      'Updated allotment, obligation amounts.',
+      'Allotment and Obligation amounts.'
     );
     expect(
       auditDetailSentence('GAS', action: 'Added', program: 'GAS'),
-      'Added program GAS.',
+      'Program GAS.'
     );
     expect(
-      auditDetailSentence('Budget Utilization Report (PDF)', action: 'Generated'),
-      'Generated Budget Utilization Report (PDF).',
+      auditDetailSentence('Budget Utilization Report (PDF)', action: 'Generated', program: 'GAS'),
+      'GAS_Current (PDF)',
     );
     expect(
       auditDetailSentence('Account profile updated', action: 'Updated'),
-      'Updated account profile.',
+      'Account profile.'
     );
   });
 
