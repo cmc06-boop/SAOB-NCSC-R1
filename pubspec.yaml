@@ -30,8 +30,12 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   assets:
-    # Include all root-level photo and logo files, including the new group
-    # portrait and Bagong Pilipinas logo if they are saved in assets/.
+    # Bundle the exact login assets as well as the root directory, so local
+    # optional group/Bagong Pilipinas artwork is discovered when present.
     - assets/
+    - assets/ncsc-logo-transparent.png
+    - assets/login-reference-background.png
+    - assets/login-senior.png
+    - assets/login-group-photo.jpg
     - assets/fonts/DejaVuSans.ttf
     - assets/fonts/DejaVuSans-Bold.ttf
