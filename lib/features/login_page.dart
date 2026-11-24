@@ -15,14 +15,12 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
   final _username = TextEditingController(),
-      _password = TextEditingController(),
-      _name = TextEditingController(),
-      _confirmation = TextEditingController();
+      _password = TextEditingController();
   bool _showPassword = false, _busy = false;
   String? _error;
   @override
   void dispose() {
-    for (final c in [_username, _password, _name, _confirmation]) {
+    for (final c in [_username, _password]) {
       c.dispose();
     }
     super.dispose();
@@ -36,19 +34,12 @@ class _LoginPageState extends State<LoginPage> {
     });
     try {
       if (widget.store.needsAccount) {
-        if (_password.text != _confirmation.text) {
-          throw const FinanceError('The passwords do not match.');
-        }
-        await widget.store.createOwner(
-          _name.text,
-          _username.text,
-          _password.text,
+        throw const FinanceError(
+          'This computer has no configured Admin account. Contact the system maintainer.',
         );
-      } else {
-        await widget.store.signIn(_username.text, _password.text);
       }
+      await widget.store.signIn(_username.text, _password.text);
       _password.clear();
-      _confirmation.clear();
     } catch (e) {
       if (mounted) setState(() => _error = friendlyError(e));
     } finally {
@@ -66,7 +57,7 @@ class _LoginPageState extends State<LoginPage> {
     child: TextField(
       key: ValueKey(label),
       controller: controller,
-      enabled: !_busy,
+      enabled: !_busy && !widget.store.needsAccount,
       obscureText: password && !_showPassword,
       autofillHints: label == 'Username'
           ? const [AutofillHints.username]
@@ -93,7 +84,7 @@ class _LoginPageState extends State<LoginPage> {
   );
 
   Widget _card() {
-    final setup = widget.store.needsAccount;
+    final needsProvisioning = widget.store.needsAccount;
     return Container(
       width: LoginLayout.cardWidth,
       decoration: BoxDecoration(
@@ -152,8 +143,8 @@ class _LoginPageState extends State<LoginPage> {
                       ],
                     ),
                     const SizedBox(height: 14),
-                    Text(
-                      setup ? 'Set Up Account' : 'System Login',
+                    const Text(
+                      'System Login',
                       style: const TextStyle(
                         fontSize: 30,
                         fontWeight: FontWeight.w800,
@@ -161,30 +152,24 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    Text(
-                      setup
-                          ? 'Create the account for this computer'
-                          : 'Access your account to continue',
+                    const Text(
+                      'Access your account to continue',
                       textAlign: TextAlign.center,
-                      style: const TextStyle(fontSize: 14, color: muted),
+                      style: TextStyle(fontSize: 14, color: muted),
                     ),
                     const SizedBox(height: 20),
-                    if (setup) ...[
-                      _field('Full name', Icons.badge_outlined, _name),
+                    if (needsProvisioning) ...[
+                      const Text(
+                        'No Admin account is configured on this computer. '
+                        'Please contact the system maintainer before signing in.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(fontSize: 13, color: red),
+                      ),
                       const SizedBox(height: 12),
                     ],
                     _field('Username', Icons.person, _username),
                     const SizedBox(height: 12),
                     _field('Password', Icons.lock, _password, password: true),
-                    if (setup) ...[
-                      const SizedBox(height: 12),
-                      _field(
-                        'Confirm password',
-                        Icons.lock_outline,
-                        _confirmation,
-                        password: true,
-                      ),
-                    ],
                     if (_error != null)
                       Padding(
                         padding: const EdgeInsets.only(top: 12),
@@ -202,7 +187,7 @@ class _LoginPageState extends State<LoginPage> {
                           backgroundColor: navy,
                           padding: const EdgeInsets.symmetric(horizontal: 16),
                         ),
-                        onPressed: _busy ? null : _submit,
+                        onPressed: _busy || needsProvisioning ? null : _submit,
                         icon: _busy
                             ? const SizedBox(
                                 width: 18,
@@ -212,8 +197,8 @@ class _LoginPageState extends State<LoginPage> {
                                 ),
                               )
                             : const Icon(Icons.login, size: 22),
-                        label: Text(
-                          setup ? 'Create Account' : 'Login',
+                        label: const Text(
+                          'Login',
                           style: const TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w700,
@@ -221,33 +206,6 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                       ),
                     ),
-                    if (!setup) ...[
-                      const SizedBox(height: 12),
-                      Row(
-                        children: [
-                          const Expanded(child: Divider()),
-                          TextButton(
-                            onPressed: () => showDialog<void>(
-                              context: context,
-                              builder: (ctx) => AlertDialog(
-                                title: const Text('Account access'),
-                                content: const Text(
-                                  'Accounts are stored on this computer. Contact the person maintaining this application for help recovering account access.',
-                                ),
-                                actions: [
-                                  TextButton(
-                                    onPressed: () => Navigator.pop(ctx),
-                                    child: const Text('Close'),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            child: const Text('Forgot Password?'),
-                          ),
-                          const Expanded(child: Divider()),
-                        ],
-                      ),
-                    ],
                   ],
                 ),
               ),
