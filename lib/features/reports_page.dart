@@ -10,6 +10,9 @@ import '../data/export_file.dart';
 import '../data/finance_store.dart';
 import '../data/models.dart';
 import '../data/report_io.dart';
+import '../data/report_pdf_sections.dart';
+import '../data/report_summary.dart';
+import 'summary_preview.dart';
 import '../ui/common.dart';
 import '../ui/theme.dart';
 
@@ -190,8 +193,11 @@ class _ReportsPageState extends State<ReportsPage> {
   String? lastExportFolder;
   bool busy = false, preview = false;
   void change(VoidCallback fn) => setState(fn);
+
+  String get dataProgram => program == summarySelection ? '' : program;
+
   void openPreview() {
-    final rows = widget.store.records(year, program: program);
+    final rows = widget.store.records(year, program: dataProgram);
     if (rows.isEmpty) {
       showMessage(context, 'There are no records for this report.');
       return;
@@ -203,7 +209,11 @@ class _ReportsPageState extends State<ReportsPage> {
     if (busy) return;
     final selectedYear = year, selectedProgram = program;
     const selectedType = _reportType;
-    final rows = widget.store.records(selectedYear, program: selectedProgram);
+    final isSummary = selectedProgram == summarySelection;
+    final rows = widget.store.records(
+      selectedYear,
+      program: isSummary ? '' : selectedProgram,
+    );
     if (rows.isEmpty) {
       showMessage(context, 'There are no records for this report.');
       return;
@@ -221,12 +231,18 @@ class _ReportsPageState extends State<ReportsPage> {
       if (folderPath == null) return;
       lastExportFolder = folderPath;
       final bytes = fmt == 'PDF'
-          ? await pdfReport(
-              data,
-              title: selectedType,
-              year: selectedYear,
-              program: selectedProgram,
-            )
+          ? isSummary
+              ? await pdfSaobSummaryReport(rows, year: selectedYear)
+              : selectedProgram.isEmpty
+              ? await pdfAllProgramsReport(rows, year: selectedYear)
+              : await pdfReport(
+                  data,
+                  title: selectedType,
+                  year: selectedYear,
+                  program: selectedProgram,
+                )
+          : isSummary
+          ? excelSaobSummaryReport(rows, year: selectedYear)
           : excelReport(
               rows,
               title: selectedType,
@@ -236,8 +252,12 @@ class _ReportsPageState extends State<ReportsPage> {
       if (bytes.isEmpty) {
         throw const FinanceError('The report file could not be created.');
       }
-      final fileName =
-          'NCSC-R1-$selectedYear-${selectedProgram.isEmpty ? 'All' : selectedProgram}.$extension';
+      final fileLabel = isSummary
+          ? 'Summary'
+          : selectedProgram.isEmpty
+          ? 'All'
+          : selectedProgram;
+      final fileName = 'NCSC-R1-$selectedYear-$fileLabel.$extension';
       final destination = await saveExportCopy(
         folderPath: folderPath,
         fileName: fileName,
@@ -254,7 +274,7 @@ class _ReportsPageState extends State<ReportsPage> {
       widget.store.logReport(
         selectedType,
         selectedYear,
-        selectedProgram,
+        isSummary ? 'Summary' : selectedProgram,
         fmt,
       );
     } on FileSystemException {
@@ -283,12 +303,13 @@ class _ReportsPageState extends State<ReportsPage> {
   @override
   Widget build(BuildContext context) {
     if (program.isNotEmpty &&
+        program != summarySelection &&
         !widget.store.programs.any((p) => p.code == program)) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) setState(() => program = '');
       });
     }
-    final records = widget.store.records(year, program: program);
+    final records = widget.store.records(year, program: dataProgram);
     final totals = Totals(records);
     final history = widget.store.reportHistory;
     if (preview) return _previewPage(records);
@@ -324,6 +345,7 @@ class _ReportsPageState extends State<ReportsPage> {
           width: 168,
           items: [
             ('', 'All Programs'),
+            (summarySelection, 'Summary'),
             for (final p in widget.store.programs)
               (p.code, p.code),
           ],
@@ -423,7 +445,11 @@ class _ReportsPageState extends State<ReportsPage> {
   }
 
   Widget _previewPage(List<BudgetRecord> records) {
-    final programLabel = program.isEmpty ? 'All Programs' : program;
+    final programLabel = program == summarySelection
+        ? 'Summary'
+        : program.isEmpty
+        ? 'All Programs'
+        : program;
     return Padding(
       padding: const EdgeInsets.fromLTRB(28, 30, 28, 28),
       child: Column(
@@ -485,6 +511,7 @@ class _ReportsPageState extends State<ReportsPage> {
             width: double.infinity,
             items: [
               ('', 'All Programs'),
+              (summarySelection, 'Summary'),
               for (final p in widget.store.programs)
                 (p.code, p.code),
             ],
@@ -628,6 +655,8 @@ class _ReportsPageState extends State<ReportsPage> {
                         style: TextStyle(color: muted),
                       ),
                     )
+                  : program == summarySelection
+                  ? SummaryPreview(records: records, year: year)
                   : _ReportSheet(
                       year: year,
                       programLabel: programLabel,
