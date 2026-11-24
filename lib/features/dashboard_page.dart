@@ -443,15 +443,13 @@ class _DashboardPageState extends State<DashboardPage> {
                 ),
               );
               return sideBySide
-                  ? IntrinsicHeight(
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          SizedBox(width: cardWidth, child: chart),
-                          const SizedBox(width: gap),
-                          SizedBox(width: cardWidth, child: rates),
-                        ],
-                      ),
+                  ? Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        SizedBox(width: cardWidth, child: chart),
+                        const SizedBox(width: gap),
+                        SizedBox(width: cardWidth, child: rates),
+                      ],
                     )
                   : Column(
                       children: [
