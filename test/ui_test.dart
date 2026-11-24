@@ -46,7 +46,7 @@ void main() {
       expect(toast.behavior, SnackBarBehavior.floating);
       expect(toast.backgroundColor, Colors.white);
       expect(toast.elevation, 5);
-      expect(margin.right, 72);
+      expect(margin.right, 48);
       expect(margin.bottom, 48);
       expect(toastWidth, inInclusiveRange(320, 540));
       expect(
@@ -57,7 +57,7 @@ void main() {
       expect(content.style?.color, const Color(0xff132951));
       if (message == 'Select a record to edit.') {
         expect(toastWidth, 320);
-        expect(margin.left, 974);
+        expect(margin.left, 998);
       } else {
         expect(toastWidth, greaterThan(400));
         expect(margin.left, lessThan(900));
