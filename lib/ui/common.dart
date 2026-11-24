@@ -60,8 +60,9 @@ class PageFrame extends StatelessWidget {
         ...children,
       ],
     );
-    if (expand)
+    if (expand) {
       return Padding(padding: const EdgeInsets.all(26), child: column);
+    }
     return SingleChildScrollView(
       padding: const EdgeInsets.all(26),
       child: column,
