@@ -145,6 +145,60 @@ void main() {
     expect(xml, contains('TOTAL'));
   });
 
+  test('Summary Excel keeps editable formulas, cached totals and selected fiscal year', () {
+    final bytes = excelSaobSummaryReport(records, year: 2027);
+    final zip = ZipDecoder().decodeBytes(bytes);
+    final shared = utf8.decode(
+      zip.files.firstWhere((f) => f.name == 'xl/sharedStrings.xml').content
+          as List<int>,
+    );
+    final sheet = utf8.decode(
+      zip.files
+          .firstWhere(
+            (f) => f.name.startsWith('xl/worksheets/sheet') &&
+                f.name.endsWith('.xml'),
+          )
+          .content as List<int>,
+    );
+
+    expect(shared, contains('FISCAL YEAR 2027'));
+    expect(shared, contains('CURRENT APPRO'));
+    expect(shared, contains('CONTINUING APPRO'));
+
+    // CURRENT starts at Excel row 5. Values in B/C/F are directly editable.
+    // Balance, utilization and disbursement rates are live Excel formulas.
+    expect(sheet, contains('<f>B5-C5</f>'));
+    expect(sheet, contains('<f>IF(B5=0,0,C5/B5)</f>'));
+    expect(sheet, contains('<f>IF(C5=0,0,F5/C5)</f>'));
+    // Totals must recompute after a program's amounts are changed.
+    expect(sheet, contains('<f>SUM(B5:B6)</f>'));
+    expect(sheet, contains('<f>SUM(C5:C6)</f>'));
+    expect(sheet, contains('<f>SUM(F5:F6)</f>'));
+    expect(sheet, contains('<f>B7-C7</f>'));
+    expect(sheet, contains('<f>IF(B7=0,0,C7/B7)</f>'));
+    // CONTINUING has its own table and separate totals.
+    expect(sheet, contains('<f>SUM(B11:B11)</f>'));
+    expect(sheet, contains('<f>B12-C12</f>'));
+    // Cache initial result without replacing the editable formula.
+    expect(sheet, matches(RegExp(r'<f>B5-C5</f><v>400(\\.0)?</v>')));
+  });
+
+  test('Summary Excel fiscal year is dynamic, not hard-coded to 2026', () {
+    final first = excelSaobSummaryReport(records, year: 2027);
+    final later = excelSaobSummaryReport(records, year: 2028);
+    String strings(List<int> bytes) {
+      final zip = ZipDecoder().decodeBytes(bytes);
+      return utf8.decode(
+        zip.files.firstWhere((f) => f.name == 'xl/sharedStrings.xml').content
+            as List<int>,
+      );
+    }
+
+    expect(strings(first), contains('FISCAL YEAR 2027'));
+    expect(strings(first), isNot(contains('FISCAL YEAR 2026')));
+    expect(strings(later), contains('FISCAL YEAR 2028'));
+  });
+
   test('Grouped All Programs and standalone Summary PDFs generate offline', () async {
     final all = await pdfAllProgramsReport(records, year: 2026);
     final oneProgram = await pdfAllProgramsReport(
