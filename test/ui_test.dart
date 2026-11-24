@@ -382,6 +382,64 @@ void main() {
       );
       expect(find.byKey(const ValueKey('reports-export')), findsOneWidget);
       expect(find.byKey(const ValueKey('reports-back')), findsOneWidget);
+      expect(find.text('Report Format'), findsOneWidget);
+      expect(
+        tester.getTopLeft(find.text('Report Format')).dy,
+        greaterThan(tester.getTopLeft(find.text('Program *')).dy),
+      );
+      final pdfFormat = find.byKey(const ValueKey('reports-format-pdf'));
+      final excelFormat = find.byKey(const ValueKey('reports-format-excel'));
+      expect(pdfFormat, findsOneWidget);
+      expect(excelFormat, findsOneWidget);
+      expect(
+        find.descendant(
+          of: pdfFormat,
+          matching: find.byIcon(Icons.radio_button_checked),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(
+          of: excelFormat,
+          matching: find.byIcon(Icons.radio_button_unchecked),
+        ),
+        findsOneWidget,
+      );
+      await tester.tap(excelFormat);
+      await tester.pumpAndSettle();
+      expect(
+        find.descendant(
+          of: excelFormat,
+          matching: find.byIcon(Icons.radio_button_checked),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(
+          of: pdfFormat,
+          matching: find.byIcon(Icons.radio_button_unchecked),
+        ),
+        findsOneWidget,
+      );
+      final directExport = tester.widget<FilledButton>(
+        find.byKey(const ValueKey('reports-export')),
+      );
+      expect(directExport.onPressed, isNotNull);
+      expect(
+        find.descendant(
+          of: find.byKey(const ValueKey('reports-export')),
+          matching: find.byIcon(Icons.arrow_drop_down),
+        ),
+        findsNothing,
+      );
+      final smallBack = tester.widget<IconButton>(
+        find.byKey(const ValueKey('reports-back')),
+      );
+      expect(smallBack.iconSize, 16);
+      expect(
+        smallBack.constraints,
+        const BoxConstraints.tightFor(width: 32, height: 32),
+      );
       final backPosition = tester.getCenter(
         find.byKey(const ValueKey('reports-back')),
       );
