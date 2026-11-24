@@ -260,8 +260,8 @@ class _AuditCell extends StatelessWidget {
   }
 }
 
-/// A short display sentence; the original audit detail stays in SQLite and
-/// remains available from the Details tooltip for accounting traceability.
+/// Concise, action-free Details. The Action column already tells users
+/// what happened; the full original entry remains available on hover.
 String auditDetailSentence(
   String raw, {
   String action = '',
@@ -273,18 +273,13 @@ String auditDetailSentence(
   }
   final kind = action.trim().toLowerCase();
 
-  // One successful Excel workbook import produces one audit entry.
-  // Display the filename, never a list of workbook sheets.
+  // Each Excel workbook is a single import event. Show only its filename.
   if (kind == 'imported') {
-    // The new format is just the filename. Preserve spaces, commas and
-    // other valid filename characters rather than trying to parse sheets.
     final basename = detail.split(RegExp(r'[\\/]')).last.trim();
-    if (basename.toLowerCase().endsWith('.xlsx')) {
+    if (basename.toLowerCase().endsWith('.xlsx') &&
+        !RegExp(r'^Imported\b', caseSensitive: false).hasMatch(basename)) {
       return basename.replaceFirst(
-        RegExp(
-          r'^(?:Imported\b.*?\bfrom|Workbook\s*:|File\s*:)\s*',
-          caseSensitive: false,
-        ),
+        RegExp(r'^(?:Workbook\s*:|File\s*:)\s*', caseSensitive: false),
         '',
       );
     }
@@ -293,29 +288,43 @@ String auditDetailSentence(
       caseSensitive: false,
     ).allMatches(detail).toList();
     if (matches.isNotEmpty) {
-      var file = matches.last.group(1)!.trim();
-      file = file.replaceFirst(
+      final filename = matches.last.group(1)!.trim();
+      return filename.replaceFirst(
         RegExp(
-          r'^(?:Imported\b.*?\bfrom|Workbook\s*:?|File\s*:?)\s+',
+          r'^(?:Imported\b.*?\bfrom|Workbook\s*:|File\s*:)\s*',
           caseSensitive: false,
         ),
         '',
       );
-      return file;
     }
-    // Older per-sheet rows may not contain a filename: do not invent one.
-    return 'Imported budget records.';
+    // Historical sheet-only entries do not contain a workbook filename.
+    return 'Budget records.';
+  }
+
+  // Older entries may contain "Budget Utilization Report (PDF)".
+  // Use the program and format to match Generated Reports instead.
+  if (kind == 'generated') {
+    final format = RegExp(
+      r'\((PDF|Excel|XLSX)\)\.?$',
+      caseSensitive: false,
+    ).firstMatch(detail);
+    if (format != null) {
+      return generatedReportName(program, format.group(1)!);
+    }
+    return detail.replaceFirst(
+      RegExp(r'^Generated\s+', caseSensitive: false),
+      '',
+    );
   }
 
   if (detail == 'Account profile updated') {
-    return 'Updated account profile.';
+    return 'Account profile.';
   }
   if (detail == 'Account password changed') {
-    return 'Changed account password.';
+    return 'Account password.';
   }
 
-  // Budget amount changes preserve a full detail tooltip, but one
-  // short human-readable sentence is shown in the table.
+  // Financial amount details keep the numbers, but omit "Updated".
   final amount = RegExp(
     r'^(Allotment|Obligation|Disbursement)\s+from\s+',
     caseSensitive: false,
@@ -326,57 +335,41 @@ String auditDetailSentence(
       parts.every((part) => amount.hasMatch(part))) {
     if (parts.length == 1) {
       final item = parts.single;
-      return 'Updated ${item[0].toLowerCase()}${item.substring(1)}.';
+      return item.endsWith('.') ? item : '${item}.';
     }
     final labels = [
-      for (final part in parts) amount.firstMatch(part)!.group(1)!.toLowerCase(),
+      for (final part in parts) amount.firstMatch(part)!.group(1)!,
     ];
-    return 'Updated ${labels.join(', ')} amounts.';
+    return "${labels.join(' and ')} amounts.";
   }
 
   if (kind == 'updated' &&
       RegExp(r'\b(Allotment|Obligation|Disbursement):').hasMatch(detail)) {
-    return 'Updated budget amounts.';
+    return 'Budget amounts.';
   }
 
-  // The original record detail includes its UACS code and long expense name.
+  // UACS identity stays concise for Added, Updated and Deleted events.
   final record = RegExp(
     r'^(\d{8}(?:\s?\d{0,6}))\s+-\s+.+$',
   ).firstMatch(detail);
   if (record != null) {
-    final code = codeKey(record.group(1));
-    final verb = switch (kind) {
-      'added' => 'Added',
-      'updated' => 'Updated',
-      'deleted' => 'Deleted',
-      _ => 'Changed',
-    };
-    return '$verb UACS ${displayCode(code)}.';
+    return 'UACS ${displayCode(codeKey(record.group(1)))}.';
   }
 
-  if (kind == 'generated') {
-    return detail.endsWith('.') ? 'Generated $detail' : 'Generated $detail.';
-  }
-
-  // Program operations also preserve their longer original details.
   if (program.isNotEmpty &&
       (kind == 'added' || kind == 'updated' || kind == 'deleted')) {
-    final verb = switch (kind) {
-      'added' => 'Added',
-      'updated' => 'Updated',
-      _ => 'Deleted',
-    };
-    return '$verb program ${programLabel(program)}.';
+    return 'Program ${programLabel(program)}.';
   }
 
-  final verb = switch (kind) {
-    'added' => 'Added',
-    'updated' => 'Updated',
-    'deleted' => 'Deleted',
-    _ => '',
-  };
-  final sentence = verb.isEmpty ? detail : '$verb $detail';
-  return sentence.endsWith('.') ? sentence : '$sentence.';
+  // Legacy data occasionally included the same word as the Action column.
+  final withoutAction = detail.replaceFirst(
+    RegExp('^${RegExp.escape(action.trim())}\\s+', caseSensitive: false),
+    '',
+  );
+  if (withoutAction.isEmpty) {
+    return 'No additional details.';
+  }
+  return withoutAction.endsWith('.') ? withoutAction : '${withoutAction}.';
 }
 
 class _AuditFilter<T> extends StatelessWidget {
