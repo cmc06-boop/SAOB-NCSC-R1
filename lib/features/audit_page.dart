@@ -268,6 +268,18 @@ String auditDetailSentence(
   // One successful Excel workbook import produces one audit entry.
   // Display the filename, never a list of workbook sheets.
   if (kind == 'imported') {
+    // The new format is just the filename. Preserve spaces, commas and
+    // other valid filename characters rather than trying to parse sheets.
+    final basename = detail.split(RegExp(r'[\\/]')).last.trim();
+    if (basename.toLowerCase().endsWith('.xlsx')) {
+      return basename.replaceFirst(
+        RegExp(
+          r'^(?:Imported\b.*?\bfrom|Workbook\s*:|File\s*:)\s*',
+          caseSensitive: false,
+        ),
+        '',
+      );
+    }
     final matches = RegExp(
       r'([^\\/:;,"<>|\r\n]+\.xlsx)\b',
       caseSensitive: false,
