@@ -534,8 +534,8 @@ void main() {
     final nameField = tester.widget<TextField>(
       find.byKey(const ValueKey('reference-editor-name')),
     );
-    expect(codeField.decoration?.hintText, 'e.g. GAS');
-    expect(nameField.decoration?.hintText, 'e.g. General Administrative Services');
+    expect(codeField.decoration?.hintText, 'GAS');
+    expect(nameField.decoration?.hintText, 'General Administrative Services');
     expect(codeField.controller?.text, isEmpty);
     expect(nameField.controller?.text, isEmpty);
     expect(find.byKey(const ValueKey('reference-editor-cancel')), findsOneWidget);
