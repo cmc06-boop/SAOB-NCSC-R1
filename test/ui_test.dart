@@ -298,10 +298,7 @@ void main() {
       final recordPadding = recordScroll.padding! as EdgeInsets;
       expect(recordPadding.bottom, 24);
       final recordMinSize = tester.widget<ConstrainedBox>(
-        find.descendant(
-          of: find.byKey(const ValueKey('budget-record-dialog')),
-          matching: find.byType(ConstrainedBox),
-        ).first,
+        find.byKey(const ValueKey('budget-record-dialog-size')),
       );
       expect(recordMinSize.constraints.minHeight, 500);
       expect(find.widgetWithText(FilledButton, 'Save'), findsOneWidget);
