@@ -821,7 +821,7 @@ class _BudgetCell extends StatelessWidget {
     final label = Text(text, textAlign: align, softWrap: true, style: style);
     return Padding(
       padding: EdgeInsets.only(
-        left: align == TextAlign.right ? 8 : 12,
+        left: align == TextAlign.left ? 12 : 8,
         right: align == TextAlign.right ? 12 : 8,
         top: 8,
         bottom: 8,
