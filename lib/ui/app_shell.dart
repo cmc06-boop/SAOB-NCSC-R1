@@ -7,15 +7,16 @@ import '../features/budget_page.dart';
 import '../features/dashboard_page.dart';
 import '../features/reports_page.dart';
 import '../features/settings_page.dart';
+import 'svg_icon.dart';
 import 'theme.dart';
 
 const _menus = [
-  ('dashboard', 'Dashboard', Icons.dashboard_outlined),
-  ('budget', 'Budget Utilization', Icons.account_balance_wallet_outlined),
-  ('reports', 'Reports', Icons.description_outlined),
-  ('audit', 'Audit Trail', Icons.history_outlined),
-  ('programs', 'Programs', Icons.category_outlined),
-  ('uacs', 'UACS Reference', Icons.menu_book_outlined),
+  ('dashboard', 'Dashboard', 'layout-dashboard'),
+  ('budget', 'Budget Utilization', 'wallet'),
+  ('reports', 'Reports', 'file-text'),
+  ('audit', 'Audit Trail', 'history'),
+  ('programs', 'Programs', 'layers-3'),
+  ('uacs', 'UACS Reference', 'book-open'),
 ];
 
 class AppShell extends StatefulWidget {
@@ -189,18 +190,15 @@ class _AppShellState extends State<AppShell> {
                           ),
                           child: Row(
                             children: [
-                              Container(
+                              SizedBox(
+                                key: const ValueKey('sidebar-logo'),
                                 width: 45,
                                 height: 45,
-                                alignment: Alignment.center,
-                                decoration: const BoxDecoration(
-                                  color: Colors.white,
-                                  shape: BoxShape.circle,
-                                ),
                                 child: Image.asset(
                                   'assets/ncsc-logo-transparent.png',
-                                  width: 40,
-                                  height: 40,
+                                  width: 45,
+                                  height: 45,
+                                  fit: BoxFit.contain,
                                 ),
                               ),
                               if (expanded) ...[
@@ -274,7 +272,7 @@ class _AppShellState extends State<AppShell> {
                                               SizedBox(
                                                 width: expanded ? 10 : 0,
                                               ),
-                                              Icon(
+                                              AppSvgIcon(
                                                 m.$3,
                                                 color: Colors.white,
                                                 size: 21,
@@ -376,8 +374,8 @@ class _AppShellState extends State<AppShell> {
                                               ],
                                             ),
                                           ),
-                                          const Icon(
-                                            Icons.chevron_right,
+                                          const AppSvgIcon(
+                                            'chevron-right',
                                             color: Colors.white70,
                                             size: 18,
                                           ),
@@ -406,8 +404,8 @@ class _AppShellState extends State<AppShell> {
                                 child: Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    const Icon(
-                                      Icons.logout,
+                                    const AppSvgIcon(
+                                      'log-out',
                                       size: 18,
                                       color: Colors.white,
                                     ),
