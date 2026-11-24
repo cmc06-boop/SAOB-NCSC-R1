@@ -700,7 +700,8 @@ void _writeSaobSummarySheet(
     writeSection(
       'CONTINUING APPRO',
       continuing,
-      current.isEmpty ? 0 : current.length + 5,
+      // One blank row between the two tables, as in the reference workbook.
+      current.isEmpty ? 0 : current.length + 4,
     );
   }
 }
