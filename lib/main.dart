@@ -5,6 +5,7 @@ import 'data/database.dart';
 import 'data/finance_store.dart';
 import 'features/login_page.dart';
 import 'ui/app_shell.dart';
+import 'ui/svg_icon.dart';
 import 'ui/theme.dart';
 
 void main() {
@@ -25,7 +26,7 @@ void main() {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.folder_off_outlined, size: 48, color: red),
+                    const AppSvgIcon('file-warning', size: 48, color: red),
                     const SizedBox(height: 18),
                     const Text(
                       'The local database could not be opened.',
