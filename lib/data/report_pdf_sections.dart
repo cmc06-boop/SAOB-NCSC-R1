@@ -1,5 +1,3 @@
-import 'dart:typed_data';
-
 import 'package:flutter/services.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
@@ -67,8 +65,7 @@ Future<Uint8List> pdfAllProgramsReport(
               crossAxisAlignment: pw.CrossAxisAlignment.start,
               children: [
                 pw.Text(
-                  'TOTAL - $program' +
-                      (fundNames.length > 1 ? ' (ALL FUNDS)' : ''),
+                  'TOTAL - $program${fundNames.length > 1 ? ' (ALL FUNDS)' : ''}',
                   style: pw.TextStyle(
                     fontSize: 10,
                     fontWeight: pw.FontWeight.bold,
@@ -76,10 +73,10 @@ Future<Uint8List> pdfAllProgramsReport(
                 ),
                 pw.SizedBox(height: 4),
                 pw.Text(
-                  'Allotment: ' + money(totals.allotment) +
-                      '   Obligation: ' + money(totals.obligation) +
-                      '   Unobligated: ' + money(totals.balance) +
-                      '   Disbursement: ' + money(totals.disbursement),
+                  'Allotment: ${money(totals.allotment)}   '
+                  'Obligation: ${money(totals.obligation)}   '
+                  'Unobligated: ${money(totals.balance)}   '
+                  'Disbursement: ${money(totals.disbursement)}',
                   style: const pw.TextStyle(fontSize: 8),
                 ),
               ],
@@ -154,15 +151,16 @@ Future<Uint8List> pdfSaobSummaryReport(
 }
 
 Future<(pw.Font, pw.Font, pw.MemoryImage)> _loadAssets() async {
-  final data = await Future.wait([
-    rootBundle.load('assets/fonts/DejaVuSans.ttf'),
-    rootBundle.load('assets/fonts/DejaVuSans-Bold.ttf'),
-    rootBundle.load('assets/ncsc-logo-transparent.png'),
-  ]);
+  // In Flutter widget tests, asset loads can complete synchronously.
+  // Await each asset individually instead of passing these futures to
+  // Future.wait, which can produce an empty result with SynchronousFuture.
+  final regular = await rootBundle.load('assets/fonts/DejaVuSans.ttf');
+  final bold = await rootBundle.load('assets/fonts/DejaVuSans-Bold.ttf');
+  final logo = await rootBundle.load('assets/ncsc-logo-transparent.png');
   return (
-    pw.Font.ttf(data[0]),
-    pw.Font.ttf(data[1]),
-    pw.MemoryImage(data[2].buffer.asUint8List()),
+    pw.Font.ttf(regular),
+    pw.Font.ttf(bold),
+    pw.MemoryImage(logo.buffer.asUint8List()),
   );
 }
 
@@ -206,8 +204,7 @@ pw.Widget _letterhead(pw.MemoryImage logo, int year, String heading) =>
 pw.Widget _footer(pw.Context context) => pw.Align(
   alignment: pw.Alignment.centerRight,
   child: pw.Text(
-    'Page ' + context.pageNumber.toString() + ' of ' +
-        context.pagesCount.toString(),
+    'Page ${context.pageNumber} of ${context.pagesCount}',
     style: const pw.TextStyle(fontSize: 8),
   ),
 );
