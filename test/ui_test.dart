@@ -385,7 +385,20 @@ void main() {
     );
     expect(find.byKey(const ValueKey('account-two-columns')), findsNothing);
     expect(find.byKey(const ValueKey('account-save')), findsOneWidget);
+    expect(find.byKey(const ValueKey('account-cancel')), findsOneWidget);
     expect(find.widgetWithText(FilledButton, 'Save'), findsOneWidget);
+    expect(
+      tester.widget<AlertDialog>(find.byType(AlertDialog)).actionsAlignment,
+      MainAxisAlignment.end,
+    );
+    expect(
+      tester.getCenter(find.byKey(const ValueKey('account-cancel'))).dx,
+      lessThan(tester.getCenter(find.byKey(const ValueKey('account-save'))).dx),
+    );
+    expect(
+      tester.getCenter(find.byKey(const ValueKey('account-save'))).dy,
+      greaterThan(tester.getCenter(find.byKey(const ValueKey('account-confirm-password'))).dy),
+    );
     expect(find.text('Save Changes'), findsNothing);
     expect(
       tester.widget<FilledButton>(find.byKey(const ValueKey('account-save'))).child,
@@ -443,6 +456,31 @@ void main() {
     expect(
       store.db.rows('SELECT name FROM users').single['name'],
       'New Finance Officer',
+    );
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox());
+  });
+
+  testWidgets('My Account Cancel closes without saving changes', (tester) async {
+    await binding.setSurfaceSize(const Size(1366, 720));
+    addTearDown(() => binding.setSurfaceSize(null));
+    final store = createStore()
+      ..user = const LocalUser(1, 'Finance AO', 'ao', 'Admin');
+    await tester.pumpWidget(FinanceApp(store: store));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('nav-account')));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const ValueKey('account-name')),
+      'Unsaved Name',
+    );
+    await tester.tap(find.byKey(const ValueKey('account-cancel')));
+    await tester.pumpAndSettle();
+    expect(find.byType(AlertDialog), findsNothing);
+    expect(store.user!.name, 'Finance AO');
+    expect(
+      store.db.rows('SELECT name FROM users').single['name'],
+      'Finance AO',
     );
     expect(tester.takeException(), isNull);
     await tester.pumpWidget(const SizedBox());
