@@ -145,7 +145,7 @@ class _LoginPageState extends State<LoginPage> {
                     const SizedBox(height: 14),
                     const Text(
                       'System Login',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 30,
                         fontWeight: FontWeight.w800,
                         color: navy,
@@ -199,7 +199,7 @@ class _LoginPageState extends State<LoginPage> {
                             : const Icon(Icons.login, size: 22),
                         label: const Text(
                           'Login',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w700,
                           ),
