@@ -1329,7 +1329,7 @@ class _HistoryCardState extends State<_HistoryCard> {
 
   Widget _cell(String text, {TextStyle style = _body, bool number = false, bool center = false}) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 10, 10, 10),
+      padding: EdgeInsets.fromLTRB(center ? 10 : 12, 10, 10, 10),
       child: Text(
         text,
         textAlign: center ? TextAlign.center : TextAlign.left,
