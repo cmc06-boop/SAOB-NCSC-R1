@@ -4,6 +4,7 @@ import 'dart:math' as math;
 import 'package:file_selector/file_selector.dart';
 import 'package:intl/intl.dart' hide TextDirection;
 import 'package:material_ui/material_ui.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 import '../core/format.dart';
 import '../data/export_file.dart';
@@ -17,7 +18,7 @@ import '../ui/common.dart';
 import '../ui/svg_icon.dart';
 import '../ui/theme.dart';
 
-/// Compact file-type artwork, distinct from the generic table/document icons.
+/// File-type SVG icons keep the red PDF and green Excel artwork distinct.
 class _ReportFileIcon extends StatelessWidget {
   const _ReportFileIcon({required this.format});
 
@@ -28,105 +29,15 @@ class _ReportFileIcon extends StatelessWidget {
     key: ValueKey('reports-file-icon-${format.toLowerCase()}'),
     width: 24,
     height: 26,
-    child: CustomPaint(
-      painter: _ReportFileIconPainter(pdf: format == 'PDF'),
+    child: SvgPicture.asset(
+      format == 'PDF'
+          ? 'assets/icons/file-pdf.svg'
+          : 'assets/icons/file-excel.svg',
+      width: 24,
+      height: 26,
+      fit: BoxFit.contain,
     ),
   );
-}
-
-class _ReportFileIconPainter extends CustomPainter {
-  const _ReportFileIconPainter({required this.pdf});
-
-  final bool pdf;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    canvas.save();
-    canvas.scale(size.width / 24, size.height / 26);
-    final primary = pdf ? const Color(0xffd42035) : const Color(0xff16804a);
-    final page = Path()
-      ..moveTo(4, 1)
-      ..lineTo(16, 1)
-      ..lineTo(22, 7)
-      ..lineTo(22, 24)
-      ..quadraticBezierTo(22, 25, 21, 25)
-      ..lineTo(4, 25)
-      ..quadraticBezierTo(3, 25, 3, 24)
-      ..lineTo(3, 2)
-      ..quadraticBezierTo(3, 1, 4, 1)
-      ..close();
-    canvas.drawPath(
-      page,
-      Paint()..color = pdf ? const Color(0xfffff8f8) : const Color(0xfff2fff7),
-    );
-    canvas.drawPath(
-      page,
-      Paint()
-        ..color = primary
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.2,
-    );
-    canvas.drawPath(
-      Path()
-        ..moveTo(16, 1)
-        ..lineTo(16, 7)
-        ..lineTo(22, 7),
-      Paint()
-        ..color = primary
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.2,
-    );
-    if (pdf) {
-      canvas.drawRRect(
-        RRect.fromRectAndRadius(
-          const Rect.fromLTWH(1, 12, 22, 10),
-          const Radius.circular(2),
-        ),
-        Paint()..color = primary,
-      );
-      final caption = TextPainter(
-        text: const TextSpan(
-          text: 'PDF',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 8,
-            fontWeight: FontWeight.w800,
-            letterSpacing: 0.3,
-          ),
-        ),
-        textDirection: TextDirection.ltr,
-      )..layout();
-      caption.paint(canvas, Offset((24 - caption.width) / 2, 12.5));
-      caption.dispose();
-    } else {
-      final grid = Paint()
-        ..color = primary.withValues(alpha: 0.65)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 0.9;
-      canvas.drawRect(const Rect.fromLTWH(11, 10, 9, 12), grid);
-      canvas.drawLine(const Offset(11, 14), const Offset(20, 14), grid);
-      canvas.drawLine(const Offset(11, 18), const Offset(20, 18), grid);
-      canvas.drawLine(const Offset(15.5, 10), const Offset(15.5, 22), grid);
-      canvas.drawRRect(
-        RRect.fromRectAndRadius(
-          const Rect.fromLTWH(1, 9, 12, 13),
-          const Radius.circular(1.5),
-        ),
-        Paint()..color = primary,
-      );
-      final x = Paint()
-        ..color = Colors.white
-        ..strokeWidth = 1.9
-        ..strokeCap = StrokeCap.round;
-      canvas.drawLine(const Offset(4, 12), const Offset(10, 19), x);
-      canvas.drawLine(const Offset(10, 12), const Offset(4, 19), x);
-    }
-    canvas.restore();
-  }
-
-  @override
-  bool shouldRepaint(covariant _ReportFileIconPainter oldDelegate) =>
-      oldDelegate.pdf != pdf;
 }
 
 class _HeaderFilter<T> extends StatelessWidget {
