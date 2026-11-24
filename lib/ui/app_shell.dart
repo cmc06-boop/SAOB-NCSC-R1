@@ -38,7 +38,12 @@ class _AppShellState extends State<AppShell> {
   }
 
   Future<void> logout() async {
-    if (await confirm(context, 'Log out?', 'Return to the login screen?')) {
+    if (await confirm(
+      context,
+      'Log out?',
+      'Return to the login screen?',
+      confirmLabel: 'Log out',
+    )) {
       widget.store.signOut();
     }
   }
