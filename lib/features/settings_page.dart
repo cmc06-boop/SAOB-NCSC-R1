@@ -427,44 +427,112 @@ class _ReferenceEditorState extends State<ReferenceEditor> {
   }
 
   @override
-  Widget build(BuildContext context) => AlertDialog(
-    title: Text(widget.isProgram ? 'Program' : 'UACS Reference'),
-    content: SizedBox(
-      width: 460,
-      child: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
+  Widget build(BuildContext context) {
+    final heading = widget.isProgram
+        ? (widget.program == null ? 'Add Program' : 'Edit Program')
+        : (widget.reference == null ? 'Add UACS Reference' : 'Edit UACS Reference');
+    Widget field(String label, TextEditingController controller, Key key) =>
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            TextField(
-              controller: code,
-              decoration: InputDecoration(
-                labelText: widget.isProgram ? 'Program Code' : 'UACS Code',
+            FieldLabel(
+              label,
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: ink,
               ),
             ),
-            const SizedBox(height: 18),
+            const SizedBox(height: 6),
             TextField(
-              controller: name,
+              key: key,
+              controller: controller,
+              onChanged: (_) {
+                if (error != null) setState(() => error = null);
+              },
               decoration: InputDecoration(
-                labelText: widget.isProgram
-                    ? 'Program Name'
-                    : 'Expense (UACS Name)',
+                hintText: label,
+                isDense: true,
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 11,
+                ),
               ),
             ),
-            if (error != null)
-              Padding(
-                padding: const EdgeInsets.only(top: 12),
-                child: Text(error!, style: const TextStyle(color: red)),
-              ),
           ],
+        );
+
+    return AlertDialog(
+      backgroundColor: Colors.white,
+      surfaceTintColor: Colors.transparent,
+      titlePadding: const EdgeInsets.fromLTRB(24, 16, 16, 8),
+      title: Row(
+        children: [
+          Expanded(
+            child: Text(
+              heading,
+              style: const TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+                color: ink,
+              ),
+            ),
+          ),
+          IconButton(
+            key: const ValueKey('reference-editor-close'),
+            tooltip: 'Close editor',
+            onPressed: () => Navigator.pop(context),
+            icon: const Icon(Icons.close),
+          ),
+        ],
+      ),
+      contentPadding: const EdgeInsets.fromLTRB(24, 8, 24, 0),
+      content: SizedBox(
+        width: 420,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              field(
+                widget.isProgram ? 'Program Code' : 'UACS Code',
+                code,
+                const ValueKey('reference-editor-code'),
+              ),
+              const SizedBox(height: 14),
+              field(
+                widget.isProgram ? 'Program Name' : 'Expense (UACS Name)',
+                name,
+                const ValueKey('reference-editor-name'),
+              ),
+              if (error != null) ...[
+                const SizedBox(height: 12),
+                Text(
+                  error!,
+                  key: const ValueKey('reference-editor-error'),
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: red, fontSize: 12),
+                ),
+              ],
+            ],
+          ),
         ),
       ),
-    ),
-    actions: [
-      TextButton(
-        onPressed: () => Navigator.pop(context),
-        child: const Text('Cancel'),
-      ),
-      FilledButton(onPressed: save, child: const Text('Save')),
-    ],
-  );
+      actionsPadding: const EdgeInsets.fromLTRB(24, 12, 24, 18),
+      actionsAlignment: MainAxisAlignment.center,
+      actions: [
+        OutlinedButton(
+          key: const ValueKey('reference-editor-cancel'),
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancel'),
+        ),
+        FilledButton.icon(
+          key: const ValueKey('reference-editor-save'),
+          onPressed: save,
+          icon: const Icon(Icons.save_outlined, size: 18),
+          label: const Text('Save'),
+        ),
+      ],
+    );
+  }
 }
