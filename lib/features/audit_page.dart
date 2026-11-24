@@ -201,9 +201,9 @@ class _AuditTableState extends State<_AuditTable> {
         else
           for (final (i, r) in rows.indexed)
             _row([
-              _AuditCell(dateOnly(r['at']), style: body),
-              _AuditCell(timeOnly(r['at']), style: body),
-              _AuditCell('${r['action']}', style: body),
+              _AuditCell(dateOnly(r['at']), style: body, align: TextAlign.center),
+              _AuditCell(timeOnly(r['at']), style: body, align: TextAlign.center),
+              _AuditCell('${r['action']}', style: body, align: TextAlign.center),
               _AuditCell(
                 auditDetailSentence(
                   '${r['detail'] ?? ''}',
