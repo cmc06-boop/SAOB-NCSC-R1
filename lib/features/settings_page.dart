@@ -245,7 +245,7 @@ class _SettingsTable extends StatelessWidget {
   };
 
   Widget _text(String text, {TextStyle style = _body, TextAlign align = TextAlign.left}) => Padding(
-    padding: const EdgeInsets.fromLTRB(12, 8, 8, 8),
+    padding: EdgeInsets.fromLTRB(align == TextAlign.center ? 8 : 12, 8, 8, 8),
     child: Text(text, style: style, textAlign: align),
   );
 
