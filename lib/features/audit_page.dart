@@ -314,12 +314,12 @@ String auditDetailSentence(
       parts.every((part) => amount.hasMatch(part))) {
     if (parts.length == 1) {
       final item = parts.single;
-      return 'Updated ' + item[0].toLowerCase() + item.substring(1) + '.';
+      return 'Updated ${item[0].toLowerCase()}${item.substring(1)}.';
     }
     final labels = [
       for (final part in parts) amount.firstMatch(part)!.group(1)!.toLowerCase(),
     ];
-    return 'Updated ' + labels.join(', ') + ' amounts.';
+    return 'Updated ${labels.join(', ')} amounts.';
   }
 
   if (kind == 'updated' &&
@@ -339,11 +339,11 @@ String auditDetailSentence(
       'deleted' => 'Deleted',
       _ => 'Changed',
     };
-    return verb + ' UACS ' + displayCode(code) + '.';
+    return '$verb UACS ${displayCode(code)}.';
   }
 
   if (kind == 'generated') {
-    return detail.endsWith('.') ? 'Generated ' + detail : 'Generated ' + detail + '.';
+    return detail.endsWith('.') ? 'Generated $detail' : 'Generated $detail.';
   }
 
   // Program operations also preserve their longer original details.
@@ -354,7 +354,7 @@ String auditDetailSentence(
       'updated' => 'Updated',
       _ => 'Deleted',
     };
-    return verb + ' program ' + programLabel(program) + '.';
+    return '$verb program ${programLabel(program)}.';
   }
 
   final verb = switch (kind) {
@@ -363,8 +363,8 @@ String auditDetailSentence(
     'deleted' => 'Deleted',
     _ => '',
   };
-  final sentence = verb.isEmpty ? detail : verb + ' ' + detail;
-  return sentence.endsWith('.') ? sentence : sentence + '.';
+  final sentence = verb.isEmpty ? detail : '$verb $detail';
+  return sentence.endsWith('.') ? sentence : '$sentence.';
 }
 
 class _AuditFilter<T> extends StatelessWidget {
