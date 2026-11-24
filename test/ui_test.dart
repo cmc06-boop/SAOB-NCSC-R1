@@ -201,8 +201,33 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('nav-account')));
     await tester.pumpAndSettle();
     expect(find.text('Personal Information'), findsOneWidget);
-    expect(find.text('Save Profile Changes'), findsOneWidget);
     expect(find.text('Change Password'), findsOneWidget);
+    expect(find.text('Update your administrator profile and password.'), findsNothing);
+    expect(find.byKey(const ValueKey('account-two-columns')), findsOneWidget);
+    expect(find.byKey(const ValueKey('account-save')), findsOneWidget);
+    expect(find.text('Save Changes'), findsOneWidget);
+    expect(find.text('Save Profile Changes'), findsNothing);
+    expect(find.text('Update Password'), findsNothing);
+    expect(
+      tester.getCenter(find.text('Personal Information')).dx,
+      lessThan(tester.getCenter(find.text('Change Password')).dx),
+    );
+    // The account form is now two columns with no nested scrolling.
+    expect(
+      find.descendant(
+        of: find.byKey(const ValueKey('account-two-columns')),
+        matching: find.byType(SingleChildScrollView),
+      ),
+      findsNothing,
+    );
+    await tester.enterText(
+      find.byKey(const ValueKey('account-name')),
+      'New Finance Officer',
+    );
+    await tester.tap(find.byKey(const ValueKey('account-save')));
+    await tester.pumpAndSettle();
+    expect(store.user!.name, 'New Finance Officer');
+    expect(store.db.rows('SELECT name FROM users').single['name'], 'New Finance Officer');
     expect(tester.takeException(), isNull);
     await tester.pumpWidget(const SizedBox());
   });
