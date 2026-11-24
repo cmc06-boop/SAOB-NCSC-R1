@@ -5,7 +5,7 @@ import 'package:archive/archive.dart';
 
 /// Preserves editable Excel formulas while also writing initial calculated
 /// values into XLSX cells for viewers that do not recalculate on load.
-/// Cache values are only a display fallback; the <f> formulas remain intact.
+/// Cache values are only a display fallback; the `<f>` formulas remain intact.
 Uint8List excelWithCachedFormulas(
   Uint8List bytes,
   Map<String, Map<String, String>> cache,
