@@ -2,6 +2,7 @@ import 'package:material_ui/material_ui.dart';
 
 import '../data/finance_store.dart';
 import '../ui/common.dart';
+import '../ui/svg_icon.dart';
 import '../ui/theme.dart';
 
 /// Account editor shown over the current page when the profile is clicked.
@@ -126,10 +127,8 @@ class _AccountDialogState extends State<AccountDialog> {
               ? IconButton(
                   tooltip: visible ? 'Hide $label' : 'Show $label',
                   onPressed: toggleVisibility,
-                  icon: Icon(
-                    visible
-                        ? Icons.visibility_outlined
-                        : Icons.visibility_off_outlined,
+                  icon: AppSvgIcon(
+                    visible ? 'eye' : 'eye-off',
                     size: 19,
                   ),
                 )
@@ -166,7 +165,7 @@ class _AccountDialogState extends State<AccountDialog> {
             key: const ValueKey('account-close'),
             tooltip: 'Close account',
             onPressed: _saving ? null : () => Navigator.of(context).pop(),
-            icon: const Icon(Icons.close),
+            icon: const AppSvgIcon('x'),
           ),
         ),
       ],
