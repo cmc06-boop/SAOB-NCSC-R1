@@ -1327,11 +1327,12 @@ class _HistoryCardState extends State<_HistoryCard> {
   );
   static const _body = TextStyle(fontSize: 13, color: ink);
 
-  Widget _cell(String text, {TextStyle style = _body, bool number = false}) {
+  Widget _cell(String text, {TextStyle style = _body, bool number = false, bool center = false}) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(12, 10, 10, 10),
       child: Text(
         text,
+        textAlign: center ? TextAlign.center : TextAlign.left,
         softWrap: true,
         style: number
             ? const TextStyle(
@@ -1400,10 +1401,10 @@ class _HistoryCardState extends State<_HistoryCard> {
                   defaultVerticalAlignment: TableCellVerticalAlignment.middle,
                   children: [
                     _row([
-                      _cell('#', style: _header),
-                      _cell('Report Name', style: _header),
-                      _cell('Fiscal Year', style: _header),
-                      _cell('Date Generated', style: _header),
+                      _cell('#', style: _header, center: true),
+                      _cell('Report Name', style: _header, center: true),
+                      _cell('Fiscal Year', style: _header, center: true),
+                      _cell('Date Generated', style: _header, center: true),
                     ], const Color(0xffeef3fb), center: true),
                   ],
                 ),
