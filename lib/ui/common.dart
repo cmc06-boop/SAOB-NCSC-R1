@@ -415,7 +415,12 @@ class _WideTableState extends State<WideTable> {
                 columns: [
                   for (var i = 0; i < widget.columns.length; i++)
                     DataColumn(
-                      label: Text(widget.columns[i]),
+                      label: Center(
+                        child: Text(
+                          widget.columns[i],
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
                       numeric: widget.numeric.contains(i),
                     ),
                 ],
