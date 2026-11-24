@@ -108,6 +108,21 @@ void main() {
           reason: '$page table header should be centered',
         );
       }
+      // Verify that generated report values, not only headers, are centered.
+      await tester.tap(find.byKey(const ValueKey('nav-reports')));
+      await tester.pumpAndSettle();
+      final reportEntry = store.reportHistory.first;
+      final reportBody = find.byType(Table).last;
+      final yearValue = find.descendant(
+        of: reportBody,
+        matching: find.text('${reportEntry['year']}'),
+      );
+      final generatedAt = find.descendant(
+        of: reportBody,
+        matching: find.text(dateLabel(reportEntry['at'])),
+      );
+      expect(tester.widget<Text>(yearValue).textAlign, TextAlign.center);
+      expect(tester.widget<Text>(generatedAt).textAlign, TextAlign.center);
       expect(find.text('Settings'), findsNothing);
       expect(find.text('Users'), findsNothing);
       expect(find.text('System'), findsNothing);
@@ -117,12 +132,67 @@ void main() {
       expect(find.text('Fiscal Year:'), findsOneWidget);
       expect(find.text('Program:'), findsOneWidget);
       expect(find.text('Action:'), findsOneWidget);
+      final firstAudit = store.auditRows(manilaNow().year).first;
+      expect(
+        tester.widget<Text>(find.text(dateOnly(firstAudit['at'])).first).textAlign,
+        TextAlign.center,
+      );
+      expect(
+        tester.widget<Text>(find.text(timeOnly(firstAudit['at'])).first).textAlign,
+        TextAlign.center,
+      );
+      expect(
+        tester.widget<Text>(find.text('${firstAudit['action']}').first).textAlign,
+        TextAlign.center,
+      );
       expect(tester.takeException(), isNull);
       await tester.tap(find.byKey(const ValueKey('nav-programs')));
       await tester.pumpAndSettle();
       expect(find.text('Program Management'), findsNothing);
       expect(find.text('Add Program'), findsOneWidget);
       expect(find.byKey(const ValueKey('programs-table')), findsOneWidget);
+      final programsTable = find.byKey(const ValueKey('programs-table'));
+      final firstProgramCode = find.descendant(
+        of: programsTable,
+        matching: find.text(store.programs.first.code),
+      ).first;
+      final programNumber = find.descendant(
+        of: programsTable,
+        matching: find.text('1'),
+      ).first;
+      expect(
+        (tester.getCenter(firstProgramCode).dx -
+                tester.getCenter(find.text('Code')).dx)
+            .abs(),
+        lessThan(8),
+      );
+      expect(
+        (tester.getCenter(programNumber).dx -
+                tester.getCenter(find.text('#')).dx)
+            .abs(),
+        lessThan(8),
+      );
+      final edit = find.descendant(
+        of: programsTable,
+        matching: find.byTooltip('Edit'),
+      ).first;
+      final delete = find.descendant(
+        of: programsTable,
+        matching: find.byTooltip('Delete'),
+      ).first;
+      final actionsCenter =
+          (tester.getCenter(edit).dx + tester.getCenter(delete).dx) / 2;
+      expect(
+        (actionsCenter - tester.getCenter(find.text('Actions')).dx).abs(),
+        lessThan(8),
+      );
+      final programHeader = tester.widget<Table>(
+        find.descendant(of: programsTable, matching: find.byType(Table)).first,
+      );
+      expect(
+        (programHeader.columnWidths![3] as FixedColumnWidth).value,
+        160,
+      );
       // The action is now aligned with the page subtitle, above the table.
       final programSubtitle = tester.getCenter(
         find.text('Manage programs and their associated names.'),
@@ -132,6 +202,29 @@ void main() {
       await tester.tap(find.byKey(const ValueKey('nav-uacs')));
       await tester.pumpAndSettle();
       expect(find.byKey(const ValueKey('uacs-table')), findsOneWidget);
+      final uacsTable = find.byKey(const ValueKey('uacs-table'));
+      final firstUacs = find.descendant(
+        of: uacsTable,
+        matching: find.text(
+          displayCode(store.references().first['code'] as String),
+        ),
+      ).first;
+      final uacsNumber = find.descendant(
+        of: uacsTable,
+        matching: find.text('1'),
+      ).first;
+      expect(
+        (tester.getCenter(firstUacs).dx -
+                tester.getCenter(find.text('UACS Code')).dx)
+            .abs(),
+        lessThan(8),
+      );
+      expect(
+        (tester.getCenter(uacsNumber).dx -
+                tester.getCenter(find.text('#')).dx)
+            .abs(),
+        lessThan(8),
+      );
       expect(find.byKey(const ValueKey('uacs-search')), findsOneWidget);
       final uacsSubtitle = tester.getCenter(
         find.text('Browse and search UACS reference codes and expense names.'),
