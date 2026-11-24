@@ -82,6 +82,14 @@ void main() {
       await tester.pumpWidget(FinanceApp(store: store));
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
+      // Sidebar Logout has no filled background at wide or compact widths.
+      expect(find.byKey(const ValueKey('sidebar-logout')), findsOneWidget);
+      expect(
+        tester.widget<Material>(
+          find.byKey(const ValueKey('sidebar-logout')),
+        ).color,
+        Colors.transparent,
+      );
       // The Programs and UACS Reference views are separate sidebar pages.
       // Stable keys also work when the sidebar is collapsed.
       for (final page in [
