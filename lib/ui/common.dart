@@ -876,11 +876,11 @@ class Pager extends StatelessWidget {
 }
 
 void showMessage(BuildContext context, String message, {bool error = false}) {
-  const padding = EdgeInsets.symmetric(horizontal: 14, vertical: 11);
-  const messageStyle = TextStyle(
+  const padding = EdgeInsets.symmetric(horizontal: 18, vertical: 14);
+  final messageStyle = TextStyle(
     fontSize: 13,
     height: 1.3,
-    color: Colors.white,
+    color: error ? red : ink,
   );
   final size = MediaQuery.sizeOf(context);
   final painter = TextPainter(
@@ -888,21 +888,27 @@ void showMessage(BuildContext context, String message, {bool error = false}) {
     textDirection: Directionality.of(context),
     textScaler: MediaQuery.textScalerOf(context),
   )..layout();
-  // Make short notices compact; long messages wrap instead of filling the page.
-  final maxWidth = math.min(500.0, math.max(0.0, size.width - 32));
+  // Position notices a little inward from the right and above the bottom.
+  // Short messages get a comfortable minimum width; longer ones wrap.
+  final rightInset = size.width >= 680 ? 72.0 : 20.0;
+  final maxWidth = math.min(540.0, math.max(0.0, size.width - rightInset - 16));
   final contentWidth = painter.width + padding.horizontal;
   painter.dispose();
-  final toastWidth = math.min(maxWidth, math.max(180.0, contentWidth));
-  final left = math.max(16.0, size.width - toastWidth - 16);
+  final toastWidth = math.min(maxWidth, math.max(320.0, contentWidth));
+  final left = math.max(16.0, size.width - toastWidth - rightInset);
 
   ScaffoldMessenger.of(context).showSnackBar(
     SnackBar(
       content: Text(message, style: messageStyle),
-      backgroundColor: error ? red : navy,
+      backgroundColor: Colors.white,
       behavior: SnackBarBehavior.floating,
+      elevation: 5,
       padding: padding,
-      margin: EdgeInsets.fromLTRB(left, 0, 16, 16),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      margin: EdgeInsets.fromLTRB(left, 0, rightInset, 48),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(8),
+        side: const BorderSide(color: line),
+      ),
       duration: const Duration(seconds: 3),
     ),
   );
