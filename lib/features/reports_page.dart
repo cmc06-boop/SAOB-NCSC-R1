@@ -321,28 +321,16 @@ class _ReportsPageState extends State<ReportsPage> {
             ),
           ),
           const SizedBox(height: 8),
-          Row(
-            children: [
-              const Expanded(
-                child: Text(
-                  'Generate and download financial and budget reports.',
-                  style: TextStyle(fontSize: 14, color: muted, height: 1.35),
-                ),
-              ),
-              const SizedBox(width: 16),
-              OutlinedButton.icon(
-                onPressed: () => setState(() => preview = false),
-                icon: const Icon(Icons.arrow_back, size: 18),
-                label: const Text('Reports'),
-              ),
-            ],
+          const Text(
+            'Generate and download financial and budget reports.',
+            style: TextStyle(fontSize: 14, color: muted, height: 1.35),
           ),
           const SizedBox(height: 22),
           Expanded(
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                SizedBox(width: 280, child: _parameterCard()),
+                SizedBox(width: 280, child: _parameterCard(records)),
                 const SizedBox(width: 16),
                 Expanded(child: _previewCard(records, programLabel)),
               ],
@@ -353,7 +341,7 @@ class _ReportsPageState extends State<ReportsPage> {
     );
   }
 
-  Widget _parameterCard() {
+  Widget _parameterCard(List<BudgetRecord> records) {
     return Panel(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -384,25 +372,11 @@ class _ReportsPageState extends State<ReportsPage> {
             ],
             onChanged: busy ? null : (v) => change(() => program = v),
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _previewCard(List<BudgetRecord> records, String programLabel) {
-    return Panel(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            children: [
-              const Expanded(
-                child: Text(
-                  'Report Preview',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
-                ),
-              ),
-              PopupMenuButton<String>(
+          const Spacer(),
+          Align(
+            alignment: Alignment.bottomCenter,
+            child: PopupMenuButton<String>(
+                                key: const ValueKey('reports-export'),
                 onSelected: records.isEmpty ? null : generate,
                 enabled: !busy && records.isNotEmpty,
                 itemBuilder: (context) => const [
@@ -439,6 +413,31 @@ class _ReportsPageState extends State<ReportsPage> {
                   ),
                 ),
               ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _previewCard(List<BudgetRecord> records, String programLabel) {
+    return Panel(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              const Expanded(
+                child: Text(
+                  'Report Preview',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                ),
+              ),
+              IconButton.outlined(
+                key: const ValueKey('reports-back'),
+                tooltip: 'Back to Reports',
+                onPressed: busy ? null : () => setState(() => preview = false),
+                icon: const Icon(Icons.arrow_back, size: 20),
+              ),,
             ],
           ),
           const SizedBox(height: 14),
