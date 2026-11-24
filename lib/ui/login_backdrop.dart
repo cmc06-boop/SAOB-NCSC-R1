@@ -19,6 +19,16 @@ class _LoginBackdropState extends State<LoginBackdrop> {
   }
 
   Future<void> _load() async {
+    try {
+      await _renderBackdrop();
+    } catch (_) {
+      // Flutter's asset bundle can be stale immediately after a hot restart
+      // that changes pubspec.yaml. Show the existing pale-blue fallback
+      // instead of throwing an unhandled exception on the login page.
+    }
+  }
+
+  Future<void> _renderBackdrop() async {
     Future<ui.Image> load(String path) async {
       final data = await rootBundle.load(path);
       final codec = await ui.instantiateImageCodec(data.buffer.asUint8List());
@@ -27,11 +37,9 @@ class _LoginBackdropState extends State<LoginBackdrop> {
       return image;
     }
 
-    final images = await Future.wait([
-      load('assets/login-reference-background.png'),
-      load('assets/login-senior.png'),
-    ]);
-    final backdrop = images[0], senior = images[1];
+    // Load sequentially so synchronous asset futures behave reliably in tests.
+    final backdrop = await load('assets/login-reference-background.png');
+    final senior = await load('assets/login-senior.png');
     final recorder = ui.PictureRecorder();
     // Use the supplied portrait unchanged; clip only its on-screen presentation.
     final c = Canvas(recorder);
