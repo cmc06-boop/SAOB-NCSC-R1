@@ -5,6 +5,7 @@ import 'package:ncsc_region1_finance/data/database.dart';
 import 'package:ncsc_region1_finance/data/finance_store.dart';
 import 'package:ncsc_region1_finance/data/models.dart';
 import 'package:ncsc_region1_finance/main.dart';
+import 'package:ncsc_region1_finance/ui/common.dart';
 
 void main() {
   final binding = TestWidgetsFlutterBinding.ensureInitialized();
@@ -14,6 +15,49 @@ void main() {
       "INSERT INTO users(name,username,password_hash,role,active) VALUES ('AO','ao','test-only','Admin',1)",
     );
     return FinanceStore(db);
+  }
+
+  for (final message in [
+    'Select a record to edit.',
+    'This is a longer instruction explaining that a valid record must be selected before an action can be completed in the finance system.',
+  ]) {
+    testWidgets('notifications stay compact at the lower right: $message', (
+      tester,
+    ) async {
+      await binding.setSurfaceSize(const Size(1366, 720));
+      addTearDown(() => binding.setSurfaceSize(null));
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: Builder(
+              builder: (context) => TextButton(
+                onPressed: () => showMessage(context, message),
+                child: const Text('Show instruction'),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.tap(find.text('Show instruction'));
+      await tester.pump();
+      final toast = tester.widget<SnackBar>(find.byType(SnackBar));
+      final margin = toast.margin! as EdgeInsets;
+      final toastWidth = 1366 - margin.left - margin.right;
+      expect(toast.behavior, SnackBarBehavior.floating);
+      expect(margin.right, 16);
+      expect(margin.bottom, 16);
+      expect(toastWidth, lessThanOrEqualTo(500));
+      expect(toast.padding, const EdgeInsets.symmetric(horizontal: 14, vertical: 11));
+      if (message == 'Select a record to edit.') {
+        expect(toastWidth, lessThan(260));
+        expect(margin.left, greaterThan(1000));
+      } else {
+        expect(toastWidth, greaterThan(350));
+        expect(margin.left, greaterThan(700));
+      }
+      expect(tester.takeException(), isNull);
+      await tester.pumpWidget(const SizedBox());
+    });
   }
 
   for (final size in const [
