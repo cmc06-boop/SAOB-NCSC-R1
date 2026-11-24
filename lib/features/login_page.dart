@@ -40,11 +40,12 @@ class _LoginPageState extends State<LoginPage> {
       final manifest = await AssetManifest.loadFromAssetBundle(rootBundle);
       final matches = manifest.listAssets().where((path) {
         final lower = path.toLowerCase();
+        // Only use a PNG explicitly marked as transparent. Otherwise the
+        // painter below avoids the opaque background around the mark.
         return lower.startsWith('assets/') &&
             lower.contains('bagong') &&
-            (lower.endsWith('.png') ||
-                lower.endsWith('.jpg') ||
-                lower.endsWith('.webp'));
+            lower.contains('transparent') &&
+            lower.endsWith('.png');
       }).toList()
         ..sort();
       if (mounted && matches.isNotEmpty) {
@@ -108,6 +109,7 @@ class _LoginPageState extends State<LoginPage> {
       );
     }
     return SizedBox(
+      key: const ValueKey('bagong-transparent-logo'),
       width: size * 1.4,
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -139,9 +141,9 @@ class _LoginPageState extends State<LoginPage> {
   Widget _welcomeContent(double width, double height) {
     final compact = height < 730 || width < 1000;
     final verySmall = width < 590;
-    final logoSize = verySmall ? 82.0 : compact ? 120.0 : 180.0;
-    final brandSize = verySmall ? 23.0 : compact ? 32.0 : 43.0;
-    final titleSize = verySmall ? 27.0 : compact ? 38.0 : 54.0;
+    final logoSize = verySmall ? 68.0 : compact ? 96.0 : 132.0;
+    final brandSize = verySmall ? 18.0 : compact ? 24.0 : 32.0;
+    final titleSize = verySmall ? 22.0 : compact ? 30.0 : 42.0;
 
     return ConstrainedBox(
       key: const ValueKey('login-welcome'),
@@ -162,11 +164,11 @@ class _LoginPageState extends State<LoginPage> {
                   fit: BoxFit.contain,
                   semanticLabel: 'National Commission of Senior Citizens logo',
                 ),
-                SizedBox(width: verySmall ? 16 : compact ? 34 : 52),
+                SizedBox(width: verySmall ? 12 : compact ? 22 : 34),
                 _bagongMark(logoSize),
               ],
             ),
-            SizedBox(height: compact ? 17 : 25),
+            SizedBox(height: compact ? 14 : 20)
             Text(
               'National Commission of Senior Citizens',
               textAlign: TextAlign.center,
@@ -186,7 +188,7 @@ class _LoginPageState extends State<LoginPage> {
                 fontSize: brandSize * 0.86,
               ),
             ),
-            SizedBox(height: compact ? 29 : 49),
+            SizedBox(height: compact ? 24 : 38),
             Text(
               productTitle,
               maxLines: 3,
@@ -198,10 +200,10 @@ class _LoginPageState extends State<LoginPage> {
                 height: 1.18,
               ),
             ),
-            SizedBox(height: compact ? 36 : 62),
+            SizedBox(height: compact ? 28 : 46),
             SizedBox(
-              width: verySmall ? 250 : compact ? 300 : 410,
-              height: compact ? 63 : 90,
+              width: verySmall ? 210 : compact ? 245 : 330,
+              height: compact ? 54 : 68,
               child: FilledButton(
                 key: const ValueKey('login-welcome-sign-in'),
                 onPressed: _openForm,
@@ -219,14 +221,14 @@ class _LoginPageState extends State<LoginPage> {
                     Text(
                       'Sign in',
                       style: TextStyle(
-                        fontSize: compact ? 24 : 37,
+                        fontSize: compact ? 20 : 28,
                         fontWeight: FontWeight.w800,
                       ),
                     ),
                     const SizedBox(width: 12),
                     Icon(
                       Icons.arrow_forward,
-                      size: compact ? 28 : 38,
+                      size: compact ? 22 : 30,
                     ),
                   ],
                 ),
@@ -251,14 +253,14 @@ class _LoginPageState extends State<LoginPage> {
       Text(
         label,
         style: const TextStyle(
-          fontSize: 16,
+          fontSize: 14,
           fontWeight: FontWeight.w700,
           color: Color(0xff102458),
         ),
       ),
-      const SizedBox(height: 7),
+      const SizedBox(height: 6),
       SizedBox(
-        height: 58,
+        height: 52,
         child: TextField(
           key: ValueKey(label),
           focusNode: focusNode,
@@ -276,16 +278,16 @@ class _LoginPageState extends State<LoginPage> {
               _passwordFocus.requestFocus();
             }
           },
-          style: const TextStyle(fontSize: 16, color: Color(0xff102458)),
+          style: const TextStyle(fontSize: 14, color: Color(0xff102458)),
           decoration: InputDecoration(
             hintText: hint,
             hintStyle: const TextStyle(
               color: Color(0xff69748d),
-              fontSize: 15,
+              fontSize: 14,
             ),
             filled: true,
             fillColor: const Color(0xfff5f7fc),
-            prefixIcon: Icon(icon, size: 24, color: navy),
+            prefixIcon: Icon(icon, size: 21, color: navy),
             suffixIcon: password
                 ? IconButton(
                     tooltip: _showPassword ? 'Hide password' : 'Show password',
@@ -296,7 +298,7 @@ class _LoginPageState extends State<LoginPage> {
                           ? Icons.visibility_outlined
                           : Icons.visibility_off_outlined,
                       color: navy,
-                      size: 23,
+                      size: 21,
                     ),
                   )
                 : null,
@@ -330,10 +332,10 @@ class _LoginPageState extends State<LoginPage> {
     final needsProvisioning = widget.store.needsAccount;
     return Container(
       key: const ValueKey('login-form'),
-      width: 530,
+      width: 430,
       decoration: BoxDecoration(
         color: const Color(0xfffbfcff).withValues(alpha: 0.98),
-        borderRadius: BorderRadius.circular(28),
+        borderRadius: BorderRadius.circular(24),
         boxShadow: const [
           BoxShadow(
             color: Color(0x55051846),
@@ -344,10 +346,10 @@ class _LoginPageState extends State<LoginPage> {
       ),
       child: Padding(
         padding: EdgeInsets.fromLTRB(
-          compact ? 30 : 40,
-          compact ? 20 : 28,
-          compact ? 30 : 40,
-          compact ? 28 : 40,
+          compact ? 25 : 32,
+          compact ? 18 : 24,
+          compact ? 25 : 32,
+          compact ? 25 : 32,
         ),
         child: AutofillGroup(
           child: Column(
@@ -355,8 +357,8 @@ class _LoginPageState extends State<LoginPage> {
             children: [
               Image.asset(
                 'assets/ncsc-logo-transparent.png',
-                width: compact ? 120 : 165,
-                height: compact ? 120 : 165,
+                width: compact ? 92 : 122,
+                height: compact ? 92 : 122,
                 fit: BoxFit.contain,
                 semanticLabel: 'NCSC logo',
               ),
@@ -364,7 +366,7 @@ class _LoginPageState extends State<LoginPage> {
               const Text(
                 'NCSC-R1',
                 style: TextStyle(
-                  fontSize: 22,
+                  fontSize: 18,
                   fontWeight: FontWeight.w800,
                   color: navy,
                 ),
@@ -373,13 +375,13 @@ class _LoginPageState extends State<LoginPage> {
               Text(
                 'Log in',
                 style: TextStyle(
-                  fontSize: compact ? 39 : 49,
+                  fontSize: compact ? 31 : 39,
                   fontWeight: FontWeight.w800,
                   color: const Color(0xff092766),
                   height: 1.1,
                 ),
               ),
-              SizedBox(height: compact ? 17 : 25),
+              SizedBox(height: compact ? 14 : 20)
               if (needsProvisioning) ...[
                 const Text(
                   'No Admin account is configured on this computer. '
@@ -396,7 +398,7 @@ class _LoginPageState extends State<LoginPage> {
                 _username,
                 _usernameFocus,
               ),
-              SizedBox(height: compact ? 16 : 22),
+              SizedBox(height: compact ? 14 : 18),
               _field(
                 'Password',
                 'Enter your password',
@@ -413,10 +415,10 @@ class _LoginPageState extends State<LoginPage> {
                   style: const TextStyle(color: red, fontSize: 12),
                 ),
               ],
-              SizedBox(height: compact ? 24 : 32),
+              SizedBox(height: compact ? 19 : 26),
               SizedBox(
                 width: double.infinity,
-                height: 63,
+                height: 54,
                 child: FilledButton(
                   key: const ValueKey('login-submit'),
                   onPressed: _busy || needsProvisioning ? null : _submit,
@@ -440,7 +442,7 @@ class _LoginPageState extends State<LoginPage> {
                           'Log in',
                           style: TextStyle(
                             fontWeight: FontWeight.w800,
-                            fontSize: 22,
+                            fontSize: 18,
                           ),
                         ),
                 ),
