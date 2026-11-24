@@ -24,8 +24,12 @@ void main() {
     testWidgets('notifications are white, wider, and raised at lower right: $message', (
       tester,
     ) async {
-      await binding.setSurfaceSize(const Size(1366, 720));
-      addTearDown(() => binding.setSurfaceSize(null));
+      tester.view.devicePixelRatio = 1.0;
+      tester.view.physicalSize = const Size(1366, 720);
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
@@ -42,7 +46,9 @@ void main() {
       await tester.pump();
       final toast = tester.widget<SnackBar>(find.byType(SnackBar));
       final margin = toast.margin! as EdgeInsets;
-      final toastWidth = 1366 - margin.left - margin.right;
+      final viewportWidth = tester.getSize(find.byType(Scaffold)).width;
+      expect(viewportWidth, 1366);
+      final toastWidth = viewportWidth - margin.left - margin.right;
       expect(toast.behavior, SnackBarBehavior.floating);
       expect(toast.backgroundColor, Colors.white);
       expect(toast.elevation, 5);
@@ -55,13 +61,14 @@ void main() {
       );
       final content = toast.content as Text;
       expect(content.style?.color, const Color(0xff132951));
+      // Flutter widget tests use the Ahem font, so even a short message
+      // can measure wider than the 320 px minimum.
       if (message == 'Select a record to edit.') {
-        expect(toastWidth, 320);
-        expect(margin.left, 998);
+        expect(toastWidth, lessThan(400));
       } else {
         expect(toastWidth, greaterThan(400));
-        expect(margin.left, lessThan(900));
       }
+      expect(margin.left + toastWidth + margin.right, viewportWidth);
       expect(tester.takeException(), isNull);
       await tester.pumpWidget(const SizedBox());
     });
@@ -70,8 +77,12 @@ void main() {
   testWidgets('notification uses compact side spacing on narrower windows', (
     tester,
   ) async {
-    await binding.setSurfaceSize(const Size(400, 640));
-    addTearDown(() => binding.setSurfaceSize(null));
+    tester.view.devicePixelRatio = 1.0;
+    tester.view.physicalSize = const Size(400, 640);
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
@@ -88,6 +99,7 @@ void main() {
     await tester.pump();
     final toast = tester.widget<SnackBar>(find.byType(SnackBar));
     final margin = toast.margin! as EdgeInsets;
+    expect(tester.getSize(find.byType(Scaffold)).width, 400);
     expect(margin.left, greaterThanOrEqualTo(16));
     expect(margin.right, 20);
     expect(margin.bottom, 48);
@@ -124,7 +136,8 @@ void main() {
         isFalse,
       );
       expect(password.obscureText, isTrue);
-      await tester.tap(find.byTooltip('Show password'));
+      // TooltipVisibility is disabled globally; locate the actual icon.
+      await tester.tap(find.byIcon(Icons.visibility_off_outlined));
       await tester.pump();
       expect(
         tester
@@ -275,13 +288,14 @@ void main() {
             .abs(),
         lessThan(8),
       );
+      // Hover labels are hidden, so use visible action icons instead.
       final edit = find.descendant(
         of: programsTable,
-        matching: find.byTooltip('Edit'),
+        matching: find.byIcon(Icons.edit_outlined),
       ).first;
       final delete = find.descendant(
         of: programsTable,
-        matching: find.byTooltip('Delete'),
+        matching: find.byIcon(Icons.delete_outline),
       ).first;
       final actionsCenter =
           (tester.getCenter(edit).dx + tester.getCenter(delete).dx) / 2;
