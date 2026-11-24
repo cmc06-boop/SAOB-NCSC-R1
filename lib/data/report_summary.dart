@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:excel/excel.dart';
 
 import '../core/format.dart';
+import 'excel_formula_cache.dart';
 import 'models.dart';
 
 const summarySelection = '__SUMMARY__';
@@ -104,7 +105,9 @@ List<String> summaryDisplayRow(String name, Totals t) => [
   t.obligation == 0 ? '0.00%' : rate(t.disbursement, t.obligation),
 ];
 
-/// Standalone SUMMARY Excel workbook for printing or further review.
+/// Standalone SUMMARY workbook. All amounts that users enter are numeric;
+/// balances, utilization rates, disbursement rates and section totals are
+/// Excel formulas, so they update automatically when the workbook is edited.
 Uint8List excelSaobSummaryReport(
   List<BudgetRecord> records, {
   required int year,
@@ -116,12 +119,13 @@ Uint8List excelSaobSummaryReport(
   for (var i = 1; i < 7; i++) {
     sheet.setColumnWidth(i, i == 3 ? 28 : 20);
   }
-  final navy = ExcelColor.fromHexString('#173C80');
+
   final pale = ExcelColor.fromHexString('#EEF3FB');
   final totalFill = ExcelColor.fromHexString('#E7EEFC');
   final ink = ExcelColor.fromHexString('#132951');
   final currencyFormat = NumFormat.custom(formatCode: '#,##0.00');
   final rateFormat = NumFormat.custom(formatCode: '0.00%');
+  final cached = <String, String>{};
 
   void put(
     int row,
@@ -129,6 +133,7 @@ Uint8List excelSaobSummaryReport(
     CellValue value, {
     bool heading = false,
     bool section = false,
+    bool title = false,
     bool total = false,
   }) {
     final target = sheet.cell(
@@ -136,10 +141,19 @@ Uint8List excelSaobSummaryReport(
     );
     target.value = value;
     target.cellStyle = CellStyle(
-      bold: heading || section || total,
-      fontColorHex: section ? ExcelColor.white : ink,
-      backgroundColorHex: section ? navy : total ? totalFill : heading ? pale : ExcelColor.none,
-      horizontalAlign: col == 0 ? HorizontalAlign.Left : HorizontalAlign.Right,
+      bold: heading || section || title || total,
+      fontColorHex: ink,
+      // Section titles stay centered on white, without a colored background.
+      backgroundColorHex: total
+          ? totalFill
+          : heading
+          ? pale
+          : ExcelColor.none,
+      horizontalAlign: section || title
+          ? HorizontalAlign.Center
+          : col == 0
+          ? HorizontalAlign.Left
+          : HorizontalAlign.Right,
       verticalAlign: VerticalAlign.Center,
       numberFormat: col == 4 || col == 6
           ? rateFormat
@@ -149,11 +163,37 @@ Uint8List excelSaobSummaryReport(
     );
   }
 
-  var at = 0;
+  // FormulaCellValue keeps formulas editable, and the cached result makes the
+  // initial numbers readable in viewers that do not recalculate immediately.
+  void formula(
+    int row,
+    int col,
+    String expression,
+    num initialValue, {
+    bool total = false,
+  }) {
+    put(row, col, FormulaCellValue(expression), total: total);
+    cached['${String.fromCharCode(65 + col)}${row + 1}'] =
+        initialValue.toString();
+  }
+
+  sheet.merge(
+    CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: 0),
+    CellIndex.indexByColumnRow(columnIndex: 6, rowIndex: 0),
+  );
+  put(
+    0,
+    0,
+    TextCellValue('SUMMARY  |  FISCAL YEAR $year'),
+    title: true,
+  );
+
+  // Leave one blank row after the year heading.
+  var at = 2;
   for (final section in saobSummarySections(records)) {
     sheet.merge(
       CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: at),
-      CellIndex.indexByColumnRow(columnIndex: 3, rowIndex: at),
+      CellIndex.indexByColumnRow(columnIndex: 6, rowIndex: at),
     );
     put(at++, 0, TextCellValue(section.title), section: true);
     for (var col = 0; col < summaryHeaders.length; col++) {
@@ -161,46 +201,82 @@ Uint8List excelSaobSummaryReport(
     }
     at++;
 
-    void row(String name, Totals totals, {bool total = false}) {
-      put(at, 0, TextCellValue(name), total: total);
-      for (final (col, amount) in [
-        (1, totals.allotment),
-        (2, totals.obligation),
-        (3, totals.balance),
-        (5, totals.disbursement),
-      ]) {
-        put(at, col, DoubleCellValue(amount / 100), total: total);
-      }
-      put(
+    final firstDataExcel = at + 1;
+
+    for (final entry in section.rows) {
+      final t = entry.totals;
+      final excelRow = at + 1;
+      put(at, 0, TextCellValue(entry.program));
+      put(at, 1, DoubleCellValue(t.allotment / 100));
+      put(at, 2, DoubleCellValue(t.obligation / 100));
+      formula(at, 3, 'B$excelRow-C$excelRow', t.balance / 100);
+      formula(
         at,
         4,
-        DoubleCellValue(
-          totals.allotment == 0 ? 0 : totals.obligation / totals.allotment,
-        ),
-        total: total,
+        'IF(B$excelRow=0,0,C$excelRow/B$excelRow)',
+        t.allotment == 0 ? 0 : t.obligation / t.allotment,
       );
-      put(
+      put(at, 5, DoubleCellValue(t.disbursement / 100));
+      formula(
         at,
         6,
-        DoubleCellValue(
-          totals.obligation == 0 ? 0 : totals.disbursement / totals.obligation,
-        ),
-        total: total,
+        'IF(C$excelRow=0,0,F$excelRow/C$excelRow)',
+        t.obligation == 0 ? 0 : t.disbursement / t.obligation,
       );
       at++;
     }
 
-    for (final entry in section.rows) {
-      row(entry.program, entry.totals);
+    final total = section.totals;
+    final excelRow = at + 1;
+    final lastDataExcel = at;
+    put(at, 0, TextCellValue('TOTAL'), total: true);
+
+    for (final (col, amount) in [
+      (1, total.allotment),
+      (2, total.obligation),
+      (5, total.disbursement),
+    ]) {
+      final letter = String.fromCharCode(65 + col);
+      formula(
+        at,
+        col,
+        'SUM($letter$firstDataExcel:$letter$lastDataExcel)',
+        amount / 100,
+        total: true,
+      );
     }
-    row('TOTAL', section.totals, total: true);
-    // One blank row between sections, like the source SUMMARY worksheet.
-    at += 1;
+    formula(
+      at,
+      3,
+      'B$excelRow-C$excelRow',
+      total.balance / 100,
+      total: true,
+    );
+    formula(
+      at,
+      4,
+      'IF(B$excelRow=0,0,C$excelRow/B$excelRow)',
+      total.allotment == 0 ? 0 : total.obligation / total.allotment,
+      total: true,
+    );
+    formula(
+      at,
+      6,
+      'IF(C$excelRow=0,0,F$excelRow/C$excelRow)',
+      total.obligation == 0 ? 0 : total.disbursement / total.obligation,
+      total: true,
+    );
+    // Keep one blank row between Current and Continuing tables.
+    at += 2;
   }
+
   book.setDefaultSheet('SUMMARY');
   final encoded = book.encode();
   if (encoded == null || encoded.isEmpty) {
     throw const FinanceError('Could not create the summary Excel report.');
   }
-  return Uint8List.fromList(encoded);
+  return excelWithCachedFormulas(
+    Uint8List.fromList(encoded),
+    {'SUMMARY': cached},
+  );
 }
