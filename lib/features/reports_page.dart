@@ -736,7 +736,12 @@ class _ReportSheetState extends State<_ReportSheet> {
                 children: [
                   _row([
                     for (var i = 0; i < table.headers.length; i++)
-                      dataCell(table.headers[i], i, headerStyle),
+                      _cell(
+                        table.headers[i],
+                        align: TextAlign.center,
+                        style: headerStyle,
+                        wrap: true,
+                      ),
                   ], const Color(0xffeef3fb)),
                 ],
               );
@@ -1340,7 +1345,11 @@ class _HistoryCardState extends State<_HistoryCard> {
     );
   }
 
-  TableRow _row(List<Widget> cells, Color color) => TableRow(
+  TableRow _row(
+    List<Widget> cells,
+    Color color, {
+    bool center = false,
+  }) => TableRow(
     decoration: BoxDecoration(color: color),
     children: [
       for (final cell in cells)
@@ -1348,7 +1357,10 @@ class _HistoryCardState extends State<_HistoryCard> {
           verticalAlignment: TableCellVerticalAlignment.middle,
           child: ConstrainedBox(
             constraints: const BoxConstraints(minHeight: 48),
-            child: Align(alignment: Alignment.centerLeft, child: cell),
+            child: Align(
+              alignment: center ? Alignment.center : Alignment.centerLeft,
+              child: cell,
+            ),
           ),
         ),
     ],
@@ -1392,7 +1404,7 @@ class _HistoryCardState extends State<_HistoryCard> {
                       _cell('Report Name', style: _header),
                       _cell('Fiscal Year', style: _header),
                       _cell('Date Generated', style: _header),
-                    ], const Color(0xffeef3fb)),
+                    ], const Color(0xffeef3fb), center: true),
                   ],
                 ),
                 ConstrainedBox(
