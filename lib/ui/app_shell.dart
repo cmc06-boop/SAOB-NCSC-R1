@@ -54,6 +54,7 @@ class _AppShellState extends State<AppShell> {
         ),
         clipBehavior: Clip.antiAlias,
         child: Container(
+          key: const ValueKey('logout-surface'),
           width: 340,
           padding: const EdgeInsets.fromLTRB(28, 26, 28, 22),
           decoration: const BoxDecoration(
