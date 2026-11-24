@@ -109,7 +109,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('Program Management'), findsNothing);
       expect(find.text('Add Program'), findsOneWidget);
-      expect(find.byKey(const ValueKey('programs')), findsOneWidget);
+      expect(find.byKey(const ValueKey('programs-table')), findsOneWidget);
       // The action is now aligned with the page subtitle, above the table.
       final programSubtitle = tester.getCenter(
         find.text('Manage programs and their associated names.'),
@@ -118,7 +118,7 @@ void main() {
       expect((programSubtitle.dy - addButton.dy).abs(), lessThan(26));
       await tester.tap(find.byKey(const ValueKey('nav-uacs')));
       await tester.pumpAndSettle();
-      expect(find.byKey(const ValueKey('uacs')), findsOneWidget);
+      expect(find.byKey(const ValueKey('uacs-table')), findsOneWidget);
       await tester.tap(find.byKey(const ValueKey('nav-budget')));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Add Record'));
