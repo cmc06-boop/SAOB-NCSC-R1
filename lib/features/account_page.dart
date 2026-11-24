@@ -1,51 +1,19 @@
 import 'package:material_ui/material_ui.dart';
 
-import '../core/format.dart';
 import '../data/finance_store.dart';
 import '../ui/common.dart';
 import '../ui/theme.dart';
 
-/// Accessible from the profile button above Logout.
-class AccountPage extends StatelessWidget {
-  const AccountPage({super.key, required this.store});
+/// Account editor shown over the current page when the profile is clicked.
+class AccountDialog extends StatefulWidget {
+  const AccountDialog({super.key, required this.store});
   final FinanceStore store;
 
   @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.fromLTRB(28, 30, 28, 28),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'My Account',
-          style: TextStyle(
-            fontSize: 28,
-            fontWeight: FontWeight.w700,
-            color: ink,
-            height: 1,
-          ),
-        ),
-        const SizedBox(height: 8),
-        const Text(
-          'Manage your profile details and password.',
-          style: TextStyle(fontSize: 14, color: muted, height: 1.35),
-        ),
-        const SizedBox(height: 22),
-        Expanded(child: _AccountSettings(store: store)),
-      ],
-    ),
-  );
+  State<AccountDialog> createState() => _AccountDialogState();
 }
 
-class _AccountSettings extends StatefulWidget {
-  const _AccountSettings({required this.store});
-  final FinanceStore store;
-
-  @override
-  State<_AccountSettings> createState() => _AccountSettingsState();
-}
-
-class _AccountSettingsState extends State<_AccountSettings> {
+class _AccountDialogState extends State<AccountDialog> {
   late final TextEditingController _name;
   late final TextEditingController _username;
   final _currentPassword = TextEditingController();
@@ -94,14 +62,11 @@ class _AccountSettingsState extends State<_AccountSettings> {
         confirmPassword: _confirmPassword.text,
       );
       if (!mounted) return;
-      if (changed) {
-        _name.text = widget.store.user!.name;
-        _username.text = widget.store.user!.username;
-        _currentPassword.clear();
-        _newPassword.clear();
-        _confirmPassword.clear();
-      }
-      showMessage(context, changed ? 'Account changes saved.' : 'No changes to save.');
+      showMessage(
+        context,
+        changed ? 'Account changes saved.' : 'No changes to save.',
+      );
+      Navigator.of(context).pop();
     } catch (e) {
       if (mounted) setState(() => _error = friendlyError(e));
     } finally {
@@ -135,11 +100,14 @@ class _AccountSettingsState extends State<_AccountSettings> {
         obscureText: password && !visible,
         autocorrect: !password,
         enableSuggestions: !password,
+        onChanged: (_) {
+          if (_error != null) setState(() => _error = null);
+        },
         decoration: InputDecoration(
           isDense: true,
           contentPadding: const EdgeInsets.symmetric(
             horizontal: 12,
-            vertical: 12,
+            vertical: 11,
           ),
           hintText: label,
           suffixIcon: password
@@ -159,110 +127,120 @@ class _AccountSettingsState extends State<_AccountSettings> {
     ],
   );
 
-  Widget _personalInformation() => Column(
-    crossAxisAlignment: CrossAxisAlignment.stretch,
-    children: [
-      const Text(
-        'Personal Information',
-        style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: ink),
-      ),
-      const SizedBox(height: 18),
-      _field('Full Name', _name, key: const ValueKey('account-name')),
-      const SizedBox(height: 16),
-      _field('Username', _username, key: const ValueKey('account-username')),
-    ],
-  );
-
-  Widget _passwordInformation() => Column(
-    crossAxisAlignment: CrossAxisAlignment.stretch,
-    children: [
-      const Text(
-        'Change Password',
-        style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: ink),
-      ),
-      const SizedBox(height: 7),
-      const Text(
-        'Leave these fields blank if you are only updating your profile.',
-        style: TextStyle(fontSize: 12, color: muted),
-      ),
-      const SizedBox(height: 16),
-      _field(
-        'Current Password',
-        _currentPassword,
-        key: const ValueKey('account-current-password'),
-        password: true,
-        visible: _showCurrent,
-        toggleVisibility: () => setState(() => _showCurrent = !_showCurrent),
-      ),
-      const SizedBox(height: 13),
-      _field(
-        'New Password',
-        _newPassword,
-        key: const ValueKey('account-new-password'),
-        password: true,
-        visible: _showNew,
-        toggleVisibility: () => setState(() => _showNew = !_showNew),
-      ),
-      const SizedBox(height: 13),
-      _field(
-        'Confirm New Password',
-        _confirmPassword,
-        key: const ValueKey('account-confirm-password'),
-        password: true,
-        visible: _showConfirm,
-        toggleVisibility: () => setState(() => _showConfirm = !_showConfirm),
-      ),
-      const SizedBox(height: 10),
-      const Text(
-        'Use at least 12 characters for a new password.',
-        style: TextStyle(fontSize: 12, color: muted),
-      ),
-    ],
-  );
-
   @override
-  Widget build(BuildContext context) => Panel(
-    padding: 24,
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
+  Widget build(BuildContext context) => AlertDialog(
+    backgroundColor: Colors.white,
+    surfaceTintColor: Colors.transparent,
+    titlePadding: const EdgeInsets.fromLTRB(24, 16, 16, 8),
+    title: Row(
       children: [
-        Expanded(
-          child: Row(
-            key: const ValueKey('account-two-columns'),
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Expanded(child: _personalInformation()),
-              const SizedBox(width: 28),
-              Container(width: 1, color: line),
-              const SizedBox(width: 28),
-              Expanded(child: _passwordInformation()),
-            ],
+        const Expanded(
+          child: Text(
+            'My Account',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w700,
+              color: ink,
+            ),
           ),
         ),
-        if (_error != null) ...[
-          const SizedBox(height: 8),
-          Text(
-            _error!,
-            textAlign: TextAlign.center,
-            style: const TextStyle(color: red, fontSize: 12),
-          ),
-        ],
-        const SizedBox(height: 12),
-        Center(
-          child: FilledButton.icon(
-            key: const ValueKey('account-save'),
-            onPressed: _saving ? null : _saveChanges,
-            icon: _saving
-                ? const SizedBox(
-                    width: 18,
-                    height: 18,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Icon(Icons.save_outlined, size: 18),
-            label: const Text('Save Changes'),
-          ),
+        IconButton(
+          key: const ValueKey('account-close'),
+          tooltip: 'Close account',
+          onPressed: _saving ? null : () => Navigator.of(context).pop(),
+          icon: const Icon(Icons.close),
         ),
       ],
     ),
+    contentPadding: const EdgeInsets.fromLTRB(24, 8, 24, 0),
+    content: SizedBox(
+      width: 420,
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Text(
+              'Personal Information',
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w700,
+                color: ink,
+              ),
+            ),
+            const SizedBox(height: 12),
+            _field('Full Name', _name, key: const ValueKey('account-name')),
+            const SizedBox(height: 12),
+            _field(
+              'Username',
+              _username,
+              key: const ValueKey('account-username'),
+            ),
+            const SizedBox(height: 14),
+            const Divider(color: line),
+            const SizedBox(height: 12),
+            _field(
+              'Current Password',
+              _currentPassword,
+              key: const ValueKey('account-current-password'),
+              password: true,
+              visible: _showCurrent,
+              toggleVisibility: () => setState(() => _showCurrent = !_showCurrent),
+            ),
+            const SizedBox(height: 12),
+            _field(
+              'New Password',
+              _newPassword,
+              key: const ValueKey('account-new-password'),
+              password: true,
+              visible: _showNew,
+              toggleVisibility: () => setState(() => _showNew = !_showNew),
+            ),
+            const SizedBox(height: 12),
+            _field(
+              'Confirm New Password',
+              _confirmPassword,
+              key: const ValueKey('account-confirm-password'),
+              password: true,
+              visible: _showConfirm,
+              toggleVisibility: () => setState(() => _showConfirm = !_showConfirm),
+            ),
+          ],
+        ),
+      ),
+    ),
+    actionsPadding: const EdgeInsets.fromLTRB(24, 12, 24, 18),
+    actionsAlignment: MainAxisAlignment.center,
+    actions: [
+      SizedBox(
+        width: 420,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (_error != null) ...[
+              Text(
+                _error!,
+                key: const ValueKey('account-error'),
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: red, fontSize: 12),
+              ),
+              const SizedBox(height: 10),
+            ],
+            FilledButton.icon(
+              key: const ValueKey('account-save'),
+              onPressed: _saving ? null : _saveChanges,
+              icon: _saving
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.save_outlined, size: 18),
+              label: const Text('Save Changes'),
+            ),
+          ],
+        ),
+      ),
+    ],
   );
 }
