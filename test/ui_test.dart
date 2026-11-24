@@ -424,23 +424,21 @@ void main() {
       expect(tester.takeException(), isNull);
       expect(tester.getSize(pdfFormat).height, greaterThanOrEqualTo(40));
       expect(tester.getSize(excelFormat).height, greaterThanOrEqualTo(40));
+      // The report formats have custom recognizable document artwork
+      // (PDF lettering and Excel X/grid), rather than generic Material icons.
+      final pdfFileIcon = find.byKey(const ValueKey('reports-file-icon-pdf'));
+      final excelFileIcon = find.byKey(const ValueKey('reports-file-icon-excel'));
+      expect(find.descendant(of: pdfFormat, matching: pdfFileIcon), findsOneWidget);
+      expect(find.descendant(of: excelFormat, matching: excelFileIcon), findsOneWidget);
+      expect(tester.getSize(pdfFileIcon), const Size(24, 26));
+      expect(tester.getSize(excelFileIcon), const Size(24, 26));
       expect(
-        tester.widget<Icon>(
-          find.descendant(
-            of: pdfFormat,
-            matching: find.byIcon(Icons.picture_as_pdf_rounded),
-          ),
-        ).size,
-        22,
+        find.descendant(of: pdfFileIcon, matching: find.byType(CustomPaint)),
+        findsOneWidget,
       );
       expect(
-        tester.widget<Icon>(
-          find.descendant(
-            of: excelFormat,
-            matching: find.byIcon(Icons.table_chart_rounded),
-          ),
-        ).size,
-        22,
+        find.descendant(of: excelFileIcon, matching: find.byType(CustomPaint)),
+        findsOneWidget,
       );
       expect(
         find.descendant(
