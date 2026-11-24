@@ -231,6 +231,14 @@ class _LoginPageState extends State<LoginPage> {
                 ? 118
                 : 160,
             semanticLabel: 'National Commission of Senior Citizens logo',
+            errorBuilder: (context, error, stackTrace) => const Text(
+              'NCSC',
+              style: TextStyle(
+                color: navy,
+                fontSize: 28,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
           ),
           Container(
             width: 2,
