@@ -610,6 +610,7 @@ class _RecordEditorState extends State<RecordEditor> {
         alignment: const Alignment(0.45, 0),
         insetPadding: const EdgeInsets.symmetric(horizontal: 40, vertical: 32),
         child: ConstrainedBox(
+          key: const ValueKey('budget-record-dialog-size'),
           constraints: const BoxConstraints(maxWidth: 920, minHeight: 500),
           child: SingleChildScrollView(
             key: const ValueKey('budget-record-dialog-scroll'),
