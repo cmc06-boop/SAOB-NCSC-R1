@@ -70,31 +70,87 @@ class _ReferenceManagementPageState extends State<_ReferenceManagementPage> {
 
   @override
   Widget build(BuildContext context) {
-    final programs = widget.store.programs,
-        referenceRows = refs ? widget.store.references(query) : <DbRow>[];
-    final title = Text(
-      refs ? 'UACS Reference' : 'Programs',
-      style: TextStyle(
-        fontSize: 28,
-        fontWeight: FontWeight.w700,
-        color: ink,
-        height: 1,
-      ),
-    );
-    final subtitle = Text(
-      refs
-          ? 'Browse and search UACS reference codes and expense names.'
-          : 'Manage programs and their associated names.',
-      style: TextStyle(fontSize: 14, color: muted, height: 1.35),
-    );
+    if (!refs) {
+      final programs = widget.store.programs;
+      return PageFrame(
+        title: 'Programs',
+        subtitle: 'Manage programs and their associated names.',
+        accent: false,
+        expand: true,
+        besideSubtitle: FilledButton.icon(
+          onPressed: () => editProgram(),
+          icon: const Icon(Icons.add, size: 18),
+          label: const Text('Add Program'),
+        ),
+        children: [
+          Expanded(
+            // Same table surface as Budget Utilization: no extra
+            // 'Program Management' heading inside the table container.
+            child: Panel(
+              padding: 0,
+              child: _SettingsTable(
+                key: const ValueKey('programs'),
+                columns: const ['Code', 'Program Name', 'Actions'],
+                widths: const {
+                  0: FixedColumnWidth(200),
+                  1: FlexColumnWidth(),
+                  2: FixedColumnWidth(96),
+                },
+                rows: [
+                  for (final p in programs)
+                    [
+                      Text(
+                        p.code,
+                        style: const TextStyle(fontWeight: FontWeight.w700),
+                      ),
+                      Text(p.name),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          _boxedIcon(
+                            tooltip: 'Edit',
+                            color: blue,
+                            icon: Icons.edit_outlined,
+                            onPressed: () => editProgram(p),
+                          ),
+                          const SizedBox(width: 8),
+                          _boxedIcon(
+                            tooltip: 'Delete',
+                            color: red,
+                            icon: Icons.delete_outline,
+                            onPressed: () => removeProgram(p),
+                          ),
+                        ],
+                      ),
+                    ],
+                ],
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+
+    final referenceRows = widget.store.references(query);
     return Padding(
       padding: const EdgeInsets.fromLTRB(28, 30, 28, 28),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          title,
+          const Text(
+            'UACS Reference',
+            style: TextStyle(
+              fontSize: 28,
+              fontWeight: FontWeight.w700,
+              color: ink,
+              height: 1,
+            ),
+          ),
           const SizedBox(height: 8),
-          subtitle,
+          const Text(
+            'Browse and search UACS reference codes and expense names.',
+            style: TextStyle(fontSize: 14, color: muted, height: 1.35),
+          ),
           const SizedBox(height: 22),
           Expanded(
             child: Panel(
@@ -106,123 +162,70 @@ class _ReferenceManagementPageState extends State<_ReferenceManagementPage> {
                     padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
                     child: Row(
                       children: [
-                        Icon(
-                          refs
-                              ? Icons.menu_book_outlined
-                              : Icons.category_outlined,
+                        const Icon(
+                          Icons.menu_book_outlined,
                           color: blue,
                           size: 20,
                         ),
                         const SizedBox(width: 8),
-                        Text(
-                          refs ? 'UACS Reference' : 'Program Management',
-                          style: const TextStyle(
+                        const Text(
+                          'UACS Reference',
+                          style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w700,
                           ),
                         ),
                         const Spacer(),
-                        if (refs)
-                          SizedBox(
-                            width: 320,
-                            height: 40,
-                            child: TextField(
-                              onChanged: (v) => setState(() => query = v),
-                              style: const TextStyle(fontSize: 14, color: ink),
-                              decoration: const InputDecoration(
-                                hintText: 'Search UACS Code or Expense…',
-                                isDense: true,
-                                contentPadding: EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 8,
-                                ),
-                                prefixIcon: Icon(Icons.search, size: 18),
-                                prefixIconConstraints: BoxConstraints(
-                                  minWidth: 40,
-                                  minHeight: 36,
-                                ),
+                        SizedBox(
+                          width: 320,
+                          height: 40,
+                          child: TextField(
+                            onChanged: (v) => setState(() => query = v),
+                            style: const TextStyle(fontSize: 14, color: ink),
+                            decoration: const InputDecoration(
+                              hintText: 'Search UACS Code or Expense…',
+                              isDense: true,
+                              contentPadding: EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 8,
+                              ),
+                              prefixIcon: Icon(Icons.search, size: 18),
+                              prefixIconConstraints: BoxConstraints(
+                                minWidth: 40,
+                                minHeight: 36,
                               ),
                             ),
-                          )
-                        else
-                          FilledButton.icon(
-                            onPressed: () => editProgram(),
-                            icon: const Icon(Icons.add, size: 18),
-                            label: const Text('Add Program'),
                           ),
+                        ),
                       ],
                     ),
                   ),
                   Expanded(
                     child: Padding(
                       padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                      child: refs
-                          ? _SettingsTable(
-                              key: const ValueKey('uacs'),
-                              columns: const [
-                                'UACS Code',
-                                'Expense (UACS Name)',
-                              ],
-                              widths: const {
-                                0: FixedColumnWidth(140),
-                                1: FlexColumnWidth(),
-                              },
-                              rows: [
-                                for (final r in referenceRows)
-                                  [
-                                    Text(
-                                      displayCode(r['code'] as String),
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.w700,
-                                      ),
-                                    ),
-                                    Text('${r['name']}'),
-                                  ],
-                              ],
-                            )
-                          : _SettingsTable(
-                              key: const ValueKey('programs'),
-                              columns: const [
-                                'Code',
-                                'Program Name',
-                                'Actions',
-                              ],
-                              widths: const {
-                                0: FixedColumnWidth(200),
-                                1: FlexColumnWidth(),
-                                2: FixedColumnWidth(96),
-                              },
-                              rows: [
-                                for (final p in programs)
-                                  [
-                                    Text(
-                                      p.code,
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.w700,
-                                      ),
-                                    ),
-                                    Text(p.name),
-                                    Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        _boxedIcon(
-                                          tooltip: 'Edit',
-                                          color: blue,
-                                          icon: Icons.edit_outlined,
-                                          onPressed: () => editProgram(p),
-                                        ),
-                                        const SizedBox(width: 8),
-                                        _boxedIcon(
-                                          tooltip: 'Delete',
-                                          color: red,
-                                          icon: Icons.delete_outline,
-                                          onPressed: () => removeProgram(p),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
-                              ],
-                            ),
+                      child: _SettingsTable(
+                        key: const ValueKey('uacs'),
+                        columns: const [
+                          'UACS Code',
+                          'Expense (UACS Name)',
+                        ],
+                        widths: const {
+                          0: FixedColumnWidth(140),
+                          1: FlexColumnWidth(),
+                        },
+                        rows: [
+                          for (final r in referenceRows)
+                            [
+                              Text(
+                                displayCode(r['code'] as String),
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              Text('${r['name']}'),
+                            ],
+                        ],
+                      ),
                     ),
                   ),
                 ],
@@ -233,6 +236,7 @@ class _ReferenceManagementPageState extends State<_ReferenceManagementPage> {
       ),
     );
   }
+
 }
 
 
