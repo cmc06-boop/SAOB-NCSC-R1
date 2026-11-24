@@ -367,15 +367,27 @@ void main() {
     );
     expect(find.byKey(const ValueKey('account-close')), findsOneWidget);
     expect(find.text('Personal Information'), findsNothing);
+    final nameField = tester.widget<TextField>(
+      find.byKey(const ValueKey('account-name')),
+    );
+    final usernameField = tester.widget<TextField>(
+      find.byKey(const ValueKey('account-username')),
+    );
+    expect(nameField.decoration?.hintText, 'Juan Dela Cruz');
+    expect(usernameField.decoration?.hintText, 'juandelacruz');
+    expect(nameField.decoration?.hintStyle?.color, const Color(0xff888888));
+    expect(usernameField.decoration?.hintStyle?.color, const Color(0xff888888));
+    // Hints appear only when blank, never replace the user's saved values.
+    expect(nameField.controller?.text, 'Finance AO');
+    expect(usernameField.controller?.text, 'ao');
     for (final key in [
-      'account-name',
-      'account-username',
       'account-current-password',
       'account-new-password',
       'account-confirm-password',
     ]) {
       final field = tester.widget<TextField>(find.byKey(ValueKey(key)));
       expect(field.decoration?.hintText, '••••••••');
+      expect(field.obscureText, isTrue);
     }
     expect(find.text('Change Password'), findsNothing);
     expect(
