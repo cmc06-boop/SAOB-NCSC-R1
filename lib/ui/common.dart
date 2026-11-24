@@ -890,7 +890,7 @@ void showMessage(BuildContext context, String message, {bool error = false}) {
   )..layout();
   // Position notices a little inward from the right and above the bottom.
   // Short messages get a comfortable minimum width; longer ones wrap.
-  final rightInset = size.width >= 680 ? 72.0 : 20.0;
+  final rightInset = size.width >= 680 ? 48.0 : 20.0;
   final maxWidth = math.min(540.0, math.max(0.0, size.width - rightInset - 16));
   final contentWidth = painter.width + padding.horizontal;
   painter.dispose();
