@@ -215,12 +215,13 @@ class _AccountDialogState extends State<AccountDialog> {
       ),
     ),
     actionsPadding: const EdgeInsets.fromLTRB(24, 12, 24, 18),
-    actionsAlignment: MainAxisAlignment.center,
+    actionsAlignment: MainAxisAlignment.end,
     actions: [
       SizedBox(
         width: 420,
         child: Column(
           mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             if (_error != null) ...[
               Text(
@@ -231,10 +232,21 @@ class _AccountDialogState extends State<AccountDialog> {
               ),
               const SizedBox(height: 10),
             ],
-            FilledButton(
-              key: const ValueKey('account-save'),
-              onPressed: _saving ? null : _saveChanges,
-              child: const Text('Save'),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                TextButton(
+                  key: const ValueKey('account-cancel'),
+                  onPressed: _saving ? null : () => Navigator.of(context).pop(),
+                  child: const Text('Cancel'),
+                ),
+                const SizedBox(width: 8),
+                FilledButton(
+                  key: const ValueKey('account-save'),
+                  onPressed: _saving ? null : _saveChanges,
+                  child: const Text('Save'),
+                ),
+              ],
             ),
           ],
         ),
