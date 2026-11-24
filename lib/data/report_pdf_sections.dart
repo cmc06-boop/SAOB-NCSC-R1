@@ -64,39 +64,56 @@ Future<Uint8List> pdfSaobSummaryReport(
       footer: _footer,
       build: (_) => [
         for (final section in saobSummarySections(records)) ...[
-          pw.Text(
-            section.title,
-            style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold),
-          ),
-          pw.SizedBox(height: 6),
-          pw.TableHelper.fromTextArray(
-            headers: summaryHeaders,
-            data: [
-              for (final row in section.rows)
-                summaryDisplayRow(row.program, row.totals),
-              summaryDisplayRow('TOTAL', section.totals),
+          // The section name is a table label, not a separate report title.
+          // Keep it directly attached to the corresponding table.
+          pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.stretch,
+            children: [
+              pw.Container(
+                padding: const pw.EdgeInsets.symmetric(
+                  horizontal: 9,
+                  vertical: 7,
+                ),
+                color: const PdfColor.fromInt(0xff173c80),
+                child: pw.Text(
+                  section.title,
+                  style: pw.TextStyle(
+                    fontSize: 10,
+                    fontWeight: pw.FontWeight.bold,
+                    color: PdfColors.white,
+                  ),
+                ),
+              ),
+              pw.TableHelper.fromTextArray(
+                headers: summaryHeaders,
+                data: [
+                  for (final row in section.rows)
+                    summaryDisplayRow(row.program, row.totals),
+                  summaryDisplayRow('TOTAL', section.totals),
+                ],
+                headerStyle: pw.TextStyle(
+                  font: assets.$2,
+                  fontSize: 8,
+                  color: PdfColors.white,
+                ),
+                headerDecoration: const pw.BoxDecoration(
+                  color: PdfColor.fromInt(0xff173c80),
+                ),
+                cellStyle: const pw.TextStyle(fontSize: 8),
+                cellPadding: const pw.EdgeInsets.all(6),
+                cellAlignments: {
+                  for (var i = 1; i < summaryHeaders.length; i++)
+                    i: pw.Alignment.centerRight,
+                },
+                oddRowDecoration: const pw.BoxDecoration(
+                  color: PdfColor.fromInt(0xfff0f4fb),
+                ),
+                border: pw.TableBorder.all(
+                  color: PdfColors.blueGrey200,
+                  width: 0.3,
+                ),
+              ),
             ],
-            headerStyle: pw.TextStyle(
-              font: assets.$2,
-              fontSize: 8,
-              color: PdfColors.white,
-            ),
-            headerDecoration: const pw.BoxDecoration(
-              color: PdfColor.fromInt(0xff173c80),
-            ),
-            cellStyle: const pw.TextStyle(fontSize: 8),
-            cellPadding: const pw.EdgeInsets.all(6),
-            cellAlignments: {
-              for (var i = 1; i < summaryHeaders.length; i++)
-                i: pw.Alignment.centerRight,
-            },
-            oddRowDecoration: const pw.BoxDecoration(
-              color: PdfColor.fromInt(0xfff0f4fb),
-            ),
-            border: pw.TableBorder.all(
-              color: PdfColors.blueGrey200,
-              width: 0.3,
-            ),
           ),
           pw.SizedBox(height: 18),
         ],
