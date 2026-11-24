@@ -69,6 +69,14 @@ Basahin ang [docs/UI_GUIDE.md](docs/UI_GUIDE.md). Nasa `lib/ui/theme.dart` ang l
 
 Gamit pa rin ang original `assets/login-senior.png`. Separate widgets ang logo at text. Nasa native Windows title bar ang full agency/system title, walang logo o red underline sa title bar.
 
+## SVG icons at Sidebar Logo
+
+- Gumagamit ang app ng reusable `AppSvgIcon` widget sa `lib/ui/svg_icon.dart` at actual vector files sa `assets/icons/`.
+- Kasama ang `flutter_svg` dependency; kailangan ng `flutter pub get` pagkatapos i-pull ang update.
+- Ang navigation, dashboard KPIs, login fields, primary action buttons, at PDF/Excel file-type icons ay naka-SVG.
+- Inalis ang solid white circular background ng NCSC logo sa sidebar. Transparent image asset pa rin ang ginagamit, at walang binagong logo pixels.
+- Kung may idinagdag na SVG assets, gawin ang full app restart para ma-refresh ang asset bundle.
+
 ## Validation
 
 ```powershell
