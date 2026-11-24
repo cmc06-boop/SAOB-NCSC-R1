@@ -234,7 +234,7 @@ class _ReportsPageState extends State<ReportsPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       title,
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 5),
                       subtitle,
                       const SizedBox(height: 16),
                       actions,
@@ -244,7 +244,7 @@ class _ReportsPageState extends State<ReportsPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       title,
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 5),
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
