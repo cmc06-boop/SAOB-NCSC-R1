@@ -448,7 +448,9 @@ class _ReferenceEditorState extends State<ReferenceEditor> {
               key: key,
               controller: controller,
               onChanged: (_) {
-                if (error != null) setState(() => error = null);
+                if (error != null) {
+                  setState(() => error = null);
+                }
               },
               decoration: InputDecoration(
                 hintText: label,
