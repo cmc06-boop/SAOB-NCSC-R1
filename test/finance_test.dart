@@ -541,4 +541,65 @@ void main() {
     expect(String.fromCharCodes(bytes.take(4)), '%PDF');
     expect(bytes.length, greaterThan(5000));
   });
+
+  test('Admin can update own name, username, and password without losing records', () async {
+    store.user = null;
+    await store.createOwner('Finance AO', 'finance_ao', 'OriginalSecretPass2026!');
+    store.saveRecord(record());
+
+    store.updateMyProfile('Regional Finance Officer', 'regional_admin');
+    expect(store.user!.name, 'Regional Finance Officer');
+    expect(store.user!.username, 'regional_admin');
+    expect(db.rows('SELECT name,username FROM users').single['username'], 'regional_admin');
+
+    await expectLater(
+      store.changeMyPassword('incorrect', 'SaferNewPassword2027!'),
+      throwsA(isA<FinanceError>()),
+    );
+    await store.changeMyPassword(
+      'OriginalSecretPass2026!',
+      'SaferNewPassword2027!',
+    );
+    store.signOut();
+    await expectLater(
+      store.signIn('regional_admin', 'OriginalSecretPass2026!'),
+      throwsA(isA<FinanceError>()),
+    );
+    await store.signIn('REGIONAL_ADMIN', 'SaferNewPassword2027!');
+    expect(store.records(manilaNow().year), hasLength(1));
+    final audit = db.rows("SELECT detail FROM audit_log WHERE detail LIKE 'Account %'");
+    expect(audit.length, 2);
+    expect(audit.any((row) => (row['detail'] as String).contains('Password2027')), isFalse);
+  });
+
+  test('Account updates reject duplicate usernames and unauthorized roles', () async {
+    store.user = null;
+    await store.createOwner('Finance AO', 'finance_ao', 'OriginalSecretPass2026!');
+    db.connection.execute(
+      "INSERT INTO users(name,username,password_hash,role,active) "
+      "VALUES ('Second person','other_admin','not-a-real-hash','Viewer',1)",
+    );
+    expect(
+      () => store.updateMyProfile('Finance AO', 'OTHER_ADMIN'),
+      throwsA(isA<FinanceError>()),
+    );
+    expect(store.user!.username, 'finance_ao');
+    expect(
+      () => store.updateMyProfile('', 'new_admin'),
+      throwsA(isA<FinanceError>()),
+    );
+    await expectLater(
+      store.changeMyPassword('OriginalSecretPass2026!', 'short'),
+      throwsA(isA<FinanceError>()),
+    );
+    store.user = const LocalUser(2, 'Viewer', 'other_admin', 'Viewer');
+    expect(
+      () => store.updateMyProfile('Viewer', 'someone_else'),
+      throwsA(isA<FinanceError>()),
+    );
+    await expectLater(
+      store.changeMyPassword('anything', 'NewSecurePassword2027!'),
+      throwsA(isA<FinanceError>()),
+    );
+  });
 }
