@@ -12,6 +12,7 @@ import 'package:ncsc_region1_finance/data/models.dart';
 import 'package:ncsc_region1_finance/data/passwords.dart';
 import 'package:ncsc_region1_finance/data/report_io.dart';
 import 'package:ncsc_region1_finance/data/workbook_io.dart';
+import 'package:ncsc_region1_finance/features/audit_page.dart';
 import 'package:ncsc_region1_finance/features/import_page.dart';
 
 void main() {
@@ -115,7 +116,90 @@ void main() {
                 .single['detail']
             as String;
     expect(detail, 'SAOB_2026.xlsx');
+    final importedEvents = db.rows(
+      "SELECT * FROM audit_log WHERE action='Imported'",
+    );
+    expect(importedEvents, hasLength(1));
+    expect(importedEvents.single['program'], '');
+    expect(
+      auditDetailSentence(detail, action: 'Imported'),
+      'SAOB_2026.xlsx',
+    );
   });
+  test('Audit details use short sentences and show workbook filenames', () {
+    expect(
+      auditDetailSentence('SAOB November, 2026.xlsx', action: 'Imported'),
+      'SAOB November, 2026.xlsx',
+    );
+    expect(
+      auditDetailSentence(
+        r'C:\Finance\SAOB_2026.xlsx',
+        action: 'Imported',
+      ),
+      'SAOB_2026.xlsx',
+    );
+    expect(
+      auditDetailSentence(
+        'Imported 20 records from SAOB_2026.xlsx',
+        action: 'Imported',
+      ),
+      'SAOB_2026.xlsx',
+    );
+    expect(
+      auditDetailSentence('29 records (ATOPCONTINUING)', action: 'Imported'),
+      'Imported budget records.',
+    );
+    expect(
+      auditDetailSentence(
+        '50201010 00 - Office supplies',
+        action: 'Added',
+        program: 'GAS',
+      ),
+      'Added UACS 50201010 00.',
+    );
+    expect(
+      auditDetailSentence(
+        'Obligation from ₱100.00 to ₱200.00',
+        action: 'Updated',
+      ),
+      'Updated obligation from ₱100.00 to ₱200.00.',
+    );
+    expect(
+      auditDetailSentence(
+        'Allotment from ₱100.00 to ₱200.00; Obligation from ₱50.00 to ₱70.00',
+        action: 'Updated',
+      ),
+      'Updated allotment, obligation amounts.',
+    );
+    expect(
+      auditDetailSentence('GAS', action: 'Added', program: 'GAS'),
+      'Added program GAS.',
+    );
+    expect(
+      auditDetailSentence('Budget Utilization Report (PDF)', action: 'Generated'),
+      'Generated Budget Utilization Report (PDF).',
+    );
+    expect(
+      auditDetailSentence('Account profile updated', action: 'Updated'),
+      'Updated account profile.',
+    );
+  });
+
+  test('Excel workbook import logs just its basename, not its sheets', () {
+    store.importRecords([record()], updateExisting: true);
+    store.importRecords(
+      [record(program: 'ECA', code: '5020102000')],
+      updateExisting: true,
+    );
+    store.logWorkbookImport(
+      filename: r'C:\Finance Files\SAOB Report, 2026.xlsx',
+      year: manilaNow().year,
+    );
+    final rows = db.rows("SELECT * FROM audit_log WHERE action='Imported'");
+    expect(rows, hasLength(1));
+    expect(rows.single['detail'], 'SAOB Report, 2026.xlsx');
+  });
+
   test('import is atomic and duplicate-safe; updates are explicit', () {
     // Excel import keeps obligation/allotment as-is even when obligation is higher.
     expect(
