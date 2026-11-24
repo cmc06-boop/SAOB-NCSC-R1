@@ -188,7 +188,7 @@ void main() {
     await tester.pumpWidget(const SizedBox());
   });
 
-  testWidgets('Profile button above Logout opens My Account form', (
+  testWidgets('Profile button opens a single-column My Account dialog', (
     tester,
   ) async {
     await binding.setSurfaceSize(const Size(1366, 720));
@@ -197,37 +197,97 @@ void main() {
       ..user = const LocalUser(1, 'Finance AO', 'ao', 'Admin');
     await tester.pumpWidget(FinanceApp(store: store));
     await tester.pumpAndSettle();
+
     expect(find.byKey(const ValueKey('nav-account')), findsOneWidget);
     await tester.tap(find.byKey(const ValueKey('nav-account')));
     await tester.pumpAndSettle();
+    expect(find.byType(AlertDialog), findsOneWidget);
     expect(find.text('Personal Information'), findsOneWidget);
-    expect(find.text('Change Password'), findsOneWidget);
-    expect(find.text('Update your administrator profile and password.'), findsNothing);
-    expect(find.byKey(const ValueKey('account-two-columns')), findsOneWidget);
+    expect(find.text('Change Password'), findsNothing);
+    expect(
+      find.textContaining('Leave these fields blank'),
+      findsNothing,
+    );
+    expect(
+      find.textContaining('Use at least 12 characters for a new password'),
+      findsNothing,
+    );
+    expect(find.byKey(const ValueKey('account-two-columns')), findsNothing);
     expect(find.byKey(const ValueKey('account-save')), findsOneWidget);
     expect(find.text('Save Changes'), findsOneWidget);
     expect(find.text('Save Profile Changes'), findsNothing);
     expect(find.text('Update Password'), findsNothing);
-    expect(
-      tester.getCenter(find.text('Personal Information')).dx,
-      lessThan(tester.getCenter(find.text('Change Password')).dx),
+
+    final namePosition =
+        tester.getCenter(find.byKey(const ValueKey('account-name')));
+    final usernamePosition =
+        tester.getCenter(find.byKey(const ValueKey('account-username')));
+    final passwordPosition =
+        tester.getCenter(find.byKey(const ValueKey('account-current-password')));
+    expect(namePosition.dy, lessThan(usernamePosition.dy));
+    expect(usernamePosition.dy, lessThan(passwordPosition.dy));
+
+    // Validation is shown in red on the dialog, rather than as a permanent
+    // password-length helper. The modal stays open if the save fails.
+    await tester.enterText(
+      find.byKey(const ValueKey('account-current-password')),
+      'current-pass',
     );
-    // The account form is now two columns with no nested scrolling.
-    expect(
-      find.descendant(
-        of: find.byKey(const ValueKey('account-two-columns')),
-        matching: find.byType(SingleChildScrollView),
-      ),
-      findsNothing,
+    await tester.enterText(
+      find.byKey(const ValueKey('account-new-password')),
+      'short',
     );
+    await tester.enterText(
+      find.byKey(const ValueKey('account-confirm-password')),
+      'short',
+    );
+    await tester.tap(find.byKey(const ValueKey('account-save')));
+    await tester.pumpAndSettle();
+    expect(find.byType(AlertDialog), findsOneWidget);
+    expect(find.byKey(const ValueKey('account-error')), findsOneWidget);
+    expect(find.textContaining('at least 12 characters'), findsOneWidget);
+    expect(store.user!.name, 'Finance AO');
+
+    // A profile-only change still saves when password fields are left blank.
+    for (final key in [
+      'account-current-password',
+      'account-new-password',
+      'account-confirm-password',
+    ]) {
+      await tester.enterText(find.byKey(ValueKey(key)), '');
+    }
     await tester.enterText(
       find.byKey(const ValueKey('account-name')),
       'New Finance Officer',
     );
     await tester.tap(find.byKey(const ValueKey('account-save')));
     await tester.pumpAndSettle();
+    expect(find.byType(AlertDialog), findsNothing);
     expect(store.user!.name, 'New Finance Officer');
-    expect(store.db.rows('SELECT name FROM users').single['name'], 'New Finance Officer');
+    expect(
+      store.db.rows('SELECT name FROM users').single['name'],
+      'New Finance Officer',
+    );
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox());
+  });
+
+  testWidgets('Account dialog opens and closes in compact window', (
+    tester,
+  ) async {
+    await binding.setSurfaceSize(const Size(1000, 650));
+    addTearDown(() => binding.setSurfaceSize(null));
+    final store = createStore()
+      ..user = const LocalUser(1, 'Finance AO', 'ao', 'Admin');
+    await tester.pumpWidget(FinanceApp(store: store));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('nav-account')));
+    await tester.pumpAndSettle();
+    expect(find.byType(AlertDialog), findsOneWidget);
+    expect(find.byKey(const ValueKey('account-save')), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('account-close')));
+    await tester.pumpAndSettle();
+    expect(find.byType(AlertDialog), findsNothing);
     expect(tester.takeException(), isNull);
     await tester.pumpWidget(const SizedBox());
   });
