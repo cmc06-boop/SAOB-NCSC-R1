@@ -634,6 +634,11 @@ void main() {
     expect(sheet, contains('C4-D4'));
     expect(sheet, contains('<f>C4-D4</f><v>750.05</v>'));
     expect(xml('xl/sharedStrings.xml'), contains('REGION I'));
+    // Report Type is gone: it must not appear in downloaded program sheets.
+    expect(
+      xml('xl/sharedStrings.xml'),
+      isNot(contains('Budget Utilization Report')),
+    );
     final all = excelReport(
       [record(), record(code: '5020102000', program: 'ECA')],
       title: reportTypes.first,
