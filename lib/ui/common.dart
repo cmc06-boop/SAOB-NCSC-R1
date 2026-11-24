@@ -875,14 +875,38 @@ class Pager extends StatelessWidget {
   }
 }
 
-void showMessage(BuildContext context, String message, {bool error = false}) =>
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: error ? red : navy,
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
+void showMessage(BuildContext context, String message, {bool error = false}) {
+  const padding = EdgeInsets.symmetric(horizontal: 14, vertical: 11);
+  const messageStyle = TextStyle(
+    fontSize: 13,
+    height: 1.3,
+    color: Colors.white,
+  );
+  final size = MediaQuery.sizeOf(context);
+  final painter = TextPainter(
+    text: TextSpan(text: message, style: messageStyle),
+    textDirection: Directionality.of(context),
+    textScaler: MediaQuery.textScalerOf(context),
+  )..layout();
+  // Make short notices compact; long messages wrap instead of filling the page.
+  final maxWidth = math.min(500.0, math.max(0.0, size.width - 32));
+  final contentWidth = painter.width + padding.horizontal;
+  painter.dispose();
+  final toastWidth = math.min(maxWidth, math.max(180.0, contentWidth));
+  final left = math.max(16.0, size.width - toastWidth - 16);
+
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Text(message, style: messageStyle),
+      backgroundColor: error ? red : navy,
+      behavior: SnackBarBehavior.floating,
+      padding: padding,
+      margin: EdgeInsets.fromLTRB(left, 0, 16, 16),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      duration: const Duration(seconds: 3),
+    ),
+  );
+}
 
 String friendlyError(Object error) => error is FinanceError
     ? error.message
