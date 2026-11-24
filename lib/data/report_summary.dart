@@ -62,9 +62,10 @@ List<String> summaryDisplayRow(String name, Totals t) => [
   money(t.allotment),
   money(t.obligation),
   money(t.balance),
-  rate(t.obligation, t.allotment),
+  // The source SUMMARY worksheet displays 0.00% for zero denominators.
+  t.allotment == 0 ? '0.00%' : rate(t.obligation, t.allotment),
   money(t.disbursement),
-  rate(t.disbursement, t.obligation),
+  t.obligation == 0 ? '0.00%' : rate(t.disbursement, t.obligation),
 ];
 
 /// Standalone SUMMARY Excel workbook for printing or further review.
