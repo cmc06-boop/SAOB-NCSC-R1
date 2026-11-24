@@ -376,6 +376,10 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('Report Parameters'), findsOneWidget);
       expect(find.text('Report Preview'), findsOneWidget);
+      // Report Type was removed from the UI; the preview sheet should not
+      // repeat its old "Budget Utilization Report" heading.
+      expect(find.text('Budget Utilization Report'), findsNothing);
+      expect(find.textContaining('Program: All Programs'), findsOneWidget);
       expect(
         tester.widget<Text>(find.text('Expense (UACS Name)')).textAlign,
         TextAlign.center,
