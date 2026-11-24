@@ -28,7 +28,7 @@ class PageFrame extends StatelessWidget {
       children: [
         Text(title, style: Theme.of(context).textTheme.headlineMedium),
         if (accent) ...[
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
           Container(
             width: 42,
             height: 4,
@@ -37,9 +37,9 @@ class PageFrame extends StatelessWidget {
               borderRadius: BorderRadius.circular(4),
             ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 8),
         ] else
-          const SizedBox(height: 1),
+          const SizedBox(height: 0),
         if (besideSubtitle == null)
           Text(subtitle, style: const TextStyle(color: muted, height: 1.35))
         else
