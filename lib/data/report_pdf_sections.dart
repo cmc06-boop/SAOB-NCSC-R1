@@ -2,7 +2,6 @@ import 'package:flutter/services.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 
-import '../core/format.dart';
 import 'models.dart';
 import 'report_io.dart';
 import 'report_summary.dart';
@@ -16,23 +15,15 @@ Future<Uint8List> pdfAllProgramsReport(
 }) async {
   final assets = await _loadAssets();
   final doc = pw.Document();
-  final groups = <String, Map<String, List<BudgetRecord>>>{};
+  // One continuous table and its built-in TOTAL row per program.
+  // Each program starts in a new PDF section/page within the same file.
+  final groups = <String, List<BudgetRecord>>{};
   for (final row in records) {
-    groups
-        .putIfAbsent(row.program, () => {})
-        .putIfAbsent(row.fund, () => [])
-        .add(row);
+    groups.putIfAbsent(row.program, () => []).add(row);
   }
   final programs = groups.keys.toList()..sort();
   for (final program in programs) {
-    final funds = groups[program]!;
-    final fundNames = [
-      for (final fund in ['CURRENT', 'CONTINUING'])
-        if (funds.containsKey(fund)) fund,
-    ];
-    final totals = Totals([
-      for (final fund in fundNames) ...funds[fund]!,
-    ]);
+    final programRows = groups[program]!;
     doc.addPage(
       pw.MultiPage(
         pageFormat: pageFormat.landscape,
@@ -42,45 +33,10 @@ Future<Uint8List> pdfAllProgramsReport(
         header: (_) => _letterhead(assets.$3, year, 'Program: $program'),
         footer: _footer,
         build: (_) => [
-          for (final fund in fundNames) ...[
-            pw.Text(
-              '$fund APPROPRIATION - $program',
-              style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold),
-            ),
-            pw.SizedBox(height: 6),
-            _programTable(
-              reportData('Budget Utilization Report', funds[fund]!),
-              program,
-              fund,
-              assets.$2,
-            ),
-            pw.SizedBox(height: 14),
-          ],
-          pw.Container(
-            padding: const pw.EdgeInsets.all(9),
-            decoration: const pw.BoxDecoration(
-              color: PdfColor.fromInt(0xffe7eefc),
-            ),
-            child: pw.Column(
-              crossAxisAlignment: pw.CrossAxisAlignment.start,
-              children: [
-                pw.Text(
-                  'TOTAL - $program${fundNames.length > 1 ? ' (ALL FUNDS)' : ''}',
-                  style: pw.TextStyle(
-                    fontSize: 10,
-                    fontWeight: pw.FontWeight.bold,
-                  ),
-                ),
-                pw.SizedBox(height: 4),
-                pw.Text(
-                  'Allotment: ${money(totals.allotment)}   '
-                  'Obligation: ${money(totals.obligation)}   '
-                  'Unobligated: ${money(totals.balance)}   '
-                  'Disbursement: ${money(totals.disbursement)}',
-                  style: const pw.TextStyle(fontSize: 8),
-                ),
-              ],
-            ),
+          _programTable(
+            reportData('Budget Utilization Report', programRows),
+            program,
+            assets.$2,
           ),
         ],
       ),
@@ -212,7 +168,6 @@ pw.Widget _footer(pw.Context context) => pw.Align(
 pw.Widget _programTable(
   ReportData data,
   String program,
-  String fund,
   pw.Font bold,
 ) => pw.TableHelper.fromTextArray(
   headers: data.headers,
@@ -221,7 +176,7 @@ pw.Widget _programTable(
       [
         for (var col = 0; col < row.length; col++)
           row.length > 2 && row[2].toString() == 'Total' && col == 2
-              ? 'TOTAL ($program - $fund)'
+              ? 'TOTAL ($program)'
               : data.display(row[col], col),
       ],
   ],
