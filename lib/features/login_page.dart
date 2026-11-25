@@ -1,9 +1,12 @@
+import 'dart:convert';
+
 import 'package:material_ui/material_ui.dart';
 
 import '../core/format.dart';
 import '../data/finance_store.dart';
 import '../ui/app_icon.dart';
 import '../ui/common.dart';
+import '../ui/login_building_data.dart';
 
 const _loginNavy = Color(0xff142d5a);
 const _loginDeepRed = Color(0xffc5112a);
@@ -304,52 +307,66 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
+  // Keep the agency lockup readable at every desktop width.
   Widget _brand({required bool compact}) => Row(
     crossAxisAlignment: CrossAxisAlignment.center,
     children: [
       Image.asset(
         'assets/ncsc-logo-transparent.png',
-        width: compact ? 64 : 101,
-        height: compact ? 64 : 101,
+        width: compact ? 66 : 101,
+        height: compact ? 66 : 101,
         fit: BoxFit.contain,
         errorBuilder: (_, _, _) => const Icon(
           Icons.account_balance_outlined,
-          size: 54,
+          size: 50,
           color: Colors.white,
         ),
       ),
-      SizedBox(width: compact ? 12 : 20),
-      Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Republic of the Philippines',
-            style: TextStyle(
-              fontSize: compact ? 10 : 14,
-              color: Colors.white,
+      SizedBox(width: compact ? 11 : 18),
+      Expanded(
+        flex: 5,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            FittedBox(
+              alignment: Alignment.centerLeft,
+              fit: BoxFit.scaleDown,
+              child: Text(
+                'Republic of the Philippines',
+                maxLines: 1,
+                style: TextStyle(
+                  fontSize: compact ? 11 : 15,
+                  color: Colors.white,
+                ),
+              ),
             ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'NATIONAL COMMISSION\nOF SENIOR CITIZENS',
-            style: TextStyle(
-              fontSize: compact ? 15 : 21,
-              height: 1.09,
-              fontWeight: FontWeight.w800,
-              color: Colors.white,
+            const SizedBox(height: 4),
+            FittedBox(
+              alignment: Alignment.centerLeft,
+              fit: BoxFit.scaleDown,
+              child: Text(
+                'NATIONAL COMMISSION\\nOF SENIOR CITIZENS',
+                style: TextStyle(
+                  fontSize: compact ? 17 : 23,
+                  height: 1.10,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.white,
+                ),
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
-      SizedBox(width: compact ? 13 : 24),
+      SizedBox(width: compact ? 9 : 18),
       Container(
         height: compact ? 56 : 74,
         width: 2,
         color: Colors.white,
       ),
-      SizedBox(width: compact ? 12 : 24),
+      SizedBox(width: compact ? 9 : 18),
       Expanded(
+        flex: 3,
         child: FittedBox(
           alignment: Alignment.centerLeft,
           fit: BoxFit.scaleDown,
@@ -357,7 +374,7 @@ class _LoginPageState extends State<LoginPage> {
             'Regional Office 1',
             maxLines: 1,
             style: TextStyle(
-              fontSize: compact ? 19 : 25,
+              fontSize: compact ? 18 : 25,
               fontWeight: FontWeight.w800,
               color: Colors.white,
             ),
@@ -442,7 +459,7 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    backgroundColor: const Color(0xffe7edfc),
+    backgroundColor: const Color(0xffe6ecfa),
     body: LayoutBuilder(
       builder: (context, bounds) {
         final desktop = bounds.maxWidth >= 1160;
@@ -452,24 +469,23 @@ class _LoginPageState extends State<LoginPage> {
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: [Color(0xff132e60), Color(0xffe7edfc)],
+                colors: [Color(0xff142d5b), Color(0xffe7edfc)],
               ),
             ),
             child: SingleChildScrollView(
               child: ConstrainedBox(
                 constraints: BoxConstraints(minHeight: bounds.maxHeight),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     Container(
                       width: double.infinity,
+                      color: const Color(0xff142d5b),
                       padding: const EdgeInsets.fromLTRB(22, 24, 22, 28),
-                      color: _loginNavy,
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           _brand(compact: true),
-                          const SizedBox(height: 28),
+                          const SizedBox(height: 22),
                           _hero(compact: true),
                         ],
                       ),
@@ -485,10 +501,11 @@ class _LoginPageState extends State<LoginPage> {
           );
         }
 
-        final scale = bounds.maxWidth / 1672;
-        final smaller = bounds.maxWidth < 1460 || bounds.maxHeight < 790;
-        final cardWidth = (bounds.maxWidth * .351).clamp(430.0, 588.0).toDouble();
-        final cardRight = bounds.maxWidth * .061;
+        // Reference is 1672 x 941. Keep its diagonal, header and card
+        // proportions, but use native text and fully functional form fields.
+        final compact = bounds.maxWidth < 1500 || bounds.maxHeight < 790;
+        final cardWidth = (bounds.maxWidth * .353).clamp(435.0, 591.0).toDouble();
+        final cardRight = bounds.maxWidth * .05;
         return Stack(
           fit: StackFit.expand,
           children: [
@@ -499,81 +516,53 @@ class _LoginPageState extends State<LoginPage> {
                   end: Alignment.bottomLeft,
                   colors: [
                     Color(0xffe5ebfa),
-                    Color(0xfff5f7ff),
-                    Color(0xffd7e2f9),
+                    Color(0xfff8f9ff),
+                    Color(0xffd6e2f8),
                   ],
-                ),
-              ),
-            ),
-            Positioned(
-              right: -80,
-              top: -90,
-              width: bounds.maxWidth * .48,
-              height: bounds.maxHeight * .35,
-              child: Transform.rotate(
-                angle: -.24,
-                child: const ColoredBox(color: Color(0x22ffffff)),
-              ),
-            ),
-            const Positioned.fill(
-              child: CustomPaint(
-                painter: _DarkFinancePanelPainter(),
-              ),
-            ),
-            // The bottom-left building uses the bundled local photo; a
-            // navy color filter keeps it in the reference's palette.
-            Positioned(
-              left: 0,
-              bottom: 0,
-              width: bounds.maxWidth * .62,
-              height: bounds.maxHeight * .49,
-              child: ClipPath(
-                clipper: _DarkFinanceClipper(),
-                child: ColorFiltered(
-                  colorFilter: const ColorFilter.mode(
-                    Color(0xff506caa),
-                    BlendMode.modulate,
-                  ),
-                  child: Opacity(
-                    opacity: .64,
-                    child: Image.asset(
-                      'assets/login-reference-background.png',
-                      fit: BoxFit.cover,
-                      alignment: Alignment.bottomLeft,
-                      errorBuilder: (_, _, _) => const SizedBox.shrink(),
-                    ),
-                  ),
                 ),
               ),
             ),
             const Positioned.fill(
               child: IgnorePointer(
-                child: CustomPaint(
-                  painter: _RedBottomRibbonPainter(),
+                child: CustomPaint(painter: _ReferenceNavyPanelPainter()),
+              ),
+            ),
+            // This is the actual building/ribbon section cropped from the
+            // image the user provided, not the former login background asset.
+            Positioned(
+              left: 0,
+              bottom: 0,
+              width: bounds.maxWidth * .585,
+              height: bounds.maxHeight * .43,
+              child: IgnorePointer(
+                child: Image.memory(
+                  base64Decode(loginBuildingBase64),
+                  fit: BoxFit.fill,
+                  gaplessPlayback: true,
                 ),
               ),
             ),
             Positioned(
               left: bounds.maxWidth * .055,
-              top: bounds.maxHeight * .095,
-              width: bounds.maxWidth * .50,
-              child: _brand(compact: smaller),
+              top: bounds.maxHeight * .09,
+              width: bounds.maxWidth * .47,
+              child: _brand(compact: compact),
             ),
             Positioned(
               left: bounds.maxWidth * .055,
-              top: bounds.maxHeight * .29,
-              width: bounds.maxWidth * .49,
-              child: _hero(compact: smaller),
+              top: bounds.maxHeight * .285,
+              width: bounds.maxWidth * .475,
+              child: _hero(compact: compact),
             ),
             Positioned(
-              right: cardRight,
               top: 0,
               bottom: 0,
+              right: cardRight,
               width: cardWidth,
               child: Center(
                 child: SingleChildScrollView(
-                  padding: EdgeInsets.symmetric(vertical: 18 * scale),
-                  child: _card(compact: smaller),
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  child: _card(compact: compact),
                 ),
               ),
             ),
@@ -584,86 +573,38 @@ class _LoginPageState extends State<LoginPage> {
   );
 }
 
-class _DarkFinancePanelPainter extends CustomPainter {
-  const _DarkFinancePanelPainter();
+class _ReferenceNavyPanelPainter extends CustomPainter {
+  const _ReferenceNavyPanelPainter();
 
   @override
   void paint(Canvas canvas, Size size) {
-    final left = Path()
+    final panel = Path()
       ..moveTo(0, 0)
-      ..lineTo(size.width * .608, 0)
-      ..lineTo(size.width * .432, size.height)
+      ..lineTo(size.width * .606, 0)
+      ..lineTo(size.width * .446, size.height)
       ..lineTo(0, size.height)
       ..close();
-    final paint = Paint()
+    final fill = Paint()
       ..shader = const LinearGradient(
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
         colors: [
-          Color(0xff122a55),
-          Color(0xff18396a),
-          Color(0xff142e5d),
+          Color(0xff142c56),
+          Color(0xff193a6c),
+          Color(0xff254e8d),
         ],
       ).createShader(Offset.zero & size);
-    canvas.drawPath(left, paint);
+    canvas.drawPath(panel, fill);
 
-    final slimAccent = Path()
-      ..moveTo(size.width * .591, 0)
-      ..lineTo(size.width * .608, 0)
-      ..lineTo(size.width * .433, size.height)
-      ..lineTo(size.width * .418, size.height)
+    final edge = Path()
+      ..moveTo(size.width * .606, 0)
+      ..lineTo(size.width * .621, 0)
+      ..lineTo(size.width * .459, size.height)
+      ..lineTo(size.width * .446, size.height)
       ..close();
     canvas.drawPath(
-      slimAccent,
-      Paint()..color = const Color(0x263a5b95),
-    );
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
-
-class _DarkFinanceClipper extends CustomClipper<Path> {
-  @override
-  Path getClip(Size size) => Path()
-    ..moveTo(0, 0)
-    ..lineTo(size.width, 0)
-    ..lineTo(size.width * .73, size.height)
-    ..lineTo(0, size.height)
-    ..close();
-
-  @override
-  bool shouldReclip(covariant CustomClipper<Path> oldClipper) => false;
-}
-
-class _RedBottomRibbonPainter extends CustomPainter {
-  const _RedBottomRibbonPainter();
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final crimson = Path()
-      ..moveTo(0, size.height * .832)
-      ..lineTo(size.width * .45, size.height)
-      ..lineTo(0, size.height)
-      ..close();
-    canvas.drawPath(crimson, Paint()..color = const Color(0xffc70d2b));
-
-    final inner = Path()
-      ..moveTo(0, size.height * .86)
-      ..lineTo(size.width * .27, size.height)
-      ..lineTo(0, size.height)
-      ..close();
-    canvas.drawPath(
-      inner,
-      Paint()..color = const Color(0xffb20e30),
-    );
-
-    canvas.drawLine(
-      Offset(0, size.height * .787),
-      Offset(size.width * .46, size.height),
-      Paint()
-        ..color = Colors.white
-        ..strokeWidth = 3,
+      edge,
+      Paint()..color = const Color(0x43204c8b),
     );
   }
 
