@@ -649,16 +649,6 @@ class _ReportSheetState extends State<_ReportSheet> {
     super.dispose();
   }
 
-  // The list is newest-first; restart display numbering at each date.
-  List<int> _dailyNumbers() {
-    final counts = <String, int>{};
-    return [
-      for (final report in widget.history)
-        counts.update(dateOnly(report['at']), (count) => count + 1,
-            ifAbsent: () => 1),
-    ];
-  }
-
   static const _border = BorderSide(color: Color(0xffd5e1f2));
 
   double _textWidth(String text, TextStyle style) {
@@ -1548,6 +1538,16 @@ class _HistoryCardState extends State<_HistoryCard> {
     (report['program'] as String? ?? ''),
     (report['format'] as String? ?? ''),
   );
+
+  // The list is newest-first; restart display numbering at each date.
+  List<int> _dailyNumbers() {
+    final counts = <String, int>{};
+    return [
+      for (final report in widget.history)
+        counts.update(dateOnly(report['at']), (count) => count + 1,
+            ifAbsent: () => 1),
+    ];
+  }
 
   static const _border = BorderSide(color: Color(0xffd5e1f2));
   static const _columns = <int, TableColumnWidth>{
