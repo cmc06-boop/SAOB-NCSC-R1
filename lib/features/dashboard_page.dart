@@ -562,7 +562,7 @@ class _DashboardPageState extends State<DashboardPage> {
                             child: _programLegend(
                               chartLegend,
                               chartBase,
-                              limit: 5,
+                              limit: 6,
                               selectedShares: chartShares,
                               selectedKey: selectedLegendKey,
                             ),
@@ -572,7 +572,8 @@ class _DashboardPageState extends State<DashboardPage> {
                     ],
                   ),
                 ),
-                Align(
+                if (chartLegend.length > 6)
+                  Align(
                   alignment: Alignment.centerRight,
                   child: TextButton(
                     style: TextButton.styleFrom(
