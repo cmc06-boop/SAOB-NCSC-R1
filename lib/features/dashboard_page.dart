@@ -503,7 +503,7 @@ class _DashboardPageState extends State<DashboardPage> {
         },
       );
 
-    Widget buildContent() => Column(
+    Widget buildContent(bool fillHeight) => Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           LayoutBuilder(
@@ -635,18 +635,21 @@ class _DashboardPageState extends State<DashboardPage> {
             },
           ),
           const SizedBox(height: 10),
-          Expanded(
-            child: LayoutBuilder(
-              builder: (context, constraints) =>
-                  buildCharts(constraints.maxHeight),
-            ),
-          ),
+          if (fillHeight)
+            Expanded(
+              child: LayoutBuilder(
+                builder: (context, constraints) =>
+                    buildCharts(constraints.maxHeight),
+              ),
+            )
+          else
+            buildCharts(255.0),
           const SizedBox(height: 12),
           // Keep the Audit Trail compact and steady. Only the chart row
           // grows with the desktop viewport, not the activity preview.
           SizedBox(
             width: double.infinity,
-            height: 215,
+            height: fillHeight ? 215 : 230,
             child: _DashboardAuditPreview(
               rows: _dashboardAuditRows(),
               onSeeAll: widget.onViewAuditTrail,
@@ -662,28 +665,22 @@ class _DashboardPageState extends State<DashboardPage> {
             ),
         ],
       );
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(22, 14, 22, 10),
-      child: LayoutBuilder(
-        builder: (context, viewport) {
-          // Keep the dashboard in one viewport. A minimum logical canvas
-          // preserves the four metrics and two chart panels on smaller windows.
-          // Scale uniformly only when needed; never scroll the entire page.
-          final width = math.max(1050.0, viewport.maxWidth);
-          final height = math.max(760.0, viewport.maxHeight);
-          return SizedBox.expand(
-            child: FittedBox(
-              fit: BoxFit.contain,
-              alignment: Alignment.topCenter,
-              child: SizedBox(
-                width: width,
-                height: height,
-                child: buildContent(),
-              ),
-            ),
-          );
-        },
-      ),
+    return LayoutBuilder(
+      builder: (context, viewport) {
+        // Use the entire available width. Only fall back to scrolling
+        // when the window cannot comfortably contain the dashboard.
+        final compactDesktop =
+            viewport.maxHeight >= 710 && viewport.maxWidth >= 1000;
+        return compactDesktop
+            ? Padding(
+                padding: const EdgeInsets.fromLTRB(22, 14, 22, 10),
+                child: buildContent(true),
+              )
+            : SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(22, 14, 22, 10),
+                child: buildContent(false),
+              );
+      },
     );
   }
 }
