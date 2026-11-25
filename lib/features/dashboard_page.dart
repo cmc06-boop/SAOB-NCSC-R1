@@ -1021,7 +1021,7 @@ class _Rate extends StatelessWidget {
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
       Transform.translate(
-        offset: const Offset(4, 0),
+        offset: const Offset(10, 0),
         child: Text(
         label,
         style: TextStyle(
@@ -1036,7 +1036,7 @@ class _Rate extends StatelessWidget {
         children: [
           Expanded(
             child: Transform.translate(
-              offset: const Offset(4, 0),
+              offset: const Offset(10, 0),
               child: ClipRRect(
               borderRadius: BorderRadius.circular(99),
               child: LinearProgressIndicator(
