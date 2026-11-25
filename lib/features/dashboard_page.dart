@@ -627,12 +627,12 @@ class _DashboardPageState extends State<DashboardPage> {
                     );
             },
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 20),
           // Keep the Audit Trail compact and steady. Only the chart row
           // grows with the desktop viewport, not the activity preview.
           SizedBox(
             width: double.infinity,
-            height: 222,
+            height: 202,
             child: _DashboardAuditPreview(
               rows: _dashboardAuditRows(),
               onSeeAll: widget.onViewAuditTrail,
@@ -767,7 +767,7 @@ class _DashboardAuditPreview extends StatelessWidget {
                   child: Text(
                     'Audit Trail',
                     style: TextStyle(
-                      fontSize: 16,
+                      fontSize: 18,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
