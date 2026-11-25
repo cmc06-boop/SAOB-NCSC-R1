@@ -246,10 +246,9 @@ class _LoginPageState extends State<LoginPage> {
               )),
               Positioned(left: 191, top: 31, width: 138, height: 112, child: Container(
                 decoration: BoxDecoration(color: const Color(0xffe8edf7), borderRadius: BorderRadius.circular(26)),
-                child: const Stack(alignment: Alignment.center, children: [
-                  Positioned(left: 16, top: 12, child: AppIcon('calculator', size: 82, color: _navy)),
-                  Positioned(right: 12, bottom: 9, child: AppIcon('database', size: 55, color: _red)),
-                ]),
+                child: const Center(
+                  child: AppIcon('user-round', size: 82, color: _navy),
+                ),
               )),
               const Positioned(left: 35, top: 594, width: 450, height: 35, child: Row(children: [
                 Expanded(child: Divider(color: Color(0xffaab5c9))),
@@ -267,7 +266,7 @@ class _LoginPageState extends State<LoginPage> {
                     child: FittedBox(
                       fit: BoxFit.scaleDown,
                       child: Text(
-                      'NCSC Finance System',
+                      'Welcome',
                       maxLines: 1,
                       style: TextStyle(
                         fontSize: 38,
@@ -288,7 +287,7 @@ class _LoginPageState extends State<LoginPage> {
                   color: _cardWhite,
                   child: Center(
                     child: Text(
-                      'Sign in to your account',
+                      'Log In to your account',
                       maxLines: 1,
                       style: TextStyle(
                         fontSize: 23,
