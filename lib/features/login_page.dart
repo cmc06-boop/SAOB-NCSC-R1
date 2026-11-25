@@ -128,20 +128,6 @@ class _LoginPageState extends State<LoginPage> {
           child: Stack(
             children: [
               const Positioned.fill(child: CustomPaint(painter: _LoginArtwork())),
-              Positioned(
-                left: 0, top: 535, width: 1010, height: 406,
-                child: ShaderMask(
-                  blendMode: BlendMode.dstIn,
-                  shaderCallback: (bounds) => const LinearGradient(
-                    colors: [Colors.white, Color(0x00ffffff)],
-                    stops: [0.68, 1],
-                  ).createShader(bounds),
-                  child: Image.asset('assets/dashboard-bg.png',
-                    fit: BoxFit.cover, alignment: Alignment.bottomLeft,
-                    color: const Color(0xff183d76), colorBlendMode: BlendMode.multiply,
-                  ),
-                ),
-              ),
               const Positioned.fill(child: IgnorePointer(child: CustomPaint(painter: _LoginRibbons()))),
               Positioned(left: 94, top: 90, width: 108, height: 108,
                 child: Image.asset('assets/ncsc-logo-transparent.png')),
@@ -333,6 +319,7 @@ class _BannerClipper extends CustomClipper<Path> {
 }
 
 class _LoginArtwork extends CustomPainter {
+  const _LoginArtwork();
   @override
   void paint(Canvas canvas, Size s) {
     final rect = Offset.zero & s;
@@ -352,6 +339,7 @@ class _LoginArtwork extends CustomPainter {
 }
 
 class _LoginRibbons extends CustomPainter {
+  const _LoginRibbons();
   @override
   void paint(Canvas canvas, Size s) {
     final rect = Offset.zero & s;
@@ -364,6 +352,7 @@ class _LoginRibbons extends CustomPainter {
 }
 
 class _CardAccent extends CustomPainter {
+  const _CardAccent();
   @override
   void paint(Canvas canvas, Size s) {
     final path = Path()..moveTo(s.width - 190, 0)..lineTo(s.width, 0)..lineTo(s.width, 125)..quadraticBezierTo(s.width - 45, 35, s.width - 190, 0)..close();
