@@ -379,9 +379,9 @@ class _ReportsPageState extends State<ReportsPage> {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                SizedBox(width: 280, child: _parameterCard()),
-                const SizedBox(width: 16),
                 Expanded(child: _previewCard(records, programLabel)),
+                const SizedBox(width: 16),
+                SizedBox(width: 280, child: _parameterCard()),
               ],
             ),
           ),
