@@ -608,7 +608,12 @@ void main() {
       expect(exportPosition.dx, greaterThan(previewTitlePosition.dx));
       expect((backPosition.dy - previewTitlePosition.dy).abs(), lessThan(24));
       expect((exportPosition.dy - previewTitlePosition.dy).abs(), lessThan(24));
-      expect(exportPosition.dx, greaterThan(tester.getCenter(find.text('Report Parameters')).dx));
+      // Export belongs to the left Report Preview panel. Report Parameters
+      // is the separate panel on the right.
+      expect(
+        exportPosition.dx,
+        lessThan(tester.getCenter(find.text('Report Parameters')).dx),
+      );
       await tester.tap(find.byKey(const ValueKey('reports-back')));
       await tester.pumpAndSettle();
       expect(find.text('Generate Report'), findsOneWidget);
