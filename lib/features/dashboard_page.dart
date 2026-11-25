@@ -43,7 +43,7 @@ class _DashboardPageState extends State<DashboardPage> {
               ),
             ),
             SizedBox(
-              width: size * 0.60,
+              width: size * 0.70,
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -470,7 +470,14 @@ class _DashboardPageState extends State<DashboardPage> {
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-                          _programDonut(shares, t.allotment, previewDonutSize),
+                          Transform.translate(
+                            offset: const Offset(0, 9),
+                            child: _programDonut(
+                              shares,
+                              t.allotment,
+                              previewDonutSize,
+                            ),
+                          ),
                           const SizedBox(width: 20),
                           Expanded(
                             child: _programLegend(
@@ -675,13 +682,15 @@ class _DonutPainter extends CustomPainter {
   final List<int> amounts;
   @override
   void paint(Canvas canvas, Size size) {
+    final diameter = math.min(size.width, size.height);
+    final stroke = diameter <= 170 ? 20.0 : 24.0;
     final rect = Rect.fromCircle(
       center: size.center(Offset.zero),
-      radius: math.min(size.width, size.height) / 2 - 16,
+      radius: diameter / 2 - stroke / 2 - 2,
     );
     final paint = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 28;
+      ..strokeWidth = stroke;
     canvas.drawOval(rect, paint..color = line);
     final total = amounts.fold<int>(0, (a, b) => a + math.max(0, b));
     if (total == 0) return;
