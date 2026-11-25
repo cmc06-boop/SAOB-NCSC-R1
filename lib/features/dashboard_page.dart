@@ -377,8 +377,8 @@ class _DashboardPageState extends State<DashboardPage> {
           // Keep the preview short; the dialog shows every program.
           // Both dashboard panels use identical dimensions.
           // Give the six primary cards priority over the Audit Trail.
-          // Cap the chart panels to keep the audit preview at its original height.
-          final panelHeight = math.min(200.0, chartHeight);
+          // Fill the remaining desktop height without scaling the page.
+          final panelHeight = chartHeight;
           final dense = panelHeight < 220;
           final previewDonutSize = math.min(
             200.0,
@@ -639,14 +639,11 @@ class _DashboardPageState extends State<DashboardPage> {
             Expanded(
               child: LayoutBuilder(
                 builder: (context, constraints) =>
-                    Align(
-                      alignment: Alignment.topCenter,
-                      child: buildCharts(constraints.maxHeight),
-                    ),
+                    buildCharts(constraints.maxHeight),
               ),
             )
           else
-            buildCharts(200.0),
+            buildCharts(220.0),
           const SizedBox(height: 12),
           // Keep the Audit Trail compact and steady. Only the chart row
           // grows with the desktop viewport, not the activity preview.
