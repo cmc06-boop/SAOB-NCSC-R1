@@ -95,7 +95,7 @@ class _LoginPageState extends State<LoginPage> {
           : null,
       contentPadding: const EdgeInsets.symmetric(
         horizontal: 15,
-        vertical: 14,
+        vertical: 19,
       ),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(17),
@@ -227,44 +227,46 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                     ),
                     Positioned(
-                      left: 979 * sx,
+                      left: 1014 * sx,
                       top: 134 * sy,
-                      width: 590 * sx,
+                      width: 520 * sx,
                       height: 667 * sy,
                       child: FittedBox(
                         fit: BoxFit.contain,
                         child: SizedBox(
-                          width: 590,
+                          width: 520,
                           height: 667,
                           child: Stack(children: [
-              Positioned(left: 0, top: 0, width: 590, height: 667, child: Container(
+              Positioned(left: 0, top: 0, width: 520, height: 667, child: Container(
                 clipBehavior: Clip.antiAlias,
                 decoration: BoxDecoration(color: _cardWhite, borderRadius: BorderRadius.circular(42), boxShadow: const [
                   BoxShadow(color: Color(0x30304c92), blurRadius: 40, offset: Offset(0, 20)),
                 ]),
                 child: const CustomPaint(painter: _CardAccent()),
               )),
-              Positioned(left: 226, top: 31, width: 138, height: 112, child: Container(
+              Positioned(left: 191, top: 31, width: 138, height: 112, child: Container(
                 decoration: BoxDecoration(color: const Color(0xffe8edf7), borderRadius: BorderRadius.circular(26)),
                 child: const Stack(alignment: Alignment.center, children: [
                   Positioned(left: 16, top: 12, child: AppIcon('calculator', size: 82, color: _navy)),
                   Positioned(right: 12, bottom: 9, child: AppIcon('database', size: 55, color: _red)),
                 ]),
               )),
-              const Positioned(left: 45, top: 594, width: 502, height: 35, child: Row(children: [
+              const Positioned(left: 35, top: 594, width: 450, height: 35, child: Row(children: [
                 Expanded(child: Divider(color: Color(0xffaab5c9))),
                 Expanded(flex: 8, child: Padding(padding: EdgeInsets.symmetric(horizontal: 16), child: FittedBox(fit: BoxFit.scaleDown, child: Text('For authorized NCSC personnel only', style: TextStyle(color: Color(0xff545f73), fontSize: 19))))),
                 Expanded(child: Divider(color: Color(0xffaab5c9))),
               ])),
               const Positioned(
-                left: 87,
+                left: 35,
                 top: 150,
-                width: 457,
+                width: 450,
                 height: 52,
                 child: ColoredBox(
                   color: _cardWhite,
                   child: Center(
-                    child: Text(
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
                       'NCSC Finance System',
                       maxLines: 1,
                       style: TextStyle(
@@ -273,13 +275,14 @@ class _LoginPageState extends State<LoginPage> {
                         color: Color(0xff102e60),
                       ),
                     ),
+                    ),
                   ),
                 ),
               ),
               const Positioned(
-                left: 141,
+                left: 35,
                 top: 202,
-                width: 356,
+                width: 450,
                 height: 43,
                 child: ColoredBox(
                   color: _cardWhite,
@@ -297,17 +300,17 @@ class _LoginPageState extends State<LoginPage> {
               ),
 
               Positioned(
-                left: 44,
-                top: 266,
-                width: 502,
-                height: 61,
+                left: 35,
+                top: 260,
+                width: 450,
+                height: 72,
                 child: _field('Username', 'user-round', _username),
               ),
               Positioned(
-                left: 44,
-                top: 346,
-                width: 502,
-                height: 61,
+                left: 35,
+                top: 347,
+                width: 450,
+                height: 72,
                 child: _field(
                   'Password',
                   'lock',
@@ -318,9 +321,9 @@ class _LoginPageState extends State<LoginPage> {
 
               if (widget.store.needsAccount || _error != null)
                 Positioned(
-                  left: 45,
-                  top: 419,
-                  width: 503,
+                  left: 35,
+                  top: 425,
+                  width: 450,
                   height: 56,
                   child: Center(
                     child: Text(
@@ -340,9 +343,9 @@ class _LoginPageState extends State<LoginPage> {
                 ),
 
               Positioned(
-                left: 44,
+                left: 35,
                 top: 488,
-                width: 502,
+                width: 450,
                 height: 70,
                 child: DecoratedBox(
                   decoration: BoxDecoration(
