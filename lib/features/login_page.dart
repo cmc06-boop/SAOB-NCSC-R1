@@ -12,7 +12,6 @@ import '../ui/login_building_data.dart';
 // so the logo, large heading, diagonal, building and login card stay aligned.
 const _designWidth = 1672.0;
 const _designHeight = 941.0;
-const _navy = Color(0xff102b57);
 const _red = Color(0xffcb102b);
 const _cardWhite = Color(0xfff8f9fe);
 
@@ -131,11 +130,16 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  Widget _agencyHeader() {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
+  // The reference lockup uses precise placements. A Stack, rather than
+  // a Row with fixed-width text, avoids RenderFlex overflow at any scale.
+  Widget _agencyHeader() => SizedBox(
+    width: 747,
+    height: 112,
+    child: Stack(
       children: [
-        SizedBox(
+        Positioned(
+          left: 0,
+          top: 2,
           width: 108,
           height: 108,
           child: Image.asset(
@@ -148,42 +152,50 @@ class _LoginPageState extends State<LoginPage> {
             ),
           ),
         ),
-        const SizedBox(width: 18),
-        SizedBox(
-          width: 312,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text(
-                'Republic of the Philippines',
-                style: TextStyle(
-                  fontSize: 17,
-                  color: Colors.white,
-                ),
-              ),
-              const SizedBox(height: 5),
-              const Text(
-                'NATIONAL COMMISSION\nOF SENIOR CITIZENS',
-                maxLines: 2,
-                style: TextStyle(
-                  fontSize: 25,
-                  height: 1.08,
-                  fontWeight: FontWeight.w800,
-                  color: Colors.white,
-                ),
-              ),
-            ],
+        const Positioned(
+          left: 126,
+          top: 9,
+          width: 318,
+          child: Text(
+            'Republic of the Philippines',
+            maxLines: 1,
+            style: TextStyle(fontSize: 17, color: Colors.white),
           ),
         ),
-        const SizedBox(width: 18),
-        Container(
-          width: 2,
-          height: 75,
-          color: const Color(0xfff3f5ff),
+        const Positioned(
+          left: 126,
+          top: 36,
+          width: 318,
+          height: 68,
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.topLeft,
+            child: Text(
+              'NATIONAL COMMISSION\nOF SENIOR CITIZENS',
+              maxLines: 2,
+              style: TextStyle(
+                fontSize: 25,
+                height: 1.08,
+                fontWeight: FontWeight.w800,
+                color: Colors.white,
+              ),
+            ),
+          ),
         ),
-        const SizedBox(width: 27),
-        const Expanded(
+        Positioned(
+          left: 457,
+          top: 16,
+          child: Container(
+            width: 2,
+            height: 75,
+            color: const Color(0xfff3f5ff),
+          ),
+        ),
+        const Positioned(
+          left: 485,
+          top: 27,
+          width: 260,
+          height: 55,
           child: FittedBox(
             fit: BoxFit.scaleDown,
             alignment: Alignment.centerLeft,
@@ -199,25 +211,35 @@ class _LoginPageState extends State<LoginPage> {
           ),
         ),
       ],
-    );
-  }
+    ),
+  );
 
   Widget _financeLabel() => ClipPath(
     clipper: _FinanceTagClipper(),
     child: Container(
       width: 418,
       height: 61,
-      padding: const EdgeInsets.fromLTRB(22, 0, 31, 0),
       decoration: const BoxDecoration(
         gradient: LinearGradient(
           colors: [Color(0xffe51c39), Color(0xff842248)],
         ),
       ),
-      child: const Row(
+      child: const Stack(
         children: [
-          Icon(Icons.storage_rounded, size: 31, color: Colors.white),
-          SizedBox(width: 19),
-          Expanded(
+          Positioned(
+            left: 22,
+            top: 14,
+            child: Icon(
+              Icons.storage_rounded,
+              size: 31,
+              color: Colors.white,
+            ),
+          ),
+          Positioned(
+            left: 74,
+            top: 8,
+            width: 300,
+            height: 44,
             child: FittedBox(
               alignment: Alignment.centerLeft,
               fit: BoxFit.scaleDown,
@@ -424,20 +446,37 @@ class _LoginPageState extends State<LoginPage> {
             left: 45,
             top: 601,
             width: 499,
-            child: Row(
+            height: 28,
+            child: Stack(
+              alignment: Alignment.center,
               children: [
-                Expanded(child: Divider(color: Color(0xffaab5c6))),
-                SizedBox(width: 18),
+                Positioned(
+                  left: 0,
+                  top: 13,
+                  width: 68,
+                  child: Divider(
+                    height: 1,
+                    color: Color(0xffaab5c6),
+                  ),
+                ),
                 Text(
                   'For authorized NCSC personnel only',
+                  maxLines: 1,
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 17,
                     color: Color(0xff4a5464),
                   ),
                 ),
-                SizedBox(width: 18),
-                Expanded(child: Divider(color: Color(0xffaab5c6))),
+                Positioned(
+                  right: 0,
+                  top: 13,
+                  width: 68,
+                  child: Divider(
+                    height: 1,
+                    color: Color(0xffaab5c6),
+                  ),
+                ),
               ],
             ),
           ),
