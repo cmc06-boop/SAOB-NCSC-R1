@@ -478,7 +478,7 @@ class _LoginPageState extends State<LoginPage> {
 
         final scale = bounds.maxWidth / 1672;
         final smaller = bounds.maxWidth < 1460 || bounds.maxHeight < 790;
-        final cardWidth = (bounds.maxWidth * .351).clamp(430.0, 588.0);
+        final cardWidth = (bounds.maxWidth * .351).clamp(430.0, 588.0).toDouble();
         final cardRight = bounds.maxWidth * .061;
         return Stack(
           fit: StackFit.expand,
@@ -501,9 +501,9 @@ class _LoginPageState extends State<LoginPage> {
               top: -90,
               width: bounds.maxWidth * .48,
               height: bounds.maxHeight * .35,
-              child: const Transform(
-                transform: Matrix4.identity(),
-                child: ColoredBox(color: Color(0x22ffffff)),
+              child: Transform.rotate(
+                angle: -.24,
+                child: const ColoredBox(color: Color(0x22ffffff)),
               ),
             ),
             const Positioned.fill(
