@@ -127,7 +127,7 @@ class _LoginPageState extends State<LoginPage> {
           height: _designHeight,
           child: Stack(
             children: [
-              const Positioned.fill(child: CustomPaint(painter: _LoginArtwork())),
+              const Positioned.fill(child: CustomPaint(key: ValueKey('login-native-background'), painter: _LoginArtwork())),
               const Positioned.fill(child: IgnorePointer(child: CustomPaint(painter: _LoginRibbons()))),
               Positioned(left: 94, top: 90, width: 108, height: 108,
                 child: Image.asset('assets/ncsc-logo-transparent.png')),
@@ -149,7 +149,7 @@ class _LoginPageState extends State<LoginPage> {
                   child: const Row(children: [
                     AppIcon('database', size: 34, color: Colors.white),
                     SizedBox(width: 18),
-                    Text('FINANCE SYSTEM', style: TextStyle(color: Colors.white, fontSize: 30, fontWeight: FontWeight.w800)),
+                    Expanded(child: FittedBox(fit: BoxFit.scaleDown, alignment: Alignment.centerLeft, child: Text('FINANCE SYSTEM', style: TextStyle(color: Colors.white, fontSize: 30, fontWeight: FontWeight.w800)))),
                   ]),
                 ),
               )),
@@ -171,7 +171,7 @@ class _LoginPageState extends State<LoginPage> {
               )),
               const Positioned(left: 1024, top: 728, width: 502, child: Row(children: [
                 Expanded(child: Divider(color: Color(0xffaab5c9))),
-                Padding(padding: EdgeInsets.symmetric(horizontal: 16), child: Text('For authorized NCSC personnel only', style: TextStyle(color: Color(0xff545f73), fontSize: 19))),
+                Expanded(flex: 8, child: Padding(padding: EdgeInsets.symmetric(horizontal: 16), child: FittedBox(fit: BoxFit.scaleDown, child: Text('For authorized NCSC personnel only', style: TextStyle(color: Color(0xff545f73), fontSize: 19))))),
                 Expanded(child: Divider(color: Color(0xffaab5c9))),
               ])),
               const Positioned(
