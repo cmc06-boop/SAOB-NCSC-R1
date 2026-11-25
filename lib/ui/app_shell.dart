@@ -7,7 +7,7 @@ import '../features/budget_page.dart';
 import '../features/dashboard_page.dart';
 import '../features/reports_page.dart';
 import '../features/settings_page.dart';
-import 'svg_icon.dart';
+import 'app_icon.dart';
 import 'theme.dart';
 
 const _menus = [
@@ -78,7 +78,7 @@ class _AppShellState extends State<AppShell> {
                   shape: BoxShape.circle,
                   color: Color(0xffe2eafa),
                 ),
-                child: const AppSvgIcon(
+                child: const AppIcon(
                   'log-out',
                   size: 22,
                   color: ink,
@@ -272,7 +272,7 @@ class _AppShellState extends State<AppShell> {
                                               SizedBox(
                                                 width: expanded ? 10 : 0,
                                               ),
-                                              AppSvgIcon(
+                                              AppIcon(
                                                 m.$3,
                                                 color: Colors.white,
                                                 size: 18,
@@ -374,7 +374,7 @@ class _AppShellState extends State<AppShell> {
                                               ],
                                             ),
                                           ),
-                                          const AppSvgIcon(
+                                          const AppIcon(
                                             'chevron-right',
                                             color: Colors.white70,
                                             size: 18,
@@ -404,7 +404,7 @@ class _AppShellState extends State<AppShell> {
                                 child: Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    const AppSvgIcon(
+                                    const AppIcon(
                                       'log-out',
                                       size: 18,
                                       color: Colors.white,
