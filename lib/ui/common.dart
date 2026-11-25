@@ -105,6 +105,7 @@ class SelectField<T> extends StatelessWidget {
     this.boxKey,
     this.labelStyle,
     this.arrowRightPadding = 8,
+    this.arrowShiftRight = 0,
   });
   final String label;
   final T value;
@@ -115,6 +116,7 @@ class SelectField<T> extends StatelessWidget {
   final Key? boxKey;
   final TextStyle? labelStyle;
   final double arrowRightPadding;
+  final double arrowShiftRight;
   @override
   Widget build(BuildContext context) => SizedBox(
     width: width,
@@ -131,6 +133,7 @@ class SelectField<T> extends StatelessWidget {
           dense: dense,
           decoratorKey: boxKey,
           arrowRightPadding: arrowRightPadding,
+          arrowShiftRight: arrowShiftRight,
           fieldTextStyle: const TextStyle(
             fontFamily: 'Segoe UI',
             fontSize: 13,
@@ -161,6 +164,7 @@ class AppDropdown<T> extends StatelessWidget {
     this.decoratorKey,
     this.dense = true,
     this.arrowRightPadding = 8,
+    this.arrowShiftRight = 0,
     this.fieldTextStyle = const TextStyle(
       fontFamily: 'Segoe UI',
       fontSize: 13,
@@ -175,6 +179,7 @@ class AppDropdown<T> extends StatelessWidget {
   final Key? decoratorKey;
   final bool dense;
   final double arrowRightPadding;
+  final double arrowShiftRight;
   final TextStyle fieldTextStyle;
 
   @override
@@ -259,10 +264,13 @@ class AppDropdown<T> extends StatelessWidget {
                   const SizedBox(width: 6),
                   Padding(
                     padding: EdgeInsets.only(right: arrowRightPadding),
-                    child: const AppSvgIcon(
-                      'chevron-down',
-                      size: 18,
-                      color: muted,
+                    child: Transform.translate(
+                      offset: Offset(arrowShiftRight, 0),
+                      child: const AppSvgIcon(
+                        'chevron-down',
+                        size: 18,
+                        color: muted,
+                      ),
                     ),
                   ),
                 ],
