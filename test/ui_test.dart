@@ -130,9 +130,10 @@ void main() {
       expect(find.text('Create Account'), findsNothing);
       expect(find.text('Forgot Password?'), findsNothing);
       expect(
-        find.byKey(const ValueKey('login-reference-background')),
+        find.byKey(const ValueKey('login-native-background')),
         findsOneWidget,
       );
+      expect(find.byKey(const ValueKey('login-reference-background')), findsNothing);
       expect(find.text('Username'), findsOneWidget);
       final password = tester.widget<TextField>(
         find.byKey(const ValueKey('Password')),
@@ -669,7 +670,7 @@ void main() {
     expect(find.text('Create Account'), findsNothing);
     expect(find.text('Forgot Password?'), findsNothing);
     final login = tester.widget<FilledButton>(
-      find.widgetWithText(FilledButton, 'Log In'),
+      find.widgetWithText(FilledButton, 'Sign In'),
     );
     expect(login.onPressed, isNull);
     expect(tester.takeException(), isNull);
