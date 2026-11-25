@@ -162,7 +162,7 @@ class _BudgetPageState extends State<BudgetPage> {
       style: const TextStyle(fontSize: 14),
       decoration: const InputDecoration(
         hintText: 'Search UACS Code or Expense...',
-        prefixIcon: AppSvgIcon('search', size: 20),
+        prefixIcon: AppIcon('search', size: 16),
         isDense: true,
         contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
       ),
@@ -178,7 +178,7 @@ class _BudgetPageState extends State<BudgetPage> {
             ),
           ),
           onPressed: canEncode ? () => edit() : null,
-          icon: const AppSvgIcon('plus', size: 18),
+          icon: const AppIcon('plus', size: 18),
           label: const Text('Add Record'),
         ),
         const SizedBox(width: 8),
@@ -193,7 +193,7 @@ class _BudgetPageState extends State<BudgetPage> {
                   }
                   edit(chosen);
                 },
-          icon: const AppSvgIcon('pencil', size: 18),
+          icon: const AppIcon('pencil', size: 18),
           label: const Text('Edit'),
         ),
         const SizedBox(width: 8),
@@ -208,7 +208,7 @@ class _BudgetPageState extends State<BudgetPage> {
                   }
                   remove(chosen);
                 },
-          icon: const AppSvgIcon('trash-2', size: 18),
+          icon: const AppIcon('trash-2', size: 18),
           label: const Text('Delete'),
         ),
       ],
@@ -732,7 +732,7 @@ class _RecordEditorState extends State<RecordEditor> {
                         tooltip: 'Close',
                         onPressed: () => Navigator.pop(context),
                         visualDensity: VisualDensity.compact,
-                        icon: const AppSvgIcon('x'),
+                        icon: const AppIcon('x'),
                       ),
                     ),
                   ],
@@ -801,7 +801,7 @@ class _RecordEditorState extends State<RecordEditor> {
                           width: 36,
                           height: 24,
                           child: Center(
-                            child: AppSvgIcon(
+                            child: AppIcon(
                               'chevron-down',
                               size: 18,
                               color: muted,
