@@ -101,7 +101,11 @@ class _DashboardPageState extends State<DashboardPage> {
             ),
             SizedBox(
               width: size * 0.66,
-              child: Column(
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: SizedBox(
+                  width: size * 0.66,
+                  child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   FittedBox(
@@ -128,6 +132,8 @@ class _DashboardPageState extends State<DashboardPage> {
                     ),
                   ),
                 ],
+              ),
+                ),
               ),
             ),
           ],
@@ -303,6 +309,7 @@ class _DashboardPageState extends State<DashboardPage> {
           // Both panels keep their existing responsive dimensions.
           final panelHeight = chartHeight;
           final dense = panelHeight <= 240;
+          final compactRates = panelHeight < 230;
           final chart = Panel(
             padding: dense ? 7 : 10,
             child: Column(
@@ -367,7 +374,10 @@ class _DashboardPageState extends State<DashboardPage> {
           );
           final rates = Panel(
             padding: dense ? 8 : 12,
-            child: Column(
+            child: LayoutBuilder(
+              builder: (context, available) => SingleChildScrollView(
+                primary: false,
+                child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
@@ -378,23 +388,25 @@ class _DashboardPageState extends State<DashboardPage> {
                     color: navy,
                   ),
                 ),
-                SizedBox(height: panelHeight >= 205 ? 16 : 6),
+                SizedBox(height: compactRates ? 6 : 16),
                 _Rate(
                   'Obligation Rate',
                   t.obligation,
                   t.allotment,
                   blue,
-                  compact: panelHeight < 190,
+                  compact: compactRates,
                 ),
-                SizedBox(height: panelHeight >= 205 ? 14 : 7),
+                SizedBox(height: compactRates ? 7 : 14),
                 _Rate(
                   'Disbursement Rate',
                   t.disbursement,
                   t.allotment,
                   navy,
-                  compact: panelHeight < 190,
+                  compact: compactRates,
                 ),
               ],
+                ),
+              ),
             ),
           );
           return sideBySide
