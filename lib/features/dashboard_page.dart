@@ -19,8 +19,13 @@ const chartColors = [
 ];
 
 class DashboardPage extends StatefulWidget {
-  const DashboardPage({super.key, required this.store});
+  const DashboardPage({
+    super.key,
+    required this.store,
+    this.onViewAuditTrail,
+  });
   final FinanceStore store;
+  final VoidCallback? onViewAuditTrail;
   @override
   State<DashboardPage> createState() => _DashboardPageState();
 }
@@ -594,6 +599,11 @@ class _DashboardPageState extends State<DashboardPage> {
                     );
             },
           ),
+          const SizedBox(height: 14),
+          _DashboardAuditPreview(
+            rows: widget.store.auditRows(year),
+            onSeeAll: widget.onViewAuditTrail,
+          ),
           if (rows.isEmpty)
             const Padding(
               padding: EdgeInsets.only(top: 18),
@@ -602,6 +612,178 @@ class _DashboardPageState extends State<DashboardPage> {
                 style: TextStyle(color: muted),
               ),
             ),
+        ],
+      ),
+    );
+  }
+}
+
+/// A short read-only snapshot of the same log displayed on the Audit Trail page.
+class _DashboardAuditPreview extends StatelessWidget {
+  const _DashboardAuditPreview({
+    required this.rows,
+    required this.onSeeAll,
+  });
+
+  final List<DbRow> rows;
+  final VoidCallback? onSeeAll;
+
+  static const _border = BorderSide(color: Color(0xffd5e1f2));
+  static const _columns = <int, TableColumnWidth>{
+    0: FixedColumnWidth(145),
+    1: FixedColumnWidth(95),
+    2: FixedColumnWidth(128),
+    3: FlexColumnWidth(),
+  };
+  static const _header = TextStyle(
+    fontSize: 13,
+    fontWeight: FontWeight.w700,
+    color: navy,
+  );
+  static const _body = TextStyle(fontSize: 13, color: ink);
+
+  TableRow _row(List<Widget> cells, Color background) => TableRow(
+    decoration: BoxDecoration(color: background),
+    children: [
+      for (final cell in cells)
+        TableCell(
+          verticalAlignment: TableCellVerticalAlignment.middle,
+          child: cell,
+        ),
+    ],
+  );
+
+  Widget _cell(
+    String value, {
+    TextStyle style = _body,
+    bool center = false,
+    String? tooltip,
+  }) {
+    final label = Text(
+      value,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      textAlign: center ? TextAlign.center : TextAlign.left,
+      style: style,
+    );
+    return SizedBox(
+      height: 43,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 10),
+        child: Align(
+          alignment: center ? Alignment.center : Alignment.centerLeft,
+          child: tooltip == null
+              ? label
+              : Tooltip(message: tooltip, child: label),
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final recent = rows.take(4).toList();
+    return Panel(
+      padding: 0,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Padding(
+            padding: EdgeInsets.fromLTRB(16, 16, 16, 12),
+            child: Row(
+              children: [
+                AppIcon('history', color: blue, size: 20),
+                SizedBox(width: 8),
+                Text(
+                  'Audit Trail',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                ),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+            child: LayoutBuilder(
+              builder: (context, constraints) => SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: SizedBox(
+                  width: math.max(560.0, constraints.maxWidth),
+                  child: Column(
+                    children: [
+                      Table(
+                        border: const TableBorder(
+                          verticalInside: _border,
+                          bottom: _border,
+                        ),
+                        columnWidths: _columns,
+                        defaultVerticalAlignment:
+                            TableCellVerticalAlignment.middle,
+                        children: [
+                          _row([
+                            _cell('Date', style: _header, center: true),
+                            _cell('Time', style: _header, center: true),
+                            _cell('Action', style: _header, center: true),
+                            _cell('Details', style: _header, center: true),
+                          ], const Color(0xffeef3fb)),
+                        ],
+                      ),
+                      Table(
+                        border: const TableBorder(
+                          horizontalInside: _border,
+                          verticalInside: _border,
+                        ),
+                        columnWidths: _columns,
+                        defaultVerticalAlignment:
+                            TableCellVerticalAlignment.middle,
+                        children: [
+                          if (recent.isEmpty)
+                            _row([
+                              _cell(''),
+                              _cell(''),
+                              _cell(''),
+                              _cell('No audit records found.',
+                                  style: const TextStyle(
+                                    fontSize: 13,
+                                    color: muted,
+                                  )),
+                            ], Colors.white)
+                          else
+                            for (final (i, record) in recent.indexed)
+                              _row([
+                                _cell(dateOnly(record['at']), center: true),
+                                _cell(timeOnly(record['at']), center: true),
+                                _cell('${record['action'] ?? ''}',
+                                    center: true),
+                                _cell(
+                                  auditDetailSentence(
+                                    '${record['detail'] ?? ''}',
+                                    action: '${record['action'] ?? ''}',
+                                    program: '${record['program'] ?? ''}',
+                                  ),
+                                  tooltip: '${record['detail'] ?? ''}',
+                                ),
+                              ], i.isOdd
+                                  ? const Color(0xfff7f9fc)
+                                  : Colors.white),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: TextButton(
+                key: const ValueKey('dashboard-audit-see-all'),
+                onPressed: onSeeAll,
+                child: const Text('See All'),
+              ),
+            ),
+          ),
         ],
       ),
     );
