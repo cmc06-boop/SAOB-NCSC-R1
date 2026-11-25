@@ -382,30 +382,40 @@ class _LoginPageState extends State<LoginPage> {
             top: 489,
             width: 499,
             height: 70,
-            child: FilledButton.icon(
-              onPressed: _busy || needsSetup ? null : _submit,
-              style: FilledButton.styleFrom(
-                backgroundColor: const Color(0xffbb0d29),
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(18),
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xffdc102f), Color(0xffa90c26)],
                 ),
+                borderRadius: BorderRadius.circular(18),
               ),
-              icon: _busy
-                  ? const SizedBox(
-                      width: 22,
-                      height: 22,
-                      child: CircularProgressIndicator(
-                        color: Colors.white,
-                        strokeWidth: 2.5,
-                      ),
-                    )
-                  : const AppIcon('log-in', size: 27),
-              label: const Text(
-                'Log In',
-                style: TextStyle(
-                  fontSize: 29,
-                  fontWeight: FontWeight.w800,
+              child: FilledButton.icon(
+                onPressed: _busy || needsSetup ? null : _submit,
+                style: FilledButton.styleFrom(
+                  backgroundColor: Colors.transparent,
+                  shadowColor: Colors.transparent,
+                  elevation: 0,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                ),
+                icon: _busy
+                    ? const SizedBox(
+                        width: 22,
+                        height: 22,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2.5,
+                        ),
+                      )
+                    : const AppIcon('log-in', size: 27),
+                label: const Text(
+                  'Log In',
+                  style: TextStyle(
+                    fontSize: 29,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
               ),
             ),
