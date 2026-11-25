@@ -159,13 +159,13 @@ class _LoginPageState extends State<LoginPage> {
                       left: 0,
                       top: 0,
                       width: 950 * sx,
-                      height: 550 * sy,
+                      height: 590 * sy,
                       child: FittedBox(
                         fit: BoxFit.contain,
                         alignment: Alignment.topLeft,
                         child: SizedBox(
                           width: 950,
-                          height: 550,
+                          height: 590,
                           child: Stack(children: [
               const Positioned(
                 left: 220,
@@ -202,17 +202,17 @@ class _LoginPageState extends State<LoginPage> {
               )),
               const Positioned(
                 left: 92,
-                top: 345,
-                width: 780,
-                height: 150,
+                top: 340,
+                width: 845,
+                height: 190,
                 child: FittedBox(
                   fit: BoxFit.scaleDown,
                   alignment: Alignment.centerLeft,
                   child: Text(
-                    'Statement of Allotment,\nObligations, and Balance\nManagement System',
+                    'Statement of Allotment,\nObligations, and Balances\nManagement System',
                     style: TextStyle(
                       color: Colors.white,
-                      fontSize: 46,
+                      fontSize: 60,
                       fontWeight: FontWeight.w800,
                       height: 1.06,
                       letterSpacing: -1,
@@ -220,7 +220,7 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                 ),
               ),
-              const Positioned(left: 94, top: 499, width: 800, height: 48, child: Text('Budgeting  •  Disbursement  •  Accounting  •  Reporting', style: TextStyle(color: Color(0xffdce6fb), fontSize: 25))),
+              const Positioned(left: 94, top: 536, width: 800, height: 48, child: Text('Budgeting  •  Disbursement  •  Accounting  •  Reporting', style: TextStyle(color: Color(0xffdce6fb), fontSize: 25))),
 
                           ]),
                         ),
