@@ -883,14 +883,17 @@ class _BudgetTableState extends State<BudgetTable> {
         );
         return Column(
           children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                SizedBox(width: frozenWidth, child: frozenHeader),
-                divider,
-                movingViewport(movingHeader, _headerHorizontal),
-              ],
+            SizedBox(
+              height: 54,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SizedBox(width: frozenWidth, child: frozenHeader),
+                  divider,
+                  movingViewport(movingHeader, _headerHorizontal),
+                ],
+              ),
             ),
             Expanded(
               child: Scrollbar(
@@ -905,9 +908,13 @@ class _BudgetTableState extends State<BudgetTable> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       SizedBox(width: frozenWidth, child: frozenBody),
-                      const SizedBox(
+                      SizedBox(
                         width: 1,
-                        child: ColoredBox(color: Color(0xffd5e1f2)),
+                        height: 54.0 *
+                            (records.isEmpty
+                                ? 1
+                                : records.length + (total == null ? 0 : 1)),
+                        child: const ColoredBox(color: Color(0xffd5e1f2)),
                       ),
                       movingViewport(
                         movingBody,
