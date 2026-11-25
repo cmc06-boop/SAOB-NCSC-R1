@@ -379,7 +379,7 @@ class _DashboardPageState extends State<DashboardPage> {
           // Give the six primary cards priority over the Audit Trail.
           // Fill the remaining desktop height without scaling the page.
           final panelHeight = chartHeight;
-          final dense = panelHeight < 220;
+          final dense = panelHeight <= 240;
           final previewDonutSize = math.min(
             200.0,
             math.max(90.0, panelHeight - (dense ? 82.0 : 90.0)),
@@ -412,10 +412,15 @@ class _DashboardPageState extends State<DashboardPage> {
                       ),
                       const SizedBox(width: 20),
                       Expanded(
-                        child: _programLegend(
-                          shares,
-                          t.allotment,
-                          limit: 3,
+                        child: LayoutBuilder(
+                          builder: (context, limits) => SingleChildScrollView(
+                            primary: false,
+                            child: _programLegend(
+                              shares,
+                              t.allotment,
+                              limit: 3,
+                            ),
+                          ),
                         ),
                       ),
                     ],
@@ -643,7 +648,7 @@ class _DashboardPageState extends State<DashboardPage> {
               ),
             )
           else
-            buildCharts(220.0),
+            buildCharts(255.0),
           const SizedBox(height: 12),
           // Keep the Audit Trail compact and steady. Only the chart row
           // grows with the desktop viewport, not the activity preview.
