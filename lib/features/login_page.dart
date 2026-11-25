@@ -5,9 +5,7 @@ import '../data/finance_store.dart';
 import '../ui/app_icon.dart';
 import '../ui/common.dart';
 
-/// Original user-supplied design is the background asset. Interactive widgets
-/// are positioned over its form at reference resolution, then the entire stage
-/// scales as a unit so controls never drift away from the image.
+/// Native Flutter login artwork and interactive form.
 const _designWidth = 1672.0;
 const _designHeight = 941.0;
 const _cardWhite = Color(0xfff8f9fe);
@@ -129,20 +127,67 @@ class _LoginPageState extends State<LoginPage> {
           height: _designHeight,
           child: Stack(
             children: [
-              Positioned.fill(
-                child: Image.asset(
-                  'assets/login-design-reference.webp',
-                  key: const ValueKey('login-reference-background'),
-                  fit: BoxFit.fill,
-                  semanticLabel:
-                      'National Commission of Senior Citizens, Regional '
-                      'Office 1. Financial Management Information System.',
+              const Positioned.fill(child: CustomPaint(painter: _LoginArtwork())),
+              Positioned(
+                left: 0, top: 535, width: 1010, height: 406,
+                child: ShaderMask(
+                  blendMode: BlendMode.dstIn,
+                  shaderCallback: (bounds) => const LinearGradient(
+                    colors: [Colors.white, Color(0x00ffffff)],
+                    stops: [0.68, 1],
+                  ).createShader(bounds),
+                  child: Image.asset('assets/dashboard-bg.png',
+                    fit: BoxFit.cover, alignment: Alignment.bottomLeft,
+                    color: const Color(0xff183d76), colorBlendMode: BlendMode.multiply,
+                  ),
                 ),
               ),
-
-              // Retain the exact original design's logo, building, colors,
-              // panel shadows and card. Repaint only the title and form areas
-              // that must be native Flutter widgets.
+              const Positioned.fill(child: IgnorePointer(child: CustomPaint(painter: _LoginRibbons()))),
+              Positioned(left: 94, top: 90, width: 108, height: 108,
+                child: Image.asset('assets/ncsc-logo-transparent.png')),
+              const Positioned(left: 220, top: 98, width: 330, child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Republic of the Philippines', style: TextStyle(color: Colors.white, fontSize: 20)),
+                  SizedBox(height: 6),
+                  Text('NATIONAL COMMISSION\nOF SENIOR CITIZENS', style: TextStyle(color: Colors.white, fontSize: 25, fontWeight: FontWeight.w800, height: 1.2)),
+                ],
+              )),
+              const Positioned(left: 558, top: 105, height: 73, child: VerticalDivider(color: Colors.white, width: 2, thickness: 2)),
+              const Positioned(left: 586, top: 122, child: Text('Regional Office I', style: TextStyle(color: Colors.white, fontSize: 29, fontWeight: FontWeight.w800))),
+              Positioned(left: 93, top: 272, width: 420, height: 62, child: ClipPath(
+                clipper: _BannerClipper(),
+                child: Container(
+                  decoration: const BoxDecoration(gradient: LinearGradient(colors: [Color(0xffe5132c), Color(0xff72223c)])),
+                  padding: const EdgeInsets.symmetric(horizontal: 22),
+                  child: const Row(children: [
+                    AppIcon('database', size: 34, color: Colors.white),
+                    SizedBox(width: 18),
+                    Text('FINANCE SYSTEM', style: TextStyle(color: Colors.white, fontSize: 30, fontWeight: FontWeight.w800)),
+                  ]),
+                ),
+              )),
+              const Positioned(left: 92, top: 345, width: 780, child: Text('Financial Management\nInformation System', style: TextStyle(color: Colors.white, fontSize: 64, fontWeight: FontWeight.w800, height: 1.06, letterSpacing: -1.8))),
+              const Positioned(left: 94, top: 499, child: Text('Budgeting  •  Disbursement  •  Accounting  •  Reporting', style: TextStyle(color: Color(0xffdce6fb), fontSize: 25))),
+              Positioned(left: 979, top: 134, width: 590, height: 667, child: Container(
+                clipBehavior: Clip.antiAlias,
+                decoration: BoxDecoration(color: _cardWhite, borderRadius: BorderRadius.circular(42), boxShadow: const [
+                  BoxShadow(color: Color(0x30304c92), blurRadius: 40, offset: Offset(0, 20)),
+                ]),
+                child: const CustomPaint(painter: _CardAccent()),
+              )),
+              Positioned(left: 1205, top: 165, width: 138, height: 112, child: Container(
+                decoration: BoxDecoration(color: const Color(0xffe8edf7), borderRadius: BorderRadius.circular(26)),
+                child: const Stack(alignment: Alignment.center, children: [
+                  Positioned(left: 16, top: 12, child: AppIcon('calculator', size: 82, color: _navy)),
+                  Positioned(right: 12, bottom: 9, child: AppIcon('database', size: 55, color: _red)),
+                ]),
+              )),
+              const Positioned(left: 1024, top: 728, width: 502, child: Row(children: [
+                Expanded(child: Divider(color: Color(0xffaab5c9))),
+                Padding(padding: EdgeInsets.symmetric(horizontal: 16), child: Text('For authorized NCSC personnel only', style: TextStyle(color: Color(0xff545f73), fontSize: 19))),
+                Expanded(child: Divider(color: Color(0xffaab5c9))),
+              ])),
               const Positioned(
                 left: 1066,
                 top: 284,
@@ -172,7 +217,7 @@ class _LoginPageState extends State<LoginPage> {
                   color: _cardWhite,
                   child: Center(
                     child: Text(
-                      'Log in to your account',
+                      'Sign in to your account',
                       maxLines: 1,
                       style: TextStyle(
                         fontSize: 23,
@@ -203,27 +248,6 @@ class _LoginPageState extends State<LoginPage> {
                 ),
               ),
 
-              // The screenshot says "Forgot password?". Replace that entire
-              // line with clean card surface: this single-account system
-              // intentionally has no password-reset link.
-              Positioned(
-                left: 1280,
-                top: 547,
-                width: 258,
-                height: 62,
-                child: IgnorePointer(
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          const Color(0xfff8f9fe),
-                          const Color(0xfff6f7fc),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ),
               if (widget.store.needsAccount || _error != null)
                 Positioned(
                   left: 1024,
@@ -247,7 +271,6 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                 ),
 
-              // Fully opaque native button covers the screenshot's "Sign In".
               Positioned(
                 left: 1023,
                 top: 622,
@@ -285,7 +308,7 @@ class _LoginPageState extends State<LoginPage> {
                           )
                         : const AppIcon('log-in', size: 27),
                     label: const Text(
-                      'Log In',
+                      'Sign In',
                       style: TextStyle(
                         fontSize: 28,
                         fontWeight: FontWeight.w800,
@@ -300,4 +323,52 @@ class _LoginPageState extends State<LoginPage> {
       ),
     ),
   );
+}
+
+class _BannerClipper extends CustomClipper<Path> {
+  @override
+  Path getClip(Size s) => Path()..moveTo(0, 0)..lineTo(s.width, 0)..lineTo(s.width - 20, s.height)..lineTo(0, s.height)..close();
+  @override
+  bool shouldReclip(covariant _BannerClipper oldClipper) => false;
+}
+
+class _LoginArtwork extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size s) {
+    final rect = Offset.zero & s;
+    canvas.drawRect(rect, Paint()..shader = const LinearGradient(
+      begin: Alignment.topLeft, end: Alignment.bottomRight,
+      colors: [Color(0xfffafbff), Color(0xffdce5f8)],
+    ).createShader(rect));
+    final blue = Path()..moveTo(0, 0)..lineTo(1030, 0)..lineTo(690, s.height)..lineTo(0, s.height)..close();
+    canvas.drawPath(blue, Paint()..shader = const LinearGradient(
+      begin: Alignment.topLeft, end: Alignment.bottomRight,
+      colors: [Color(0xff11244a), Color(0xff204b85)],
+    ).createShader(rect));
+    canvas.drawPath(Path()..moveTo(952, 0)..lineTo(1030, 0)..lineTo(690, s.height)..lineTo(620, s.height)..close(), Paint()..color = const Color(0x223c72b1));
+  }
+  @override
+  bool shouldRepaint(covariant _LoginArtwork oldDelegate) => false;
+}
+
+class _LoginRibbons extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size s) {
+    final rect = Offset.zero & s;
+    canvas.drawPath(Path()..moveTo(0, 724)..lineTo(730, s.height)..lineTo(0, s.height)..close(), Paint()..color = Colors.white);
+    canvas.drawPath(Path()..moveTo(0, 731)..lineTo(707, s.height)..lineTo(0, s.height)..close(), Paint()..color = const Color(0xff102a59));
+    canvas.drawPath(Path()..moveTo(0, 785)..lineTo(690, s.height)..lineTo(0, s.height)..close(), Paint()..shader = const LinearGradient(colors: [Color(0xffed1734), Color(0xff8f071d)]).createShader(rect));
+  }
+  @override
+  bool shouldRepaint(covariant _LoginRibbons oldDelegate) => false;
+}
+
+class _CardAccent extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size s) {
+    final path = Path()..moveTo(s.width - 190, 0)..lineTo(s.width, 0)..lineTo(s.width, 125)..quadraticBezierTo(s.width - 45, 35, s.width - 190, 0)..close();
+    canvas.drawPath(path, Paint()..shader = const LinearGradient(colors: [Color(0xffe41531), Color(0xffa90c28)]).createShader(Offset.zero & s));
+  }
+  @override
+  bool shouldRepaint(covariant _CardAccent oldDelegate) => false;
 }
