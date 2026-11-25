@@ -682,12 +682,10 @@ class _DashboardAuditPreview extends StatelessWidget {
   const _DashboardAuditPreview({
     required this.rows,
     required this.onSeeAll,
-    this.fillHeight = false,
   });
 
   final List<DbRow> rows;
   final VoidCallback? onSeeAll;
-  final bool fillHeight;
 
   static const _border = BorderSide(color: Color(0xffd5e1f2));
   static const _columns = <int, TableColumnWidth>{
@@ -719,7 +717,6 @@ class _DashboardAuditPreview extends StatelessWidget {
     TextStyle style = _body,
     bool center = false,
     String? tooltip,
-    double minHeight = 0,
   }) {
     final label = Text(
       value,
@@ -730,7 +727,6 @@ class _DashboardAuditPreview extends StatelessWidget {
       style: style,
     );
     return Container(
-      constraints: BoxConstraints(minHeight: minHeight),
       padding: EdgeInsets.fromLTRB(center ? 8 : 12, 3, 8, 3),
       alignment: center ? Alignment.center : Alignment.centerLeft,
       child: tooltip == null || value.isEmpty
@@ -744,11 +740,7 @@ class _DashboardAuditPreview extends StatelessWidget {
     final recent = rows.take(5).toList();
     return LayoutBuilder(
       builder: (context, bounds) {
-        // Stretch five rows across spare desktop height.
-        final rowCount = recent.isEmpty ? 1 : recent.length;
-        final rowHeight = fillHeight && bounds.hasBoundedHeight
-            ? math.max(28.0, (bounds.maxHeight - 56) / (rowCount + 1))
-            : 0.0;
+        // Keep the Audit Trail a compact preview of five records.
         Widget cell(
           String value, {
           TextStyle style = _body,
@@ -759,7 +751,6 @@ class _DashboardAuditPreview extends StatelessWidget {
           style: style,
           center: center,
           tooltip: tooltip,
-          minHeight: rowHeight,
         );
         return Panel(
       padding: 0,
