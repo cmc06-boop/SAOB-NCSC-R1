@@ -195,19 +195,21 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('nav-reports')));
     await tester.pumpAndSettle();
 
-    final mainProgramField = tester
-        .widgetList<AppDropdown<String>>(find.byType(AppDropdown<String>))
+    // Summary is selected in Report Parameters after opening the preview.
+    await tester.tap(find.text('Generate Report'));
+    await tester.pumpAndSettle();
+
+    final summaryField = tester
+        .widgetList<SelectField<String>>(find.byType(SelectField<String>))
         .firstWhere(
-          (dropdown) =>
-              dropdown.items.any((item) => item.$1 == summarySelection),
+          (field) =>
+              field.items.any((option) => option.$1 == summarySelection),
         );
     expect(
-      mainProgramField.items,
+      summaryField.items,
       contains((summarySelection, 'Summary')),
     );
-    mainProgramField.onChanged!(summarySelection);
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Generate Report'));
+    summaryField.onChanged!(summarySelection);
     await tester.pumpAndSettle();
 
     expect(find.text('SUMMARY'), findsOneWidget);
