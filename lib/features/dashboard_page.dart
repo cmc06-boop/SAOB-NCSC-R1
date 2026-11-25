@@ -643,13 +643,13 @@ class _DashboardPageState extends State<DashboardPage> {
               ),
             )
           else
-            buildCharts(235.0),
+            buildCharts(255.0),
           const SizedBox(height: 12),
           // Keep the Audit Trail compact and steady. Only the chart row
           // grows with the desktop viewport, not the activity preview.
           SizedBox(
             width: double.infinity,
-            height: 215,
+            height: fillHeight ? 215 : 230,
             child: _DashboardAuditPreview(
               rows: _dashboardAuditRows(),
               onSeeAll: widget.onViewAuditTrail,
@@ -670,7 +670,7 @@ class _DashboardPageState extends State<DashboardPage> {
         // The normal desktop Dashboard stays fixed. On small windows or
         // narrow layouts, keep a scroll fallback rather than clipping data.
         final compactDesktop =
-            viewport.maxHeight >= 710 && viewport.maxWidth >= 1000;
+            viewport.maxHeight >= 760 && viewport.maxWidth >= 1000;
         return compactDesktop
             ? Padding(
                 padding: const EdgeInsets.fromLTRB(22, 14, 22, 10),
