@@ -451,19 +451,6 @@ class _RecordEditorState extends State<RecordEditor> {
     super.dispose();
   }
 
-  Future<void> lookup() async {
-    final r = await showDialog<DbRow>(
-      context: context,
-      builder: (ctx) => ReferencePicker(store: widget.store),
-    );
-    if (r != null && mounted) {
-      setState(() {
-        code.text = r['code'] as String;
-        name.text = r['name'] as String;
-      });
-    }
-  }
-
   void save() {
     final validation = <TextEditingController, String>{};
     if (!RegExp(r'^\d{8,14}$').hasMatch(codeKey(code.text))) {
@@ -725,12 +712,6 @@ class _RecordEditorState extends State<RecordEditor> {
                       digitsOnly: true,
                       focusNode: codeFocus,
                       hint: 'e.g. 5020101000',
-                      suffix: IconButton(
-                        tooltip: 'Find UACS code',
-                        onPressed: lookup,
-                        visualDensity: VisualDensity.compact,
-                        icon: const AppSvgIcon('search', size: 18),
-                      ),
                     ),
                     field(
                       'Expense (UACS Name) *',
