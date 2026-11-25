@@ -459,7 +459,7 @@ class _DashboardPageState extends State<DashboardPage> {
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       Transform.translate(
-                        offset: Offset(0, dense ? 0 : 9),
+                        offset: Offset(10, dense ? 0 : 9),
                         child: _programDonut(
                           chartShares,
                           t.allotment,
