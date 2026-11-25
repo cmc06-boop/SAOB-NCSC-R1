@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:math' as math;
 
 import 'package:file_selector/file_selector.dart';
+import 'package:path/path.dart' as path;
 import 'package:intl/intl.dart' hide TextDirection;
 import 'package:material_ui/material_ui.dart';
 
@@ -133,14 +134,26 @@ class _ReportsPageState extends State<ReportsPage> {
     setState(() => busy = true);
     try {
       final extension = fmt == 'PDF' ? 'pdf' : 'xlsx';
-      // Choose only the destination folder. The app generates a unique
-      // filename, avoiding the Windows Save As overwrite confirmation.
-      final folderPath = await getDirectoryPath(
+      final fileLabel = isSummary
+          ? 'Summary'
+          : selectedProgram.isEmpty
+              ? 'All'
+              : selectedProgram;
+      final location = await getSaveLocation(
         initialDirectory: lastExportFolder,
+        suggestedName: 'NCSC-R1-$selectedYear-$fileLabel.$extension',
+        acceptedTypeGroups: [
+          XTypeGroup(label: fmt == 'PDF' ? 'PDF' : 'Excel', extensions: [extension]),
+        ],
         confirmButtonText: 'Download',
       );
-      if (folderPath == null) return;
+      if (location == null) return;
+      final folderPath = path.dirname(location.path);
       lastExportFolder = folderPath;
+      final chosenName = path.basename(location.path);
+      final fileName = chosenName.toLowerCase().endsWith('.$extension')
+          ? chosenName
+          : '$chosenName.$extension';
       // All Programs and one selected program share the exact same PDF
       // renderer, including letterhead, columns, TOTAL row and spacing.
       final bytes = fmt == 'PDF'
@@ -158,15 +171,6 @@ class _ReportsPageState extends State<ReportsPage> {
       if (bytes.isEmpty) {
         throw const FinanceError('The report file could not be created.');
       }
-      final fileLabel = isSummary
-          ? 'Summary'
-          : selectedProgram.isEmpty
-          ? 'All'
-          : selectedProgram;
-      // A Manila calendar date starts a fresh filename sequence each day,
-      // while saveExportCopy still prevents overwriting any older file.
-      final downloadDate = DateFormat('yyyy-MM-dd').format(manilaNow());
-      final fileName = 'NCSC-R1-$selectedYear-$fileLabel-$downloadDate.$extension';
       final destination = await saveExportCopy(
         folderPath: folderPath,
         fileName: fileName,
