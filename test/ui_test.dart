@@ -670,7 +670,7 @@ void main() {
     expect(find.text('Create Account'), findsNothing);
     expect(find.text('Forgot Password?'), findsNothing);
     final login = tester.widget<FilledButton>(
-      find.widgetWithText(FilledButton, 'LogIn'),
+      find.widgetWithText(FilledButton, 'LOGIN'),
     );
     expect(login.onPressed, isNull);
     expect(tester.takeException(), isNull);
