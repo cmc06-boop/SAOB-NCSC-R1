@@ -66,12 +66,12 @@ class _LoginPageState extends State<LoginPage> {
       onSubmitted: (_) => _submit(),
       decoration: InputDecoration(
         hintText: label,
-        prefixIcon: AppSvgIcon(icon, size: 20, color: navy),
+        prefixIcon: AppIcon(icon, size: 20, color: navy),
         suffixIcon: password
             ? IconButton(
                 tooltip: _showPassword ? 'Hide password' : 'Show password',
                 onPressed: () => setState(() => _showPassword = !_showPassword),
-                icon: AppSvgIcon(
+                icon: AppIcon(
                   _showPassword ? 'eye' : 'eye-off',
                   size: 20,
                   color: navy,
@@ -133,7 +133,7 @@ class _LoginPageState extends State<LoginPage> {
                             child: CircleAvatar(
                               radius: 32,
                               backgroundColor: Color(0xffe2e9fa),
-                              child: AppSvgIcon('user-round', size: 40, color: navy),
+                              child: AppIcon('user-round', size: 28, color: navy),
                             ),
                           ),
                         ),
@@ -195,7 +195,7 @@ class _LoginPageState extends State<LoginPage> {
                                   strokeWidth: 2,
                                 ),
                               )
-                            : const AppSvgIcon('log-in', size: 22),
+                            : const AppIcon('log-in', size: 22),
                         label: const Text(
                           'Login',
                           style: TextStyle(
