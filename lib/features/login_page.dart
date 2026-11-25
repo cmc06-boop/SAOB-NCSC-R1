@@ -1,19 +1,18 @@
-import 'dart:convert';
-
 import 'package:material_ui/material_ui.dart';
 
 import '../core/format.dart';
 import '../data/finance_store.dart';
 import '../ui/app_icon.dart';
 import '../ui/common.dart';
-import '../ui/login_building_data.dart';
 
-// Reference artwork: 1672 x 941. The entire composition scales together,
-// so the logo, large heading, diagonal, building and login card stay aligned.
+/// Original user-supplied design is the background asset. Interactive widgets
+/// are positioned over its form at reference resolution, then the entire stage
+/// scales as a unit so controls never drift away from the image.
 const _designWidth = 1672.0;
 const _designHeight = 941.0;
-const _red = Color(0xffcb102b);
 const _cardWhite = Color(0xfff8f9fe);
+const _navy = Color(0xff142f61);
+const _red = Color(0xffc20d2a);
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key, required this.store});
@@ -59,522 +58,241 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
-  Widget _input(String title, TextEditingController controller, {
-    required String iconName,
+  Widget _field(
+    String name,
+    String icon,
+    TextEditingController controller, {
     bool password = false,
-  }) {
-    return TextField(
-      key: ValueKey(title),
-      controller: controller,
-      enabled: !_busy && !widget.store.needsAccount,
-      obscureText: password && !_showPassword,
-      autofillHints: title == 'Username'
-          ? const [AutofillHints.username]
+  }) => TextField(
+    key: ValueKey(name),
+    controller: controller,
+    enabled: !_busy && !widget.store.needsAccount,
+    obscureText: password && !_showPassword,
+    autofillHints: name == 'Username'
+        ? const [AutofillHints.username]
+        : const [AutofillHints.password],
+    textInputAction: password ? TextInputAction.done : TextInputAction.next,
+    onSubmitted: (_) {
+      if (password) _submit();
+    },
+    style: const TextStyle(color: Color(0xff29374e), fontSize: 20),
+    decoration: InputDecoration(
+      hintText: name,
+      hintStyle: const TextStyle(color: Color(0xff697182), fontSize: 19),
+      filled: true,
+      fillColor: const Color(0xfffafbff),
+      prefixIcon: AppIcon(icon, size: 26, color: Color(0xff586377)),
+      suffixIcon: password
+          ? IconButton(
+              tooltip: _showPassword ? 'Hide password' : 'Show password',
+              onPressed: () => setState(
+                () => _showPassword = !_showPassword,
+              ),
+              icon: AppIcon(
+                _showPassword ? 'eye' : 'eye-off',
+                size: 24,
+                color: const Color(0xff586377),
+              ),
+            )
           : null,
-      onSubmitted: (_) => _submit(),
-      style: const TextStyle(
-        fontSize: 20,
-        color: Color(0xff27354d),
+      contentPadding: const EdgeInsets.symmetric(
+        horizontal: 15,
+        vertical: 14,
       ),
-      decoration: InputDecoration(
-        hintText: title,
-        hintStyle: const TextStyle(
-          fontSize: 19,
-          color: Color(0xff616b7d),
-        ),
-        prefixIcon: Padding(
-          padding: const EdgeInsets.only(left: 17, right: 12),
-          child: AppIcon(iconName, size: 27, color: Color(0xff586277)),
-        ),
-        prefixIconConstraints: const BoxConstraints(
-          minWidth: 58,
-          minHeight: 46,
-        ),
-        suffixIcon: password
-            ? IconButton(
-                onPressed: () => setState(() => _showPassword = !_showPassword),
-                tooltip: _showPassword ? 'Hide password' : 'Show password',
-                icon: AppIcon(
-                  _showPassword ? 'eye' : 'eye-off',
-                  size: 26,
-                  color: const Color(0xff586277),
-                ),
-              )
-            : null,
-        filled: true,
-        fillColor: const Color(0xfffafbfe),
-        isDense: false,
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 18,
-          vertical: 17,
-        ),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(18),
-          borderSide: const BorderSide(color: Color(0xffc6cfdf)),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(18),
-          borderSide: const BorderSide(
-            color: Color(0xffbac7dd),
-            width: 1.5,
-          ),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(18),
-          borderSide: const BorderSide(
-            color: Color(0xff1b4c88),
-            width: 2,
-          ),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(17),
+        borderSide: const BorderSide(color: Color(0xffc7cfde)),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(17),
+        borderSide: const BorderSide(
+          color: Color(0xffc4cddd),
+          width: 1.5,
         ),
       ),
-    );
-  }
-
-  // The reference lockup uses precise placements. A Stack, rather than
-  // a Row with fixed-width text, avoids RenderFlex overflow at any scale.
-  Widget _agencyHeader() => SizedBox(
-    width: 747,
-    height: 112,
-    child: Stack(
-      children: [
-        Positioned(
-          left: 0,
-          top: 2,
-          width: 108,
-          height: 108,
-          child: Image.asset(
-            'assets/ncsc-logo-transparent.png',
-            fit: BoxFit.contain,
-            errorBuilder: (_, _, _) => const Icon(
-              Icons.account_balance,
-              size: 80,
-              color: Colors.white,
-            ),
-          ),
-        ),
-        const Positioned(
-          left: 126,
-          top: 9,
-          width: 318,
-          child: Text(
-            'Republic of the Philippines',
-            maxLines: 1,
-            style: TextStyle(fontSize: 17, color: Colors.white),
-          ),
-        ),
-        const Positioned(
-          left: 126,
-          top: 36,
-          width: 318,
-          height: 68,
-          child: FittedBox(
-            fit: BoxFit.scaleDown,
-            alignment: Alignment.topLeft,
-            child: Text(
-              'NATIONAL COMMISSION\nOF SENIOR CITIZENS',
-              maxLines: 2,
-              style: TextStyle(
-                fontSize: 25,
-                height: 1.08,
-                fontWeight: FontWeight.w800,
-                color: Colors.white,
-              ),
-            ),
-          ),
-        ),
-        Positioned(
-          left: 457,
-          top: 16,
-          child: Container(
-            width: 2,
-            height: 75,
-            color: const Color(0xfff3f5ff),
-          ),
-        ),
-        const Positioned(
-          left: 485,
-          top: 27,
-          width: 260,
-          height: 55,
-          child: FittedBox(
-            fit: BoxFit.scaleDown,
-            alignment: Alignment.centerLeft,
-            child: Text(
-              'Regional Office 1',
-              maxLines: 1,
-              style: TextStyle(
-                fontSize: 29,
-                fontWeight: FontWeight.w800,
-                color: Colors.white,
-              ),
-            ),
-          ),
-        ),
-      ],
-    ),
-  );
-
-  Widget _financeLabel() => ClipPath(
-    clipper: _FinanceTagClipper(),
-    child: Container(
-      width: 418,
-      height: 61,
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Color(0xffe51c39), Color(0xff842248)],
-        ),
-      ),
-      child: const Stack(
-        children: [
-          Positioned(
-            left: 22,
-            top: 14,
-            child: Icon(
-              Icons.storage_rounded,
-              size: 31,
-              color: Colors.white,
-            ),
-          ),
-          Positioned(
-            left: 74,
-            top: 8,
-            width: 300,
-            height: 44,
-            child: FittedBox(
-              alignment: Alignment.centerLeft,
-              fit: BoxFit.scaleDown,
-              child: Text(
-                'FINANCE SYSTEM',
-                maxLines: 1,
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 30,
-                  letterSpacing: .3,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-            ),
-          ),
-        ],
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(17),
+        borderSide: const BorderSide(color: _navy, width: 2),
       ),
     ),
   );
-
-  Widget _loginCard() {
-    final needsSetup = widget.store.needsAccount;
-    return Container(
-      width: 589,
-      height: 667,
-      clipBehavior: Clip.antiAlias,
-      decoration: BoxDecoration(
-        color: _cardWhite,
-        borderRadius: BorderRadius.circular(38),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x481d3b77),
-            offset: Offset(0, 16),
-            blurRadius: 37,
-          ),
-        ],
-      ),
-      child: Stack(
-        children: [
-          const Positioned(
-            right: 0,
-            top: 0,
-            width: 204,
-            height: 130,
-            child: IgnorePointer(
-              child: CustomPaint(painter: _CardCornerPainter()),
-            ),
-          ),
-          Positioned(
-            top: 31,
-            left: 225,
-            width: 139,
-            height: 115,
-            child: Container(
-              decoration: BoxDecoration(
-                color: const Color(0xffe9effb),
-                borderRadius: BorderRadius.circular(26),
-              ),
-              child: Stack(
-                children: [
-                  const Center(
-                    child: Icon(
-                      Icons.calculate_rounded,
-                      size: 86,
-                      color: Color(0xff173a75),
-                    ),
-                  ),
-                  Positioned(
-                    right: 10,
-                    bottom: 9,
-                    child: Container(
-                      padding: const EdgeInsets.all(3),
-                      decoration: BoxDecoration(
-                        color: const Color(0xffe9effb),
-                        borderRadius: BorderRadius.circular(9),
-                      ),
-                      child: const Icon(
-                        Icons.storage_rounded,
-                        color: Color(0xffd01432),
-                        size: 39,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const Positioned(
-            left: 40,
-            top: 158,
-            width: 509,
-            child: Text(
-              'NCSC Finance System',
-              textAlign: TextAlign.center,
-              maxLines: 1,
-              style: TextStyle(
-                fontSize: 38,
-                fontWeight: FontWeight.w800,
-                color: Color(0xff0d2a62),
-              ),
-            ),
-          ),
-          const Positioned(
-            left: 45,
-            top: 206,
-            width: 499,
-            child: Text(
-              'Log in to your account',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 23,
-                color: Color(0xff596475),
-              ),
-            ),
-          ),
-          Positioned(
-            left: 45,
-            top: 269,
-            width: 499,
-            height: 60,
-            child: _input(
-              'Username',
-              _username,
-              iconName: 'user-round',
-            ),
-          ),
-          Positioned(
-            left: 45,
-            top: 348,
-            width: 499,
-            height: 60,
-            child: _input(
-              'Password',
-              _password,
-              iconName: 'lock',
-              password: true,
-            ),
-          ),
-          if (needsSetup || _error != null)
-            Positioned(
-              left: 43,
-              top: 415,
-              width: 503,
-              height: 66,
-              child: Center(
-                child: Text(
-                  needsSetup
-                      ? 'No Admin account is configured on this computer. '
-                          'Please contact the system maintainer.'
-                      : _error!,
-                  textAlign: TextAlign.center,
-                  maxLines: 3,
-                  style: const TextStyle(
-                    color: _red,
-                    fontSize: 15,
-                  ),
-                ),
-              ),
-            ),
-          Positioned(
-            left: 45,
-            top: 489,
-            width: 499,
-            height: 70,
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xffdc102f), Color(0xffa90c26)],
-                ),
-                borderRadius: BorderRadius.circular(18),
-              ),
-              child: FilledButton.icon(
-                onPressed: _busy || needsSetup ? null : _submit,
-                style: FilledButton.styleFrom(
-                  backgroundColor: Colors.transparent,
-                  shadowColor: Colors.transparent,
-                  elevation: 0,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(18),
-                  ),
-                ),
-                icon: _busy
-                    ? const SizedBox(
-                        width: 22,
-                        height: 22,
-                        child: CircularProgressIndicator(
-                          color: Colors.white,
-                          strokeWidth: 2.5,
-                        ),
-                      )
-                    : const AppIcon('log-in', size: 27),
-                label: const Text(
-                  'Log In',
-                  style: TextStyle(
-                    fontSize: 29,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ),
-            ),
-          ),
-          const Positioned(
-            left: 45,
-            top: 601,
-            width: 499,
-            height: 28,
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                Positioned(
-                  left: 0,
-                  top: 13,
-                  width: 68,
-                  child: Divider(
-                    height: 1,
-                    color: Color(0xffaab5c6),
-                  ),
-                ),
-                Text(
-                  'For authorized NCSC personnel only',
-                  maxLines: 1,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 17,
-                    color: Color(0xff4a5464),
-                  ),
-                ),
-                Positioned(
-                  right: 0,
-                  top: 13,
-                  width: 68,
-                  child: Divider(
-                    height: 1,
-                    color: Color(0xffaab5c6),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    backgroundColor: const Color(0xffe6ecfa),
+    backgroundColor: const Color(0xffe6ecfb),
     body: SizedBox.expand(
       child: FittedBox(
-        fit: BoxFit.fill,
+        fit: BoxFit.contain,
         alignment: Alignment.center,
         child: SizedBox(
           width: _designWidth,
           height: _designHeight,
           child: Stack(
             children: [
-              const Positioned.fill(
-                child: IgnorePointer(
-                  child: CustomPaint(painter: _ReferenceBackdropPainter()),
+              Positioned.fill(
+                child: Image.asset(
+                  'assets/login-design-reference.webp',
+                  key: const ValueKey('login-reference-background'),
+                  fit: BoxFit.fill,
+                  semanticLabel:
+                      'National Commission of Senior Citizens, Regional '
+                      'Office 1. Financial Management Information System.',
                 ),
               ),
-              Positioned(
-                left: 0,
-                top: 513,
-                width: 1056,
-                height: 428,
-                child: IgnorePointer(
-                  child: Image.memory(
-                    base64Decode(loginBuildingBase64),
-                    fit: BoxFit.fill,
-                    gaplessPlayback: true,
+
+              // Retain the exact original design's logo, building, colors,
+              // panel shadows and card. Repaint only the title and form areas
+              // that must be native Flutter widgets.
+              const Positioned(
+                left: 1066,
+                top: 284,
+                width: 457,
+                height: 52,
+                child: ColoredBox(
+                  color: _cardWhite,
+                  child: Center(
+                    child: Text(
+                      'NCSC Finance System',
+                      maxLines: 1,
+                      style: TextStyle(
+                        fontSize: 38,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xff102e60),
+                      ),
+                    ),
                   ),
                 ),
               ),
-              Positioned(
-                left: 94,
-                top: 91,
-                width: 747,
-                height: 112,
-                child: _agencyHeader(),
+              const Positioned(
+                left: 1120,
+                top: 336,
+                width: 356,
+                height: 43,
+                child: ColoredBox(
+                  color: _cardWhite,
+                  child: Center(
+                    child: Text(
+                      'Log in to your account',
+                      maxLines: 1,
+                      style: TextStyle(
+                        fontSize: 23,
+                        color: Color(0xff545f73),
+                      ),
+                    ),
+                  ),
+                ),
               ),
+
               Positioned(
-                left: 94,
-                top: 270,
-                width: 418,
+                left: 1023,
+                top: 400,
+                width: 502,
                 height: 61,
-                child: _financeLabel(),
-              ),
-              const Positioned(
-                left: 93,
-                top: 342,
-                width: 760,
-                height: 139,
-                child: FittedBox(
-                  alignment: Alignment.topLeft,
-                  fit: BoxFit.scaleDown,
-                  child: Text(
-                    'Financial Management\nInformation System',
-                    maxLines: 2,
-                    softWrap: false,
-                    style: TextStyle(
-                      fontSize: 67,
-                      fontWeight: FontWeight.w800,
-                      height: 1.035,
-                      letterSpacing: -1.3,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-              ),
-              const Positioned(
-                left: 94,
-                top: 496,
-                width: 716,
-                height: 32,
-                child: FittedBox(
-                  fit: BoxFit.scaleDown,
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    'Budgeting   •   Disbursement   •   Accounting   •   Reporting',
-                    maxLines: 1,
-                    style: TextStyle(
-                      fontSize: 24,
-                      color: Color(0xffe2e8f7),
-                    ),
-                  ),
-                ),
+                child: _field('Username', 'user-round', _username),
               ),
               Positioned(
-                left: 979,
-                top: 133,
-                width: 589,
-                height: 667,
-                child: _loginCard(),
+                left: 1023,
+                top: 480,
+                width: 502,
+                height: 61,
+                child: _field(
+                  'Password',
+                  'lock',
+                  _password,
+                  password: true,
+                ),
+              ),
+
+              // The screenshot says "Forgot password?". Replace that entire
+              // line with clean card surface: this single-account system
+              // intentionally has no password-reset link.
+              Positioned(
+                left: 1280,
+                top: 547,
+                width: 258,
+                height: 62,
+                child: IgnorePointer(
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          const Color(0xfff8f9fe),
+                          const Color(0xfff6f7fc),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              if (widget.store.needsAccount || _error != null)
+                Positioned(
+                  left: 1024,
+                  top: 553,
+                  width: 503,
+                  height: 56,
+                  child: Center(
+                    child: Text(
+                      widget.store.needsAccount
+                          ? 'No Admin account is configured on this computer. '
+                              'Please contact the system maintainer.'
+                          : _error!,
+                      textAlign: TextAlign.center,
+                      maxLines: 3,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: _red,
+                        backgroundColor: _cardWhite,
+                      ),
+                    ),
+                  ),
+                ),
+
+              // Fully opaque native button covers the screenshot's "Sign In".
+              Positioned(
+                left: 1023,
+                top: 622,
+                width: 502,
+                height: 70,
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xffdf102f), Color(0xffa90a25)],
+                    ),
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                  child: FilledButton.icon(
+                    key: const ValueKey('login-submit'),
+                    onPressed: _busy || widget.store.needsAccount
+                        ? null
+                        : _submit,
+                    style: FilledButton.styleFrom(
+                      backgroundColor: Colors.transparent,
+                      shadowColor: Colors.transparent,
+                      elevation: 0,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(18),
+                      ),
+                    ),
+                    icon: _busy
+                        ? const SizedBox(
+                            width: 23,
+                            height: 23,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2.3,
+                              color: Colors.white,
+                            ),
+                          )
+                        : const AppIcon('log-in', size: 27),
+                    label: const Text(
+                      'Log In',
+                      style: TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                ),
               ),
             ],
           ),
@@ -582,123 +300,4 @@ class _LoginPageState extends State<LoginPage> {
       ),
     ),
   );
-}
-
-class _ReferenceBackdropPainter extends CustomPainter {
-  const _ReferenceBackdropPainter();
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final rect = Offset.zero & size;
-    canvas.drawRect(
-      rect,
-      Paint()
-        ..shader = const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Color(0xffe8eefb),
-            Color(0xfff7f8ff),
-            Color(0xffd5e2f9),
-          ],
-        ).createShader(rect),
-    );
-
-    final upperRight = Path()
-      ..moveTo(size.width * .86, 0)
-      ..lineTo(size.width, 0)
-      ..lineTo(size.width * .78, size.height * .41)
-      ..lineTo(size.width * .69, size.height * .38)
-      ..close();
-    canvas.drawPath(upperRight, Paint()..color = const Color(0x66ffffff));
-
-    final lowerRight = Path()
-      ..moveTo(size.width * .84, size.height)
-      ..lineTo(size.width, size.height * .68)
-      ..lineTo(size.width, size.height)
-      ..close();
-    canvas.drawPath(lowerRight, Paint()..color = const Color(0x4afefeff));
-
-    final navyPanel = Path()
-      ..moveTo(0, 0)
-      ..lineTo(1009, 0)
-      ..lineTo(761, size.height)
-      ..lineTo(0, size.height)
-      ..close();
-    canvas.drawPath(
-      navyPanel,
-      Paint()
-        ..shader = const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Color(0xff122a53),
-            Color(0xff12315f),
-            Color(0xff1e4780),
-          ],
-        ).createShader(rect),
-    );
-
-    final edge = Path()
-      ..moveTo(935, 0)
-      ..lineTo(1009, 0)
-      ..lineTo(761, size.height)
-      ..lineTo(711, size.height)
-      ..close();
-    canvas.drawPath(edge, Paint()..color = const Color(0x2b3c6da4));
-
-    // Faint cool highlights in the dark-blue area.
-    final glow = Path()
-      ..moveTo(0, size.height * .55)
-      ..lineTo(695, size.height * .84)
-      ..lineTo(660, size.height)
-      ..lineTo(0, size.height)
-      ..close();
-    canvas.drawPath(glow, Paint()..color = const Color(0x171c64af));
-  }
-
-  @override
-  bool shouldRepaint(covariant _ReferenceBackdropPainter oldDelegate) =>
-      false;
-}
-
-class _FinanceTagClipper extends CustomClipper<Path> {
-  @override
-  Path getClip(Size size) => Path()
-    ..moveTo(10, 0)
-    ..lineTo(size.width, 0)
-    ..lineTo(size.width * .96, size.height)
-    ..lineTo(0, size.height)
-    ..lineTo(0, 10)
-    ..quadraticBezierTo(0, 0, 10, 0)
-    ..close();
-
-  @override
-  bool shouldReclip(covariant _FinanceTagClipper oldClipper) => false;
-}
-
-class _CardCornerPainter extends CustomPainter {
-  const _CardCornerPainter();
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final redCorner = Path()
-      ..moveTo(size.width * .05, 0)
-      ..lineTo(size.width, 0)
-      ..lineTo(size.width, size.height)
-      ..quadraticBezierTo(size.width * .79, size.height * .18, 0, 0)
-      ..close();
-    canvas.drawPath(redCorner, Paint()..color = const Color(0xffd21732));
-
-    final whiteSweep = Path()
-      ..moveTo(0, 0)
-      ..quadraticBezierTo(size.width * .74, 1, size.width, size.height * .89)
-      ..lineTo(size.width * .93, size.height * .75)
-      ..quadraticBezierTo(size.width * .60, size.height * .08, 0, 0)
-      ..close();
-    canvas.drawPath(whiteSweep, Paint()..color = _cardWhite);
-  }
-
-  @override
-  bool shouldRepaint(covariant _CardCornerPainter oldDelegate) => false;
 }
