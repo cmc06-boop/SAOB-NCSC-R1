@@ -38,8 +38,16 @@ class _DashboardPageState extends State<DashboardPage> {
     String amount(double divisor, String suffix) {
       final scaled = pesos / divisor;
       final decimals = scaled.abs() < 10 ? 2 : scaled.abs() < 100 ? 1 : 0;
-      final value = scaled.toStringAsFixed(decimals);
-      return '₱${value.replaceFirst(RegExp(r'\\.?0+$'), '')}$suffix';
+      var value = scaled.toStringAsFixed(decimals);
+      if (value.contains('.')) {
+        while (value.endsWith('0')) {
+          value = value.substring(0, value.length - 1);
+        }
+        if (value.endsWith('.')) {
+          value = value.substring(0, value.length - 1);
+        }
+      }
+      return '₱${value}$suffix';
     }
 
     if (absolute >= 1e15) return amount(1e15, 'Q');
