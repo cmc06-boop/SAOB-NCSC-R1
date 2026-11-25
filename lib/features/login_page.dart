@@ -118,49 +118,66 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) => Scaffold(
     backgroundColor: const Color(0xffe6ecfb),
-    body: SizedBox.expand(
-      child: FittedBox(
-        fit: BoxFit.fill,
-        alignment: Alignment.center,
-        child: SizedBox(
-          width: _designWidth,
-          height: _designHeight,
-          child: Stack(
-            children: [
-              const Positioned.fill(child: CustomPaint(key: ValueKey('login-native-background'), painter: _LoginArtwork())),
-              Positioned(
-                left: 0,
-                top: 535,
-                width: 920,
-                height: 406,
-                child: IgnorePointer(
-                  child: ClipPath(
-                    clipper: _BuildingPanelClipper(),
-                    child: ShaderMask(
-                      blendMode: BlendMode.dstIn,
-                      shaderCallback: (bounds) => const LinearGradient(
-                        begin: Alignment.centerLeft,
-                        end: Alignment.centerRight,
-                        colors: [Colors.white, Colors.white, Color(0x00ffffff)],
-                        stops: [0, 0.72, 1],
-                      ).createShader(bounds),
-                      child: Image.asset(
-                        'assets/ncsc-building.png',
-                        key: const ValueKey('login-building-image'),
-                        fit: BoxFit.contain,
-                        alignment: Alignment.bottomLeft,
-                        color: const Color(0x55204480),
-                        colorBlendMode: BlendMode.srcATop,
-                        excludeFromSemantics: true,
-                      ),
-                    ),
-                  ),
+    body: LayoutBuilder(
+      builder: (context, constraints) {
+        final sx = constraints.maxWidth / _designWidth;
+        final sy = constraints.maxHeight / _designHeight;
+        final scale = sx < sy ? sx : sy;
+        return Stack(
+          fit: StackFit.expand,
+          children: [
+            const CustomPaint(
+              key: ValueKey('login-native-background'),
+              painter: _LoginArtwork(),
+            ),
+            Positioned(
+              left: 0,
+              bottom: 105 * sy,
+              width: 860 * sx,
+              height: 330 * sy,
+              child: IgnorePointer(
+                child: Image.asset(
+                  'assets/ncsc-building.png',
+                  key: const ValueKey('login-building-image'),
+                  fit: BoxFit.contain,
+                  alignment: Alignment.bottomLeft,
+                  color: const Color(0x33204480),
+                  colorBlendMode: BlendMode.srcATop,
+                  excludeFromSemantics: true,
                 ),
               ),
-              const Positioned.fill(child: IgnorePointer(child: CustomPaint(painter: _LoginRibbons()))),
-              Positioned(left: 94, top: 90, width: 108, height: 108,
-                child: Image.asset('assets/ncsc-logo-transparent.png')),
-              const Positioned(left: 220, top: 98, width: 330, child: Column(
+            ),
+            const IgnorePointer(child: CustomPaint(painter: _LoginRibbons())),
+            Positioned(
+              left: 94 * sx,
+              top: 90 * sy,
+              width: 108 * scale,
+              height: 108 * scale,
+              child: Image.asset(
+                'assets/ncsc-logo-transparent.png',
+                key: const ValueKey('login-agency-logo'),
+                fit: BoxFit.contain,
+              ),
+            ),
+            // Keep text and controls uniformly scaled, independently of the
+            // edge-to-edge decorative background and image layers.
+            Positioned.fill(
+              child: LayoutBuilder(
+                builder: (context, inner) => Stack(
+                  children: [
+                    Positioned(
+                      left: 0,
+                      top: 0,
+                      width: 950 * sx,
+                      height: 550 * sy,
+                      child: FittedBox(
+                        fit: BoxFit.contain,
+                        alignment: Alignment.topLeft,
+                        child: SizedBox(
+                          width: 950,
+                          height: 550,
+                          child: Stack(children: [
+              const Positioned(left: 220, top: 98, width: 330, height: 115, child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text('Republic of the Philippines', style: TextStyle(color: Colors.white, fontSize: 20)),
@@ -168,8 +185,8 @@ class _LoginPageState extends State<LoginPage> {
                   Text('NATIONAL COMMISSION\nOF SENIOR CITIZENS', style: TextStyle(color: Colors.white, fontSize: 25, fontWeight: FontWeight.w800, height: 1.2)),
                 ],
               )),
-              const Positioned(left: 558, top: 105, height: 73, child: VerticalDivider(color: Colors.white, width: 2, thickness: 2)),
-              const Positioned(left: 586, top: 122, child: Text('Regional Office I', style: TextStyle(color: Colors.white, fontSize: 29, fontWeight: FontWeight.w800))),
+              const Positioned(left: 558, top: 105, width: 2, height: 73, child: VerticalDivider(color: Colors.white, width: 2, thickness: 2)),
+              const Positioned(left: 586, top: 122, width: 360, height: 55, child: Text('Regional Office I', style: TextStyle(color: Colors.white, fontSize: 29, fontWeight: FontWeight.w800))),
               Positioned(left: 93, top: 272, width: 420, height: 62, child: ClipPath(
                 clipper: _BannerClipper(),
                 child: Container(
@@ -182,30 +199,46 @@ class _LoginPageState extends State<LoginPage> {
                   ]),
                 ),
               )),
-              const Positioned(left: 92, top: 345, width: 780, child: Text('Financial Management\nInformation System', style: TextStyle(color: Colors.white, fontSize: 64, fontWeight: FontWeight.w800, height: 1.06, letterSpacing: -1.8))),
-              const Positioned(left: 94, top: 499, child: Text('Budgeting  •  Disbursement  •  Accounting  •  Reporting', style: TextStyle(color: Color(0xffdce6fb), fontSize: 25))),
-              Positioned(left: 979, top: 134, width: 590, height: 667, child: Container(
+              const Positioned(left: 92, top: 345, width: 780, height: 150, child: Text('Financial Management\nInformation System', style: TextStyle(color: Colors.white, fontSize: 64, fontWeight: FontWeight.w800, height: 1.06, letterSpacing: -1.8))),
+              const Positioned(left: 94, top: 499, width: 800, height: 48, child: Text('Budgeting  •  Disbursement  •  Accounting  •  Reporting', style: TextStyle(color: Color(0xffdce6fb), fontSize: 25))),
+
+                          ]),
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      left: 979 * sx,
+                      top: 134 * sy,
+                      width: 590 * sx,
+                      height: 667 * sy,
+                      child: FittedBox(
+                        fit: BoxFit.contain,
+                        child: SizedBox(
+                          width: 590,
+                          height: 667,
+                          child: Stack(children: [
+              Positioned(left: 0, top: 0, width: 590, height: 667, child: Container(
                 clipBehavior: Clip.antiAlias,
                 decoration: BoxDecoration(color: _cardWhite, borderRadius: BorderRadius.circular(42), boxShadow: const [
                   BoxShadow(color: Color(0x30304c92), blurRadius: 40, offset: Offset(0, 20)),
                 ]),
                 child: const CustomPaint(painter: _CardAccent()),
               )),
-              Positioned(left: 1205, top: 165, width: 138, height: 112, child: Container(
+              Positioned(left: 226, top: 31, width: 138, height: 112, child: Container(
                 decoration: BoxDecoration(color: const Color(0xffe8edf7), borderRadius: BorderRadius.circular(26)),
                 child: const Stack(alignment: Alignment.center, children: [
                   Positioned(left: 16, top: 12, child: AppIcon('calculator', size: 82, color: _navy)),
                   Positioned(right: 12, bottom: 9, child: AppIcon('database', size: 55, color: _red)),
                 ]),
               )),
-              const Positioned(left: 1024, top: 728, width: 502, child: Row(children: [
+              const Positioned(left: 45, top: 594, width: 502, height: 35, child: Row(children: [
                 Expanded(child: Divider(color: Color(0xffaab5c9))),
                 Expanded(flex: 8, child: Padding(padding: EdgeInsets.symmetric(horizontal: 16), child: FittedBox(fit: BoxFit.scaleDown, child: Text('For authorized NCSC personnel only', style: TextStyle(color: Color(0xff545f73), fontSize: 19))))),
                 Expanded(child: Divider(color: Color(0xffaab5c9))),
               ])),
               const Positioned(
-                left: 1066,
-                top: 284,
+                left: 87,
+                top: 150,
                 width: 457,
                 height: 52,
                 child: ColoredBox(
@@ -224,8 +257,8 @@ class _LoginPageState extends State<LoginPage> {
                 ),
               ),
               const Positioned(
-                left: 1120,
-                top: 336,
+                left: 141,
+                top: 202,
                 width: 356,
                 height: 43,
                 child: ColoredBox(
@@ -244,15 +277,15 @@ class _LoginPageState extends State<LoginPage> {
               ),
 
               Positioned(
-                left: 1023,
-                top: 400,
+                left: 44,
+                top: 266,
                 width: 502,
                 height: 61,
                 child: _field('Username', 'user-round', _username),
               ),
               Positioned(
-                left: 1023,
-                top: 480,
+                left: 44,
+                top: 346,
                 width: 502,
                 height: 61,
                 child: _field(
@@ -265,8 +298,8 @@ class _LoginPageState extends State<LoginPage> {
 
               if (widget.store.needsAccount || _error != null)
                 Positioned(
-                  left: 1024,
-                  top: 553,
+                  left: 45,
+                  top: 419,
                   width: 503,
                   height: 56,
                   child: Center(
@@ -287,8 +320,8 @@ class _LoginPageState extends State<LoginPage> {
                 ),
 
               Positioned(
-                left: 1023,
-                top: 622,
+                left: 44,
+                top: 488,
                 width: 502,
                 height: 70,
                 child: DecoratedBox(
@@ -332,10 +365,17 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                 ),
               ),
-            ],
-          ),
-        ),
-      ),
+                          ]),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        );
+      },
     ),
   );
 }
@@ -351,6 +391,9 @@ class _LoginArtwork extends CustomPainter {
   const _LoginArtwork();
   @override
   void paint(Canvas canvas, Size s) {
+    canvas.save();
+    canvas.scale(s.width / _designWidth, s.height / _designHeight);
+    s = const Size(_designWidth, _designHeight);
     final rect = Offset.zero & s;
     canvas.drawRect(rect, Paint()..shader = const LinearGradient(
       begin: Alignment.topLeft, end: Alignment.bottomRight,
@@ -362,6 +405,7 @@ class _LoginArtwork extends CustomPainter {
       colors: [Color(0xff11244a), Color(0xff204b85)],
     ).createShader(rect));
     canvas.drawPath(Path()..moveTo(952, 0)..lineTo(1030, 0)..lineTo(690, s.height)..lineTo(620, s.height)..close(), Paint()..color = const Color(0x223c72b1));
+    canvas.restore();
   }
   @override
   bool shouldRepaint(covariant _LoginArtwork oldDelegate) => false;
@@ -371,10 +415,14 @@ class _LoginRibbons extends CustomPainter {
   const _LoginRibbons();
   @override
   void paint(Canvas canvas, Size s) {
+    canvas.save();
+    canvas.scale(s.width / _designWidth, s.height / _designHeight);
+    s = const Size(_designWidth, _designHeight);
     final rect = Offset.zero & s;
     canvas.drawPath(Path()..moveTo(0, 724)..lineTo(730, s.height)..lineTo(0, s.height)..close(), Paint()..color = Colors.white);
     canvas.drawPath(Path()..moveTo(0, 731)..lineTo(707, s.height)..lineTo(0, s.height)..close(), Paint()..color = const Color(0xff102a59));
     canvas.drawPath(Path()..moveTo(0, 785)..lineTo(690, s.height)..lineTo(0, s.height)..close(), Paint()..shader = const LinearGradient(colors: [Color(0xffed1734), Color(0xff8f071d)]).createShader(rect));
+    canvas.restore();
   }
   @override
   bool shouldRepaint(covariant _LoginRibbons oldDelegate) => false;
@@ -391,15 +439,3 @@ class _CardAccent extends CustomPainter {
   bool shouldRepaint(covariant _CardAccent oldDelegate) => false;
 }
 
-class _BuildingPanelClipper extends CustomClipper<Path> {
-  @override
-  Path getClip(Size s) => Path()
-    ..moveTo(0, 0)
-    ..lineTo(s.width * 0.91, 0)
-    ..lineTo(s.width * 0.75, s.height)
-    ..lineTo(0, s.height)
-    ..close();
-
-  @override
-  bool shouldReclip(covariant _BuildingPanelClipper oldClipper) => false;
-}
