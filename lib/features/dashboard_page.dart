@@ -503,7 +503,7 @@ class _DashboardPageState extends State<DashboardPage> {
         },
       );
 
-    Widget buildContent(bool fillHeight) => Column(
+    Widget buildContent() => Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           LayoutBuilder(
@@ -635,21 +635,18 @@ class _DashboardPageState extends State<DashboardPage> {
             },
           ),
           const SizedBox(height: 10),
-          if (fillHeight)
-            Expanded(
-              child: LayoutBuilder(
-                builder: (context, constraints) =>
-                    buildCharts(constraints.maxHeight),
-              ),
-            )
-          else
-            buildCharts(255.0),
+          Expanded(
+            child: LayoutBuilder(
+              builder: (context, constraints) =>
+                  buildCharts(constraints.maxHeight),
+            ),
+          ),
           const SizedBox(height: 12),
           // Keep the Audit Trail compact and steady. Only the chart row
           // grows with the desktop viewport, not the activity preview.
           SizedBox(
             width: double.infinity,
-            height: fillHeight ? 215 : 230,
+            height: 215,
             child: _DashboardAuditPreview(
               rows: _dashboardAuditRows(),
               onSeeAll: widget.onViewAuditTrail,
@@ -665,22 +662,28 @@ class _DashboardPageState extends State<DashboardPage> {
             ),
         ],
       );
-    return LayoutBuilder(
-      builder: (context, viewport) {
-        // The normal desktop Dashboard stays fixed. On small windows or
-        // narrow layouts, keep a scroll fallback rather than clipping data.
-        final compactDesktop =
-            viewport.maxHeight >= 710 && viewport.maxWidth >= 1000;
-        return compactDesktop
-            ? Padding(
-                padding: const EdgeInsets.fromLTRB(22, 14, 22, 10),
-                child: buildContent(true),
-              )
-            : SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(22, 14, 22, 10),
-                child: buildContent(false),
-              );
-      },
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(22, 14, 22, 10),
+      child: LayoutBuilder(
+        builder: (context, viewport) {
+          // Keep the dashboard in one viewport. A minimum logical canvas
+          // preserves the four metrics and two chart panels on smaller windows.
+          // Scale uniformly only when needed; never scroll the entire page.
+          final width = math.max(1050.0, viewport.maxWidth);
+          final height = math.max(760.0, viewport.maxHeight);
+          return SizedBox.expand(
+            child: FittedBox(
+              fit: BoxFit.contain,
+              alignment: Alignment.topCenter,
+              child: SizedBox(
+                width: width,
+                height: height,
+                child: buildContent(),
+              ),
+            ),
+          );
+        },
+      ),
     );
   }
 }
@@ -769,14 +772,13 @@ class _DashboardAuditPreview extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 3),
             child: Row(
               children: [
-                const AppIcon('history', color: blue, size: 20),
-                const SizedBox(width: 8),
                 const Expanded(
                   child: Text(
                     'Audit Trail',
                     style: TextStyle(
                       fontSize: 18,
-                      fontWeight: FontWeight.w700,
+                      fontWeight: FontWeight.w800,
+                      color: navy,
                     ),
                   ),
                 ),
