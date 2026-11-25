@@ -162,6 +162,12 @@ class _DashboardPageState extends State<DashboardPage> {
             padding: EdgeInsets.symmetric(vertical: limit == null ? 6 : 3),
             child: Row(
               children: [
+                const SizedBox(width: 12),
+                Expanded(
+                  flex: 3,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
                 Container(
                   width: 10,
                   height: 10,
@@ -171,21 +177,24 @@ class _DashboardPageState extends State<DashboardPage> {
                   ),
                 ),
                 const SizedBox(width: 8),
-                Expanded(
-                  flex: 2,
+                Flexible(
                   child: Text(
                     shown[i].key,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.right,
                     style: const TextStyle(
                       fontWeight: FontWeight.w600,
                       fontSize: 13,
                     ),
                   ),
                 ),
-                const SizedBox(width: 8),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 10),
                 Expanded(
-                  flex: 3,
+                  flex: 2,
                   child: Tooltip(
                     message: '${money(shown[i].value)} (${rate(shown[i].value, allotment)})',
                     child: Text(
