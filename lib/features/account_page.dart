@@ -127,7 +127,7 @@ class _AccountDialogState extends State<AccountDialog> {
               ? IconButton(
                   tooltip: visible ? 'Hide $label' : 'Show $label',
                   onPressed: toggleVisibility,
-                  icon: AppSvgIcon(
+                  icon: AppIcon(
                     visible ? 'eye' : 'eye-off',
                     size: 19,
                   ),
@@ -165,7 +165,7 @@ class _AccountDialogState extends State<AccountDialog> {
             key: const ValueKey('account-close'),
             tooltip: 'Close account',
             onPressed: _saving ? null : () => Navigator.of(context).pop(),
-            icon: const AppSvgIcon('x'),
+            icon: const AppIcon('x'),
           ),
         ),
       ],
