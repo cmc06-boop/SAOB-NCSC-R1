@@ -129,7 +129,10 @@ void main() {
       expect(find.text('Set Up Account'), findsNothing);
       expect(find.text('Create Account'), findsNothing);
       expect(find.text('Forgot Password?'), findsNothing);
-      expect(find.textContaining('NATIONAL COMMISSION'), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey('login-reference-background')),
+        findsOneWidget,
+      );
       expect(find.text('Username'), findsOneWidget);
       final password = tester.widget<TextField>(
         find.byKey(const ValueKey('Password')),
