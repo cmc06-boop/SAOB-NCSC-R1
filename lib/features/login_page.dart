@@ -188,7 +188,7 @@ class _LoginPageState extends State<LoginPage> {
               ),
               const Positioned(left: 558, top: 105, width: 2, height: 73, child: VerticalDivider(color: Colors.white, width: 2, thickness: 2)),
               const Positioned(left: 586, top: 122, width: 360, height: 55, child: Text('Regional Office I', style: TextStyle(color: Colors.white, fontSize: 29, fontWeight: FontWeight.w800))),
-              Positioned(left: 93, top: 272, width: 420, height: 62, child: ClipPath(
+              Positioned(left: 93, top: 272, width: 570, height: 62, child: ClipPath(
                 clipper: _BannerClipper(),
                 child: Container(
                   decoration: const BoxDecoration(gradient: LinearGradient(colors: [Color(0xffe5132c), Color(0xff72223c)])),
@@ -196,11 +196,30 @@ class _LoginPageState extends State<LoginPage> {
                   child: const Row(children: [
                     AppIcon('database', size: 34, color: Colors.white),
                     SizedBox(width: 18),
-                    Expanded(child: FittedBox(fit: BoxFit.scaleDown, alignment: Alignment.centerLeft, child: Text('FINANCE SYSTEM', style: TextStyle(color: Colors.white, fontSize: 30, fontWeight: FontWeight.w800)))),
+                    Expanded(child: FittedBox(fit: BoxFit.scaleDown, alignment: Alignment.centerLeft, child: Text('Budget and Finance System', style: TextStyle(color: Colors.white, fontSize: 30, fontWeight: FontWeight.w800)))),
                   ]),
                 ),
               )),
-              const Positioned(left: 92, top: 345, width: 780, height: 150, child: Text('Financial Management\nInformation System', style: TextStyle(color: Colors.white, fontSize: 64, fontWeight: FontWeight.w800, height: 1.06, letterSpacing: -1.8))),
+              const Positioned(
+                left: 92,
+                top: 345,
+                width: 780,
+                height: 150,
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'Statement of Allotment,\nObligations, and Balance\nManagement System',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 46,
+                      fontWeight: FontWeight.w800,
+                      height: 1.06,
+                      letterSpacing: -1,
+                    ),
+                  ),
+                ),
+              ),
               const Positioned(left: 94, top: 499, width: 800, height: 48, child: Text('Budgeting  •  Disbursement  •  Accounting  •  Reporting', style: TextStyle(color: Color(0xffdce6fb), fontSize: 25))),
 
                           ]),
@@ -357,7 +376,7 @@ class _LoginPageState extends State<LoginPage> {
                           )
                         : const AppIcon('log-in', size: 27),
                     label: const Text(
-                      'Sign In',
+                      'LogIn',
                       style: TextStyle(
                         fontSize: 28,
                         fontWeight: FontWeight.w800,
