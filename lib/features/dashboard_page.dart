@@ -493,7 +493,7 @@ class _DashboardPageState extends State<DashboardPage> {
                   ],
                 );
         },
-      ),
+      );
 
     Widget buildContent(bool fillHeight, double availableHeight) => Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -627,135 +627,15 @@ class _DashboardPageState extends State<DashboardPage> {
             },
           ),
           const SizedBox(height: 10),
-          LayoutBuilder(
-            builder: (context, c) {
-              const gap = 10.0;
-              final sideBySide = c.maxWidth >= 1000;
-              final cardWidth = sideBySide
-                  ? (c.maxWidth - gap) / 2
-                  : c.maxWidth;
-              // Keep the preview short; the dialog shows every program.
-              // Both dashboard panels use identical dimensions.
-              // Give the six primary cards priority over the Audit Trail.
-              // On desktop, expand the charts into the free vertical space.
-              final panelHeight = fillHeight
-                  ? math.max(225.0, availableHeight - 480.0)
-                  : 225.0;
-              final previewDonutSize = math.min(
-                200.0,
-                math.max(146.0, panelHeight - 90.0),
-              );
-              final chart = Panel(
-                padding: 10,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Utilization by Program',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w800,
-                        color: navy,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Expanded(
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Transform.translate(
-                            offset: const Offset(0, 9),
-                            child: _programDonut(
-                              shares,
-                              t.allotment,
-                              previewDonutSize,
-                            ),
-                          ),
-                          const SizedBox(width: 20),
-                          Expanded(
-                            child: _programLegend(
-                              shares,
-                              t.allotment,
-                              limit: 3,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: TextButton(
-                        style: TextButton.styleFrom(
-                          minimumSize: Size.zero,
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        ),
-                        onPressed: () => _showAllPrograms(shares, t.allotment),
-                        child: const Text('See All'),
-                      ),
-                    ),
-                  ],
-                ),
-              );
-              final rates = Panel(
-                padding: 12,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Budget Utilization Rate',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w800,
-                        color: navy,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    _Rate('Obligation Rate', t.obligation, t.allotment, blue),
-                    const SizedBox(height: 12),
-                    _Rate(
-                      'Disbursement Rate',
-                      t.disbursement,
-                      t.allotment,
-                      navy,
-                    ),
-                  ],
-                ),
-              );
-              return sideBySide
-                  ? Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        SizedBox(
-                          width: cardWidth,
-                          height: panelHeight,
-                          child: chart,
-                        ),
-                        const SizedBox(width: gap),
-                        SizedBox(
-                          width: cardWidth,
-                          height: panelHeight,
-                          child: rates,
-                        ),
-                      ],
-                    )
-                  : Column(
-                      children: [
-                        SizedBox(
-                          width: double.infinity,
-                          height: panelHeight,
-                          child: chart,
-                        ),
-                        const SizedBox(height: 12),
-                        SizedBox(
-                          width: double.infinity,
-                          height: panelHeight,
-                          child: rates,
-                        ),
-                      ],
-                    );
-            },
-          ),
+          if (fillHeight)
+            Expanded(
+              child: LayoutBuilder(
+                builder: (context, constraints) =>
+                    buildCharts(constraints.maxHeight),
+              ),
+            )
+          else
+            buildCharts(235.0),
           const SizedBox(height: 12),
           // Keep the Audit Trail compact and steady. Only the chart row
           // grows with the desktop viewport, not the activity preview.
