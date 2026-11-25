@@ -225,7 +225,7 @@ class _DashboardPageState extends State<DashboardPage> {
         final width = math.min(480.0, screen.width - 48);
         final columns = width >= 340 ? 2 : 1;
         final legendHeight = math.max(48.0, (annualShares.length / columns).ceil() * 48.0);
-        final desiredHeight = math.min(490.0, 246.0 + legendHeight);
+        final desiredHeight = math.min(490.0, 260.0 + legendHeight);
         final height = math.min(desiredHeight, screen.height - 64);
         return Dialog(
           insetPadding: const EdgeInsets.all(24),
@@ -277,7 +277,7 @@ class _DashboardPageState extends State<DashboardPage> {
                                 annualAllotment,
                               ),
                             ),
-                            const SizedBox(height: 8),
+                            const SizedBox(height: 22),
                             Expanded(
                               child: annualShares.isEmpty
                                   ? const Center(
@@ -298,9 +298,15 @@ class _DashboardPageState extends State<DashboardPage> {
                                                   ...entries.where((e) => e.key != selectedKey),
                                                 ];
                                           final count = legendConstraints.maxWidth >= 308 ? 2 : 1;
-                                          const gap = 12.0;
-                                          final cellWidth = (legendConstraints.maxWidth - (count - 1) * gap) / count;
-                                          return Wrap(
+                                          const gap = 18.0;
+                                          final groupWidth = math.min(360.0, legendConstraints.maxWidth);
+                                          final cellWidth = (groupWidth - (count - 1) * gap) / count;
+                                          return Align(
+                                            alignment: Alignment.topCenter,
+                                            child: SizedBox(
+                                              width: groupWidth,
+                                              child: Wrap(
+                                            alignment: WrapAlignment.center,
                                             spacing: gap,
                                             runSpacing: 10,
                                             children: [
@@ -352,6 +358,8 @@ class _DashboardPageState extends State<DashboardPage> {
                                                   ),
                                                 ),
                                             ],
+                                              ),
+                                            ),
                                           );
                                         },
                                       ),
