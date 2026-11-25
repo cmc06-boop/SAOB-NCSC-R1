@@ -480,35 +480,10 @@ class BudgetTable extends StatefulWidget {
 class _BudgetTableState extends State<BudgetTable> {
   final _scroll = ScrollController();
   final _horizontal = ScrollController();
-  final _headerHorizontal = ScrollController();
-
-  @override
-  void initState() {
-    super.initState();
-    _horizontal.addListener(
-      () => _syncHorizontal(_horizontal, _headerHorizontal),
-    );
-    _headerHorizontal.addListener(
-      () => _syncHorizontal(_headerHorizontal, _horizontal),
-    );
-  }
-
-  void _syncHorizontal(ScrollController from, ScrollController to) {
-    if (!from.hasClients || !to.hasClients) return;
-    final desired = from.offset.clamp(
-      to.position.minScrollExtent,
-      to.position.maxScrollExtent,
-    );
-    if ((to.offset - desired).abs() > 0.5) {
-      to.jumpTo(desired);
-    }
-  }
-
   @override
   void dispose() {
     _scroll.dispose();
     _horizontal.dispose();
-    _headerHorizontal.dispose();
     super.dispose();
   }
 
@@ -623,10 +598,7 @@ class _BudgetTableState extends State<BudgetTable> {
               child: GestureDetector(
                 behavior: HitTestBehavior.opaque,
                 onTap: onTap,
-                child: SizedBox(
-                  height: 54,
-                  child: Center(child: cell),
-                ),
+                child: cell,
               ),
             ),
         ],
@@ -663,12 +635,6 @@ class _BudgetTableState extends State<BudgetTable> {
           widths[2] += extra * 0.6;
           widths[9] += extra * 0.4;
         }
-        // Keep enough room for financial columns on narrow desktop windows.
-        widths[2] = math.min(
-          widths[2],
-          math.max(180.0, constraints.maxWidth - widths[0] - widths[1] - 230),
-        );
-        final content = widths.fold<double>(0, (sum, value) => sum + value);
         final columns = <int, TableColumnWidth>{
           for (var i = 0; i < widths.length; i++) i: FixedColumnWidth(widths[i]),
         };
@@ -820,111 +786,33 @@ class _BudgetTableState extends State<BudgetTable> {
               ], const Color(0xffe7eefc)),
           ],
         );
-        // Freeze only # and UACS Code. Expense joins the horizontal scroll.
-        // The entire table keeps a single vertical scroll.
-        Table section(Table original, bool fixed) {
-          final first = fixed ? 0 : 2;
-          final last = fixed ? 2 : widths.length;
-          return Table(
-            border: original.border,
-            columnWidths: {
-              for (var i = first; i < last; i++)
-                i - first: FixedColumnWidth(widths[i]),
-            },
-            defaultVerticalAlignment: TableCellVerticalAlignment.middle,
-            children: [
-              for (final row in original.children)
-                TableRow(
-                  decoration: row.decoration,
-                  children: row.children.sublist(first, last),
-                ),
-            ],
-          );
-        }
-
-        final frozenWidth = widths[0] + widths[1];
-        final movableWidth = content - frozenWidth;
-        final frozenHeader = section(headerTable, true);
-        final movingHeader = section(headerTable, false);
-        final frozenBody = section(bodyTable, true);
-        final movingBody = section(bodyTable, false);
-        // One vertical scroll view owns both the frozen and moving rows.
-        // Headers and data move horizontally together while # and UACS stay fixed.
-        final availableWidth = math.max(0.0, constraints.maxWidth - frozenWidth - 1);
-        Widget movingViewport(
-          Widget table,
-          ScrollController controller, {
-          bool showScrollbar = false,
-        }) {
-          final view = SingleChildScrollView(
-            controller: controller,
-            scrollDirection: Axis.horizontal,
-            child: SizedBox(width: movableWidth, child: table),
-          );
-          return SizedBox(
-            width: availableWidth,
-            child: showScrollbar
-                ? Scrollbar(
-                    controller: controller,
-                    thumbVisibility: movableWidth > availableWidth + 1,
-                    notificationPredicate: (n) =>
-                        n.metrics.axis == Axis.horizontal,
-                    child: view,
-                  )
-                : view,
-          );
-        }
-
-        const divider = SizedBox(
-          width: 1,
-          child: ColoredBox(color: Color(0xffd5e1f2)),
-        );
-        return Column(
-          children: [
-            SizedBox(
-              height: 54,
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  SizedBox(width: frozenWidth, child: frozenHeader),
-                  divider,
-                  movingViewport(movingHeader, _headerHorizontal),
-                ],
-              ),
-            ),
-            Expanded(
-              child: Scrollbar(
-                controller: _scroll,
-                thumbVisibility: true,
-                notificationPredicate: (n) => n.metrics.axis == Axis.vertical,
-                child: SingleChildScrollView(
-                  controller: _scroll,
-                  scrollDirection: Axis.vertical,
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      SizedBox(width: frozenWidth, child: frozenBody),
-                      SizedBox(
-                        width: 1,
-                        height: 54.0 *
-                            (records.isEmpty
-                                ? 1
-                                : records.length + (total == null ? 0 : 1)),
-                        child: const ColoredBox(color: Color(0xffd5e1f2)),
+        return Scrollbar(
+          controller: _scroll,
+          thumbVisibility: true,
+          notificationPredicate: (n) => n.metrics.axis == Axis.vertical,
+          child: Scrollbar(
+            controller: _horizontal,
+            thumbVisibility: width > constraints.maxWidth + 1,
+            notificationPredicate: (n) => n.metrics.axis == Axis.horizontal,
+            child: SingleChildScrollView(
+              controller: _horizontal,
+              scrollDirection: Axis.horizontal,
+              child: SizedBox(
+                width: width,
+                child: Column(
+                  children: [
+                    headerTable,
+                    Expanded(
+                      child: SingleChildScrollView(
+                        controller: _scroll,
+                        child: bodyTable,
                       ),
-                      movingViewport(
-                        movingBody,
-                        _horizontal,
-                        showScrollbar: true,
-                      ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
             ),
-          ],
+          ),
         );
       },
     );
@@ -944,14 +832,7 @@ class _BudgetCell extends StatelessWidget {
   final bool tip;
   @override
   Widget build(BuildContext context) {
-    final label = Text(
-      text,
-      textAlign: align,
-      softWrap: true,
-      maxLines: 2,
-      overflow: TextOverflow.ellipsis,
-      style: style,
-    );
+    final label = Text(text, textAlign: align, softWrap: true, style: style);
     return Padding(
       padding: EdgeInsets.only(
         left: align == TextAlign.left ? 12 : 8,
