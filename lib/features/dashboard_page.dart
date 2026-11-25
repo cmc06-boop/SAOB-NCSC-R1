@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:material_ui/material_ui.dart';
 
 import '../core/format.dart';
+import 'audit_page.dart' show auditDetailSentence;
 import '../data/finance_store.dart';
 import '../data/models.dart';
 import '../ui/common.dart';
