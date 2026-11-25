@@ -980,7 +980,9 @@ class _UtilizationChartState extends State<_UtilizationChart> {
                   );
                   if (next?.program == hovered?.program &&
                       next?.label == hovered?.label &&
-                      next?.amount == hovered?.amount) return;
+                      next?.amount == hovered?.amount) {
+                    return;
+                  }
                   setState(() {
                     hovered = next;
                     hoverPoint = next == null ? null : event.localPosition;
@@ -1018,7 +1020,7 @@ class _UtilizationChartState extends State<_UtilizationChart> {
                                 ),
                                 if (hovered!.percent != null)
                                   Text(
-                                    hovered!.percent!.toStringAsFixed(2) + '%',
+                                    '${hovered!.percent!.toStringAsFixed(2)}%',
                                     style: const TextStyle(
                                       color: Colors.white, fontSize: 12,
                                     ),
