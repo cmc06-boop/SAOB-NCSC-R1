@@ -327,6 +327,7 @@ class RecordEditor extends StatefulWidget {
 class _RecordEditorState extends State<RecordEditor> {
   late int year;
   late String program;
+  String selectedUacs = '';
   late final TextEditingController yearField,
       code,
       name,
@@ -541,6 +542,7 @@ class _RecordEditorState extends State<RecordEditor> {
           ? TextAlignVertical.top
           : TextAlignVertical.center,
       onChanged: (_) => setState(() {
+        if (identical(c, code)) selectedUacs = '';
         _fieldErrors.remove(c);
         error = null;
       }),
@@ -623,6 +625,15 @@ class _RecordEditorState extends State<RecordEditor> {
     final programs = widget.store.programs
         .where((p) => p.active || p.code == widget.record?.program)
         .toList();
+    final uacsReferences = widget.store.references();
+    final availableUacs = <String, String>{
+      for (final ref in uacsReferences)
+        ref['code'] as String: ref['name'] as String,
+    };
+    if (selectedUacs.isNotEmpty &&
+        !availableUacs.containsKey(selectedUacs)) {
+      selectedUacs = '';
+    }
     const gap = SizedBox(height: 14);
     Widget columnFields(List<Widget> children) => Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -705,6 +716,28 @@ class _RecordEditorState extends State<RecordEditor> {
                           (p.code, p.code),
                       ],
                       onChanged: (v) => setState(() => program = v),
+                    ),
+                    SelectField<String>(
+                      label: 'Existing UACS Code (Optional)',
+                      labelStyle: _recordEditorLabelStyle,
+                      value: selectedUacs,
+                      dense: true,
+                      width: double.infinity,
+                      items: [
+                        ('', 'Manual Entry / New UACS Code'),
+                        for (final ref in availableUacs.entries)
+                          (ref.key, '${displayCode(ref.key)} - ${ref.value}'),
+                      ],
+                      onChanged: (selected) => setState(() {
+                        selectedUacs = selected;
+                        if (selected.isNotEmpty) {
+                          code.text = selected;
+                          name.text = availableUacs[selected]!;
+                          _fieldErrors.remove(code);
+                          _fieldErrors.remove(name);
+                          error = null;
+                        }
+                      }),
                     ),
                     field(
                       'UACS Code *',
@@ -924,52 +957,6 @@ class _AlignedRecordColumnsState extends State<_AlignedRecordColumns> {
               KeyedSubtree(key: _importKey, child: widget.importZone),
             ],
           ),
-        ),
-      ],
-    );
-  }
-}
-
-class ReferencePicker extends StatefulWidget {
-  const ReferencePicker({super.key, required this.store});
-  final FinanceStore store;
-  @override
-  State<ReferencePicker> createState() => _ReferencePickerState();
-}
-
-class _ReferencePickerState extends State<ReferencePicker> {
-  String query = '';
-  @override
-  Widget build(BuildContext context) {
-    final refs = widget.store.references(query);
-    return AlertDialog(
-      title: const Text('Select a UACS Code'),
-      content: SizedBox(
-        width: 600,
-        height: 400,
-        child: Column(
-          children: [
-            SearchBox(onChanged: (v) => setState(() => query = v)),
-            const SizedBox(height: 16),
-            Expanded(
-              child: refs.isEmpty
-                  ? const EmptyState(text: 'No UACS references found.')
-                  : ListView.builder(
-                      itemCount: refs.length,
-                      itemBuilder: (ctx, i) => ListTile(
-                        title: Text(displayCode(refs[i]['code'] as String)),
-                        subtitle: Text(refs[i]['name'] as String),
-                        onTap: () => Navigator.pop(context, refs[i]),
-                      ),
-                    ),
-            ),
-          ],
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('Close'),
         ),
       ],
     );
