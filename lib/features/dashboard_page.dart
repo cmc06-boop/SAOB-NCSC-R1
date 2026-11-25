@@ -28,6 +28,202 @@ class DashboardPage extends StatefulWidget {
 class _DashboardPageState extends State<DashboardPage> {
   int year = manilaNow().year;
   String program = '', item = '';
+  Widget _programDonut(Map<String, int> shares, int allotment, double size) {
+    return SizedBox(
+      width: size,
+      height: size,
+      child: Semantics(
+        label: 'Total allotment ${money(allotment)}',
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            Positioned.fill(
+              child: CustomPaint(
+                painter: _DonutPainter(shares.values.toList()),
+              ),
+            ),
+            SizedBox(
+              width: size * 0.60,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      money(allotment),
+                      maxLines: 1,
+                      style: const TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w800,
+                        color: navy,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  const FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      'Total Allotment',
+                      maxLines: 1,
+                      style: TextStyle(fontSize: 12, color: muted),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _programLegend(
+    Map<String, int> shares,
+    int allotment, {
+    int? limit,
+  }) {
+    final entries = shares.entries.toList();
+    final shown = limit == null ? entries : entries.take(limit).toList();
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        for (var i = 0; i < shown.length; i++)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 6),
+            child: Row(
+              children: [
+                Container(
+                  width: 10,
+                  height: 10,
+                  decoration: BoxDecoration(
+                    color: chartColors[i % chartColors.length],
+                    borderRadius: BorderRadius.circular(3),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  flex: 2,
+                  child: Text(
+                    shown[i].key,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 13,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  flex: 3,
+                  child: Tooltip(
+                    message: '${money(shown[i].value)} (${rate(shown[i].value, allotment)})',
+                    child: Text(
+                      '${money(shown[i].value)} (${rate(shown[i].value, allotment)})',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.right,
+                      style: const TextStyle(fontSize: 12, color: muted),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+      ],
+    );
+  }
+
+  void _showAllPrograms(Map<String, int> shares, int allotment) {
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        final screen = MediaQuery.sizeOf(dialogContext);
+        final width = math.min(900.0, screen.width - 48);
+        final height = math.min(520.0, screen.height - 64);
+        return Dialog(
+          insetPadding: const EdgeInsets.all(24),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(18),
+          ),
+          child: SizedBox(
+            width: width,
+            height: height,
+            child: Padding(
+              padding: const EdgeInsets.all(22),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Expanded(
+                        child: Text(
+                          'Utilization by Program',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w800,
+                            color: navy,
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        tooltip: 'Close',
+                        onPressed: () => Navigator.pop(dialogContext),
+                        icon: const AppIcon('x', size: 19),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 14),
+                  Expanded(
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        final horizontal = constraints.maxWidth >= 580;
+                        final donut = Center(
+                          child: _programDonut(
+                            shares,
+                            allotment,
+                            horizontal ? 220 : 165,
+                          ),
+                        );
+                        final legend = shares.isEmpty
+                            ? const Center(
+                                child: Text(
+                                  'No programs found.',
+                                  style: TextStyle(color: muted),
+                                ),
+                              )
+                            : SingleChildScrollView(
+                                child: _programLegend(shares, allotment),
+                              );
+                        if (!horizontal) {
+                          return Column(
+                            children: [
+                              donut,
+                              const SizedBox(height: 12),
+                              Expanded(child: legend),
+                            ],
+                          );
+                        }
+                        return Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            SizedBox(width: 245, child: donut),
+                            const SizedBox(width: 20),
+                            Expanded(child: legend),
+                          ],
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     if (program.isNotEmpty &&
@@ -252,16 +448,10 @@ class _DashboardPageState extends State<DashboardPage> {
               final cardWidth = sideBySide
                   ? (c.maxWidth - gap) / 2
                   : c.maxWidth;
-              const donutSize = 190.0;
-              final legendWidth = math.max(
-                96.0,
-                cardWidth - 40 - donutSize - 12,
-              );
-              final amountWidth = math.min(168.0, legendWidth * 0.58);
-              final nameWidth = math.max(
-                40.0,
-                legendWidth - 10 - 8 - 12 - amountWidth,
-              );
+              // Keep the preview short; the dialog shows every program.
+              // Both dashboard panels use identical dimensions.
+              const panelHeight = 260.0;
+              const previewDonutSize = 160.0;
               final chart = Panel(
                 padding: 18,
                 child: Column(
@@ -275,120 +465,29 @@ class _DashboardPageState extends State<DashboardPage> {
                         color: navy,
                       ),
                     ),
-                    const SizedBox(height: 12),
-                    Builder(
-                      builder: (context) {
-                        final donut = SizedBox(
-                          width: donutSize,
-                          height: donutSize,
-                          child: Semantics(
-                            label: 'Total allotment ${money(t.allotment)}',
-                            child: Stack(
-                              alignment: Alignment.center,
-                              children: [
-                                Positioned.fill(
-                                  child: CustomPaint(
-                                    painter: _DonutPainter(
-                                      shares.values.toList(),
-                                    ),
-                                  ),
-                                ),
-                                SizedBox(
-                                  width: 124,
-                                  child: Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      FittedBox(
-                                        fit: BoxFit.scaleDown,
-                                        child: Text(
-                                          money(t.allotment),
-                                          maxLines: 1,
-                                          style: const TextStyle(
-                                            fontSize: 18,
-                                            fontWeight: FontWeight.w800,
-                                            color: navy,
-                                          ),
-                                        ),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      const FittedBox(
-                                        fit: BoxFit.scaleDown,
-                                        child: Text(
-                                          'Total Allotment',
-                                          maxLines: 1,
-                                          style: TextStyle(
-                                            fontSize: 12,
-                                            color: muted,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
+                    const SizedBox(height: 6),
+                    Expanded(
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          _programDonut(shares, t.allotment, previewDonutSize),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: _programLegend(
+                              shares,
+                              t.allotment,
+                              limit: 3,
                             ),
                           ),
-                        );
-                        final legend = Column(
-                          children: [
-                            for (final e in shares.entries.indexed)
-                              Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 5,
-                                ),
-                                child: Row(
-                                  children: [
-                                    Container(
-                                      width: 10,
-                                      height: 10,
-                                      decoration: BoxDecoration(
-                                        color:
-                                            chartColors[e.$1 %
-                                                chartColors.length],
-                                        borderRadius: BorderRadius.circular(3),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    SizedBox(
-                                      width: nameWidth,
-                                      child: Text(
-                                        e.$2.key,
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.w600,
-                                          fontSize: 14,
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 12),
-                                    SizedBox(
-                                      width: amountWidth,
-                                      child: Text(
-                                        '${money(e.$2.value)} (${rate(e.$2.value, t.allotment)})',
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        textAlign: TextAlign.right,
-                                        style: const TextStyle(
-                                          fontSize: 14,
-                                          color: muted,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                          ],
-                        );
-                        return Row(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            donut,
-                            const SizedBox(width: 12),
-                            SizedBox(width: legendWidth, child: legend),
-                          ],
-                        );
-                      },
+                        ],
+                      ),
+                    ),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton(
+                        onPressed: () => _showAllPrograms(shares, t.allotment),
+                        child: const Text('See All'),
+                      ),
                     ),
                   ],
                 ),
@@ -422,16 +521,32 @@ class _DashboardPageState extends State<DashboardPage> {
                   ? Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        SizedBox(width: cardWidth, child: chart),
+                        SizedBox(
+                          width: cardWidth,
+                          height: panelHeight,
+                          child: chart,
+                        ),
                         const SizedBox(width: gap),
-                        SizedBox(width: cardWidth, child: rates),
+                        SizedBox(
+                          width: cardWidth,
+                          height: panelHeight,
+                          child: rates,
+                        ),
                       ],
                     )
                   : Column(
                       children: [
-                        chart,
+                        SizedBox(
+                          width: double.infinity,
+                          height: panelHeight,
+                          child: chart,
+                        ),
                         const SizedBox(height: 12),
-                        SizedBox(width: double.infinity, child: rates),
+                        SizedBox(
+                          width: double.infinity,
+                          height: panelHeight,
+                          child: rates,
+                        ),
                       ],
                     );
             },
