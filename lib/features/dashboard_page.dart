@@ -145,11 +145,14 @@ class _DashboardPageState extends State<DashboardPage> {
     int allotment, {
     int? limit,
     Map<String, int>? selectedShares,
+    String? selectedKey,
   }) {
     final entries = shares.entries.toList();
-    final ordered = limit != null && (program.isNotEmpty || item.isNotEmpty)
-        ? [...entries.where((e) => (selectedShares?[e.key] ?? 0) != 0), ...entries.where((e) => (selectedShares?[e.key] ?? 0) == 0)]
-        : entries;
+    final ordered = selectedKey != null
+        ? [...entries.where((e) => e.key == selectedKey), ...entries.where((e) => e.key != selectedKey)]
+        : limit != null && (program.isNotEmpty || item.isNotEmpty)
+            ? [...entries.where((e) => (selectedShares?[e.key] ?? 0) != 0), ...entries.where((e) => (selectedShares?[e.key] ?? 0) == 0)]
+            : entries;
     final shown = limit == null ? ordered : ordered.take(limit).toList();
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -201,7 +204,7 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
-  void _showAllPrograms(Map<String, int> shares, int allotment, int annualAllotment, Map<String, int> annualShares) {
+  void _showAllPrograms(Map<String, int> shares, int allotment, int annualAllotment, Map<String, int> annualShares, {required String chartTitle, String? selectedKey}) {
     showDialog<void>(
       context: context,
       builder: (dialogContext) {
@@ -223,10 +226,10 @@ class _DashboardPageState extends State<DashboardPage> {
                 children: [
                   Row(
                     children: [
-                      const Expanded(
+                      Expanded(
                         child: Text(
-                          'Utilization by Program',
-                          style: TextStyle(
+                          chartTitle,
+                          style: const TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.w800,
                             color: navy,
@@ -256,12 +259,12 @@ class _DashboardPageState extends State<DashboardPage> {
                         final legend = shares.isEmpty
                             ? const Center(
                                 child: Text(
-                                  'No programs found.',
+                                  'No allotment records found.',
                                   style: TextStyle(color: muted),
                                 ),
                               )
                             : SingleChildScrollView(
-                                child: _programLegend(annualShares, annualAllotment),
+                                child: _programLegend(annualShares, annualAllotment, selectedKey: selectedKey),
                               );
                         if (!horizontal) {
                           return Column(
@@ -329,6 +332,32 @@ class _DashboardPageState extends State<DashboardPage> {
     for (final r in annualRows) {
       annualShares[r.program] = (annualShares[r.program] ?? 0) + r.allotment;
     }
+    // Item mode compares against the selected program's entire allotment,
+    // or the entire fiscal year's allotment when All Programs is selected.
+    final itemMode = item.isNotEmpty;
+    final itemShares = <String, int>{};
+    String? selectedItemLabel;
+    if (itemMode) {
+      for (final r in all) {
+        final key = '${r.program}\u0001${r.code}';
+        final label = items[key] ?? '${r.name} (${displayCode(r.code)})';
+        itemShares[label] = (itemShares[label] ?? 0) + r.allotment;
+        if (key == item) selectedItemLabel = label;
+      }
+    }
+    final chartBase = itemMode ? Totals(all).allotment : annualAllotment;
+    final chartLegend = itemMode ? itemShares : annualShares;
+    // Use exactly the legend order in the painter so segment colors agree.
+    final chartShares = <String, int>{
+      for (final entry in chartLegend.entries)
+        entry.key: itemMode
+            ? (entry.key == selectedItemLabel ? t.allotment : 0)
+            : (shares[entry.key] ?? 0),
+    };
+    final chartTitle = itemMode ? 'Allotment by Item' : 'Utilization by Program';
+    final selectedLegendKey = itemMode
+        ? selectedItemLabel
+        : program.isNotEmpty ? program : null;
     final filters = Wrap(
       spacing: 16,
       runSpacing: 12,
@@ -407,9 +436,9 @@ class _DashboardPageState extends State<DashboardPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Utilization by Program',
-                  style: TextStyle(
+                Text(
+                  chartTitle,
+                  style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w800,
                     color: navy,
@@ -423,10 +452,10 @@ class _DashboardPageState extends State<DashboardPage> {
                       Transform.translate(
                         offset: Offset(0, dense ? 0 : 9),
                         child: _programDonut(
-                          shares,
+                          chartShares,
                           t.allotment,
                           previewDonutSize,
-                          annualAllotment,
+                          chartBase,
                         ),
                       ),
                       const SizedBox(width: 20),
@@ -435,10 +464,11 @@ class _DashboardPageState extends State<DashboardPage> {
                           builder: (context, limits) => SingleChildScrollView(
                             primary: false,
                             child: _programLegend(
-                              annualShares,
-                              annualAllotment,
+                              chartLegend,
+                              chartBase,
                               limit: 5,
-                              selectedShares: shares,
+                              selectedShares: chartShares,
+                              selectedKey: selectedLegendKey,
                             ),
                           ),
                         ),
@@ -454,7 +484,7 @@ class _DashboardPageState extends State<DashboardPage> {
                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
                       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     ),
-                    onPressed: () => _showAllPrograms(shares, t.allotment, annualAllotment, annualShares),
+                    onPressed: () => _showAllPrograms(chartShares, t.allotment, chartBase, chartLegend, chartTitle: chartTitle, selectedKey: selectedLegendKey),
                     child: const Text('See All'),
                   ),
                 ),
