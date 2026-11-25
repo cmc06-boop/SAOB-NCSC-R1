@@ -1,6 +1,5 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:ncsc_region1_finance/core/format.dart';
 import 'package:ncsc_region1_finance/data/database.dart';
 import 'package:ncsc_region1_finance/data/finance_store.dart';
