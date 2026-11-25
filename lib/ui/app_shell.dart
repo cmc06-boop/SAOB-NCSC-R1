@@ -135,7 +135,12 @@ class _AppShellState extends State<AppShell> {
     final user = widget.store.user!,
         visible = _menus.where((m) => user.can(m.$1)).toList();
     final widgets = <String, Widget>{
-      'dashboard': DashboardPage(store: widget.store),
+      'dashboard': DashboardPage(
+        store: widget.store,
+        onViewAuditTrail: user.can('audit')
+            ? () => setState(() => selected = 'audit')
+            : null,
+      ),
       'budget': BudgetPage(store: widget.store),
       'reports': ReportsPage(store: widget.store),
       'audit': AuditPage(store: widget.store),
