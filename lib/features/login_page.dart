@@ -4,7 +4,7 @@ import '../core/format.dart';
 import '../data/finance_store.dart';
 import '../ui/common.dart';
 import '../ui/login_backdrop.dart';
-import '../ui/svg_icon.dart';
+import '../ui/app_icon.dart';
 import '../ui/theme.dart';
 
 class LoginPage extends StatefulWidget {
