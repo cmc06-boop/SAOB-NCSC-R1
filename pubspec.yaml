@@ -31,7 +31,6 @@ flutter:
   uses-material-design: true
   assets:
     - assets/login-design-reference.webp
-    - assets/dashboard-bg.png
     - assets/ncsc-logo-transparent.png
     - assets/fonts/DejaVuSans.ttf
     - assets/fonts/DejaVuSans-Bold.ttf
