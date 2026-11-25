@@ -450,7 +450,7 @@ class _DashboardPageState extends State<DashboardPage> {
                   : c.maxWidth;
               // Keep the preview short; the dialog shows every program.
               // Both dashboard panels use identical dimensions.
-              const panelHeight = 260.0;
+              const panelHeight = 278.0;
               const previewDonutSize = 160.0;
               final chart = Panel(
                 padding: 18,
