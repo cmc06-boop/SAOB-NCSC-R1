@@ -11,7 +11,7 @@ import '../data/finance_store.dart';
 import '../data/models.dart';
 import '../data/workbook_io.dart';
 import '../ui/common.dart';
-import '../ui/svg_icon.dart';
+import '../ui/app_icon.dart';
 import '../ui/theme.dart';
 
 /// Sample workbook used by unit tests.
