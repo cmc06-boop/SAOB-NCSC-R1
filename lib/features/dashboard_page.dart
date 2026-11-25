@@ -451,7 +451,7 @@ class _DashboardPageState extends State<DashboardPage> {
               // Keep the preview short; the dialog shows every program.
               // Both dashboard panels use identical dimensions.
               const panelHeight = 225.0;
-              const previewDonutSize = 122.0;
+              const previewDonutSize = 146.0;
               final chart = Panel(
                 padding: 14,
                 child: Column(
@@ -471,7 +471,7 @@ class _DashboardPageState extends State<DashboardPage> {
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
                           _programDonut(shares, t.allotment, previewDonutSize),
-                          const SizedBox(width: 8),
+                          const SizedBox(width: 20),
                           Expanded(
                             child: _programLegend(
                               shares,
