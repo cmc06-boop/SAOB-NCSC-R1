@@ -7,7 +7,7 @@ class AppSvgIcon extends StatelessWidget {
   const AppSvgIcon(
     this.name, {
     super.key,
-    this.size = 20,
+    this.size = 18,
     this.color,
     this.semanticLabel,
   });
