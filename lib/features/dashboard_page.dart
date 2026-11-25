@@ -450,28 +450,28 @@ class _DashboardPageState extends State<DashboardPage> {
                   : c.maxWidth;
               // Keep the preview short; the dialog shows every program.
               // Both dashboard panels use identical dimensions.
-              const panelHeight = 278.0;
-              const previewDonutSize = 160.0;
+              const panelHeight = 225.0;
+              const previewDonutSize = 122.0;
               final chart = Panel(
-                padding: 18,
+                padding: 14,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
                       'Utilization by Program',
                       style: TextStyle(
-                        fontSize: 20,
+                        fontSize: 18,
                         fontWeight: FontWeight.w800,
                         color: navy,
                       ),
                     ),
-                    const SizedBox(height: 6),
+                    const SizedBox(height: 2),
                     Expanded(
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
                           _programDonut(shares, t.allotment, previewDonutSize),
-                          const SizedBox(width: 10),
+                          const SizedBox(width: 8),
                           Expanded(
                             child: _programLegend(
                               shares,
@@ -485,6 +485,11 @@ class _DashboardPageState extends State<DashboardPage> {
                     Align(
                       alignment: Alignment.centerRight,
                       child: TextButton(
+                        style: TextButton.styleFrom(
+                          minimumSize: Size.zero,
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
                         onPressed: () => _showAllPrograms(shares, t.allotment),
                         child: const Text('See All'),
                       ),
@@ -493,21 +498,21 @@ class _DashboardPageState extends State<DashboardPage> {
                 ),
               );
               final rates = Panel(
-                padding: 18,
+                padding: 14,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
                       'Budget Utilization Rate',
                       style: TextStyle(
-                        fontSize: 20,
+                        fontSize: 18,
                         fontWeight: FontWeight.w800,
                         color: navy,
                       ),
                     ),
-                    const SizedBox(height: 18),
+                    const SizedBox(height: 12),
                     _Rate('Obligation Rate', t.obligation, t.allotment, blue),
-                    const SizedBox(height: 18),
+                    const SizedBox(height: 12),
                     _Rate(
                       'Disbursement Rate',
                       t.disbursement,
