@@ -479,17 +479,21 @@ class BudgetTable extends StatefulWidget {
 
 class _BudgetTableState extends State<BudgetTable> {
   final _scroll = ScrollController();
-  final _movingVertical = ScrollController();
   final _horizontal = ScrollController();
+  final _headerHorizontal = ScrollController();
 
   @override
   void initState() {
     super.initState();
-    _scroll.addListener(() => _syncVertical(_scroll, _movingVertical));
-    _movingVertical.addListener(() => _syncVertical(_movingVertical, _scroll));
+    _horizontal.addListener(
+      () => _syncHorizontal(_horizontal, _headerHorizontal),
+    );
+    _headerHorizontal.addListener(
+      () => _syncHorizontal(_headerHorizontal, _horizontal),
+    );
   }
 
-  void _syncVertical(ScrollController from, ScrollController to) {
+  void _syncHorizontal(ScrollController from, ScrollController to) {
     if (!from.hasClients || !to.hasClients) return;
     final desired = from.offset.clamp(
       to.position.minScrollExtent,
@@ -503,8 +507,8 @@ class _BudgetTableState extends State<BudgetTable> {
   @override
   void dispose() {
     _scroll.dispose();
-    _movingVertical.dispose();
     _horizontal.dispose();
+    _headerHorizontal.dispose();
     super.dispose();
   }
 
@@ -845,62 +849,72 @@ class _BudgetTableState extends State<BudgetTable> {
         final movingHeader = section(headerTable, false);
         final frozenBody = section(bodyTable, true);
         final movingBody = section(bodyTable, false);
-        // Financial headers and values share a single horizontal viewport.
-        // The first three identity columns remain frozen at all times.
-        // Both vertical viewports are synchronized to keep rows aligned.
-        return Row(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+        // One vertical scroll view owns both the frozen and moving rows.
+        // Financial headers have their own horizontal viewport, synchronized
+        // with the body; the first three identity columns stay in place.
+        final availableWidth = math.max(0.0, constraints.maxWidth - frozenWidth - 1);
+        Widget movingViewport(
+          Widget table,
+          ScrollController controller, {
+          bool showScrollbar = false,
+        }) {
+          final view = SingleChildScrollView(
+            controller: controller,
+            scrollDirection: Axis.horizontal,
+            child: SizedBox(width: movableWidth, child: table),
+          );
+          return SizedBox(
+            width: availableWidth,
+            child: showScrollbar
+                ? Scrollbar(
+                    controller: controller,
+                    thumbVisibility: movableWidth > availableWidth + 1,
+                    notificationPredicate: (n) =>
+                        n.metrics.axis == Axis.horizontal,
+                    child: view,
+                  )
+                : view,
+          );
+        }
+
+        const divider = SizedBox(
+          width: 1,
+          child: ColoredBox(color: Color(0xffd5e1f2)),
+        );
+        return Column(
           children: [
-            SizedBox(
-              width: frozenWidth,
-              child: Column(
-                children: [
-                  frozenHeader,
-                  Expanded(
-                    child: Scrollbar(
-                      controller: _scroll,
-                      thumbVisibility: true,
-                      notificationPredicate: (n) =>
-                          n.metrics.axis == Axis.vertical,
-                      child: SingleChildScrollView(
-                        controller: _scroll,
-                        scrollDirection: Axis.vertical,
-                        child: frozenBody,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            // Visible border between frozen Expense and moving Allotment.
-            const SizedBox(
-              width: 1,
-              child: ColoredBox(color: Color(0xffd5e1f2)),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                SizedBox(width: frozenWidth, child: frozenHeader),
+                divider,
+                movingViewport(movingHeader, _headerHorizontal),
+              ],
             ),
             Expanded(
               child: Scrollbar(
-                controller: _horizontal,
-                thumbVisibility:
-                    movableWidth > constraints.maxWidth - frozenWidth - 1,
-                notificationPredicate: (n) =>
-                    n.metrics.axis == Axis.horizontal,
+                controller: _scroll,
+                thumbVisibility: true,
+                notificationPredicate: (n) => n.metrics.axis == Axis.vertical,
                 child: SingleChildScrollView(
-                  controller: _horizontal,
-                  scrollDirection: Axis.horizontal,
-                  child: SizedBox(
-                    width: movableWidth,
-                    child: Column(
-                      children: [
-                        movingHeader,
-                        Expanded(
-                          child: SingleChildScrollView(
-                            controller: _movingVertical,
-                            scrollDirection: Axis.vertical,
-                            child: movingBody,
-                          ),
-                        ),
-                      ],
-                    ),
+                  controller: _scroll,
+                  scrollDirection: Axis.vertical,
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      SizedBox(width: frozenWidth, child: frozenBody),
+                      const SizedBox(
+                        width: 1,
+                        child: ColoredBox(color: Color(0xffd5e1f2)),
+                      ),
+                      movingViewport(
+                        movingBody,
+                        _horizontal,
+                        showScrollbar: true,
+                      ),
+                    ],
                   ),
                 ),
               ),
