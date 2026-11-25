@@ -354,6 +354,17 @@ class _RecordEditorState extends State<RecordEditor> {
     });
   }
 
+  bool get _duplicateUacs {
+    final uacs = codeKey(code.text);
+    if (!RegExp(r'^\d{8,14}$').hasMatch(uacs) || program.isEmpty) {
+      return false;
+    }
+    final fund = widget.record?.fund ?? 'CURRENT';
+    return widget.store.records(year, program: program, item: uacs).any(
+      (record) => record.fund == fund && record.id != widget.record?.id,
+    );
+  }
+
   final _inputKey = GlobalKey();
   double? _inputHeight;
   late final ImportController _imports;
@@ -456,6 +467,10 @@ class _RecordEditorState extends State<RecordEditor> {
     if (!RegExp(r'^\d{8,14}$').hasMatch(codeKey(code.text))) {
       validation[code] = 'UACS Code must contain 8–14 digits.';
     }
+    if (_duplicateUacs) {
+      validation[code] =
+          'This UACS Code already exists for the selected year, program and fund.';
+    }
     if (name.text.trim().isEmpty) {
       validation[name] = 'Expense name is required.';
     }
@@ -500,7 +515,15 @@ class _RecordEditorState extends State<RecordEditor> {
       Navigator.pop(context);
       showMessage(context, 'Budget record saved.');
     } catch (e) {
-      setState(() => error = friendlyError(e));
+      final message = friendlyError(e);
+      setState(() {
+        if (message.contains('UACS code already exists')) {
+          _fieldErrors[code] = message;
+          error = null;
+        } else {
+          error = message;
+        }
+      });
     }
   }
 
@@ -527,7 +550,9 @@ class _RecordEditorState extends State<RecordEditor> {
         empty &&
         !focused &&
         (amount ? true : hint != null);
-    final fieldError = _fieldErrors[c];
+    final fieldError = identical(c, code) && _duplicateUacs
+        ? 'This UACS Code already exists for the selected year, program and fund.'
+        : _fieldErrors[c];
     final input = TextField(
       key: boxKey,
       controller: c,
@@ -589,8 +614,8 @@ class _RecordEditorState extends State<RecordEditor> {
             : null,
         suffixIcon: suffix,
         suffixIconConstraints: const BoxConstraints(
-          minWidth: 32,
-          minHeight: 32,
+          minWidth: 36,
+          minHeight: 24,
         ),
       ),
     );
@@ -748,12 +773,15 @@ class _RecordEditorState extends State<RecordEditor> {
                               ),
                             ),
                         ],
-                        child: const Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 8),
-                          child: AppSvgIcon(
-                            'chevron-down',
-                            size: 18,
-                            color: muted,
+                        child: const SizedBox(
+                          width: 36,
+                          height: 24,
+                          child: Center(
+                            child: AppSvgIcon(
+                              'chevron-down',
+                              size: 18,
+                              color: muted,
+                            ),
                           ),
                         ),
                       ),
