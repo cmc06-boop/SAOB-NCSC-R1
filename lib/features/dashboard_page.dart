@@ -222,12 +222,9 @@ class _DashboardPageState extends State<DashboardPage> {
       context: context,
       builder: (dialogContext) {
         final screen = MediaQuery.sizeOf(dialogContext);
-        final width = math.min(680.0, screen.width - 48);
-        final horizontalLayout = width - 32 >= 460;
-        final legendHeight = math.max(170.0, annualShares.length * 30.0);
-        final desiredHeight = horizontalLayout
-            ? math.min(360.0, legendHeight + 76)
-            : math.min(460.0, legendHeight + 220);
+        final width = math.min(480.0, screen.width - 48);
+        final legendHeight = math.max(34.0, annualShares.length * 32.0);
+        final desiredHeight = math.min(490.0, 246.0 + legendHeight);
         final height = math.min(desiredHeight, screen.height - 64);
         return Dialog(
           insetPadding: const EdgeInsets.all(24),
@@ -265,44 +262,38 @@ class _DashboardPageState extends State<DashboardPage> {
                   Expanded(
                     child: LayoutBuilder(
                       builder: (context, constraints) {
-                        final horizontal = constraints.maxWidth >= 460;
-                        final donutSize = horizontal
-                            ? math.min(174.0, constraints.maxHeight)
-                            : math.min(140.0, constraints.maxHeight * 0.48);
-                        final donut = Center(
-                          child: _programDonut(
-                            shares,
-                            allotment,
-                            donutSize,
-                            annualAllotment,
-                          ),
-                        );
-                        final legend = annualShares.isEmpty
-                            ? const Center(
-                                child: Text(
-                                  'No allotment records found.',
-                                  style: TextStyle(color: muted),
-                                ),
-                              )
-                            : SingleChildScrollView(
-                                primary: false,
-                                child: _programLegend(annualShares, annualAllotment, selectedKey: selectedKey),
-                              );
-                        if (!horizontal) {
-                          return Column(
-                            children: [
-                              donut,
-                              const SizedBox(height: 8),
-                              Expanded(child: legend),
-                            ],
-                          );
-                        }
-                        return Row(
-                          crossAxisAlignment: CrossAxisAlignment.center,
+                        final donutSize = math.max(0.0, math.min(
+                          174.0,
+                          math.min(constraints.maxWidth, constraints.maxHeight * 0.65),
+                        ));
+                        return Column(
                           children: [
-                            SizedBox(width: 184, child: donut),
-                            const SizedBox(width: 12),
-                            Expanded(child: legend),
+                            Center(
+                              child: _programDonut(
+                                shares,
+                                allotment,
+                                donutSize,
+                                annualAllotment,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Expanded(
+                              child: annualShares.isEmpty
+                                  ? const Center(
+                                      child: Text(
+                                        'No allotment records found.',
+                                        style: TextStyle(color: muted),
+                                      ),
+                                    )
+                                  : SingleChildScrollView(
+                                      primary: false,
+                                      child: _programLegend(
+                                        annualShares,
+                                        annualAllotment,
+                                        selectedKey: selectedKey,
+                                      ),
+                                    ),
+                            ),
                           ],
                         );
                       },
