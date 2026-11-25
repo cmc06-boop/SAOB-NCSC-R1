@@ -137,7 +137,7 @@ class _ReportsPageState extends State<ReportsPage> {
       // filename, avoiding the Windows Save As overwrite confirmation.
       final folderPath = await getDirectoryPath(
         initialDirectory: lastExportFolder,
-        confirmButtonText: 'Export Here',
+        confirmButtonText: 'Download',
       );
       if (folderPath == null) return;
       lastExportFolder = folderPath;
@@ -163,7 +163,10 @@ class _ReportsPageState extends State<ReportsPage> {
           : selectedProgram.isEmpty
           ? 'All'
           : selectedProgram;
-      final fileName = 'NCSC-R1-$selectedYear-$fileLabel.$extension';
+      // A Manila calendar date starts a fresh filename sequence each day,
+      // while saveExportCopy still prevents overwriting any older file.
+      final downloadDate = DateFormat('yyyy-MM-dd').format(manilaNow());
+      final fileName = 'NCSC-R1-$selectedYear-$fileLabel-$downloadDate.$extension';
       final destination = await saveExportCopy(
         folderPath: folderPath,
         fileName: fileName,
@@ -173,8 +176,8 @@ class _ReportsPageState extends State<ReportsPage> {
         showMessage(
           context,
           fmt == 'PDF'
-              ? 'PDF report saved to $destination'
-              : 'Excel report saved to $destination',
+              ? 'PDF report downloaded to $destination'
+              : 'Excel report downloaded to $destination',
         );
       }
       widget.store.logReport(
@@ -644,6 +647,16 @@ class _ReportSheetState extends State<_ReportSheet> {
     _vertical.dispose();
     _horizontal.dispose();
     super.dispose();
+  }
+
+  // The list is newest-first; restart display numbering at each date.
+  List<int> _dailyNumbers() {
+    final counts = <String, int>{};
+    return [
+      for (final report in widget.history)
+        counts.update(dateOnly(report['at']), (count) => count + 1,
+            ifAbsent: () => 1),
+    ];
   }
 
   static const _border = BorderSide(color: Color(0xffd5e1f2));
@@ -1595,6 +1608,7 @@ class _HistoryCardState extends State<_HistoryCard> {
 
   @override
   Widget build(BuildContext context) {
+    final dailyNumbers = _dailyNumbers();
     return Panel(
       padding: 0,
       child: Column(
@@ -1664,7 +1678,7 @@ class _HistoryCardState extends State<_HistoryCard> {
                           else
                             for (var i = 0; i < widget.history.length; i++)
                               _row([
-                                _cell('${i + 1}', number: true),
+                                _cell('${dailyNumbers[i]}', number: true),
                                 _cell(_reportName(widget.history[i])),
                                 _cell('${widget.history[i]['year']}', center: true),
                                 _cell(dateLabel(widget.history[i]['at']), center: true),
