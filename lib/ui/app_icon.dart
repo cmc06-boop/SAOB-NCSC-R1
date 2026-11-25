@@ -1,5 +1,4 @@
 import 'package:material_ui/material_ui.dart';
-import 'package:flutter/material.dart' show Icon, Icons, IconData;
 
 /// Consistent Material icons without external SVG assets.
 class AppIcon extends StatelessWidget {
