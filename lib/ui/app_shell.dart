@@ -80,7 +80,7 @@ class _AppShellState extends State<AppShell> {
                 ),
                 child: const AppSvgIcon(
                   'log-out',
-                  size: 26,
+                  size: 22,
                   color: ink,
                 ),
               ),
@@ -275,7 +275,7 @@ class _AppShellState extends State<AppShell> {
                                               AppSvgIcon(
                                                 m.$3,
                                                 color: Colors.white,
-                                                size: 21,
+                                                size: 18,
                                               ),
                                               if (expanded) ...[
                                                 const SizedBox(width: 12),
