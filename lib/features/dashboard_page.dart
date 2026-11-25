@@ -402,7 +402,7 @@ class _DashboardPageState extends State<DashboardPage> {
                     ],
                   ),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 24),
           LayoutBuilder(
             builder: (context, c) {
               final cols = c.maxWidth >= 1000
@@ -497,7 +497,7 @@ class _DashboardPageState extends State<DashboardPage> {
               );
             },
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 14),
           LayoutBuilder(
             builder: (context, c) {
               const gap = 12.0;
@@ -510,7 +510,7 @@ class _DashboardPageState extends State<DashboardPage> {
               // Give the six primary cards priority over the Audit Trail.
               // On desktop, expand the charts into the free vertical space.
               final panelHeight = fillHeight
-                  ? math.max(225.0, availableHeight - 485.0)
+                  ? math.max(225.0, availableHeight - 480.0)
                   : 225.0;
               final previewDonutSize = math.min(
                 200.0,
@@ -627,12 +627,12 @@ class _DashboardPageState extends State<DashboardPage> {
                     );
             },
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 14),
           // Keep the Audit Trail compact and steady. Only the chart row
           // grows with the desktop viewport, not the activity preview.
           SizedBox(
             width: double.infinity,
-            height: 210,
+            height: 222,
             child: _DashboardAuditPreview(
               rows: _dashboardAuditRows(),
               onSeeAll: widget.onViewAuditTrail,
