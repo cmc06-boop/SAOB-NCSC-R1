@@ -186,7 +186,7 @@ class _DashboardPageState extends State<DashboardPage> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            AppSvgIcon(metrics[i].$2, size: 32, color: blue),
+                            AppIcon(metrics[i].$2, size: 22, color: blue),
                             const SizedBox(height: 18),
                             Text(
                               metrics[i].$1,
