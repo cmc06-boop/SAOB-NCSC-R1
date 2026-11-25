@@ -47,7 +47,7 @@ class _DashboardPageState extends State<DashboardPage> {
           value = value.substring(0, value.length - 1);
         }
       }
-      return '₱${value}$suffix';
+      return '₱$value$suffix';
     }
 
     if (absolute >= 1e15) return amount(1e15, 'Q');
@@ -83,7 +83,7 @@ class _DashboardPageState extends State<DashboardPage> {
                       maxLines: 1,
                       softWrap: false,
                       textAlign: TextAlign.center,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: size < 180 ? 13 : 15,
                         fontWeight: FontWeight.w800,
                         color: navy,
