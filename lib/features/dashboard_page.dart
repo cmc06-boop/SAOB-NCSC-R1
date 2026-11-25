@@ -495,7 +495,7 @@ class _DashboardPageState extends State<DashboardPage> {
         },
       );
 
-    Widget buildContent(bool fillHeight, double availableHeight) => Column(
+    Widget buildContent(bool fillHeight) => Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           LayoutBuilder(
@@ -666,11 +666,11 @@ class _DashboardPageState extends State<DashboardPage> {
         return compactDesktop
             ? Padding(
                 padding: const EdgeInsets.fromLTRB(22, 14, 22, 10),
-                child: buildContent(true, viewport.maxHeight),
+                child: buildContent(true),
               )
             : SingleChildScrollView(
                 padding: const EdgeInsets.fromLTRB(22, 14, 22, 10),
-                child: buildContent(false, viewport.maxHeight),
+                child: buildContent(false),
               );
       },
     );
