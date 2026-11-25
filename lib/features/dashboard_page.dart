@@ -192,34 +192,47 @@ class _DashboardPageState extends State<DashboardPage> {
                           children: [
                             Row(
                               children: [
-                                AppIcon(metrics[i].$2, size: 30, color: blue),
+                                AppIcon(metrics[i].$2, size: 34, color: blue),
                                 const SizedBox(width: 10),
                                 Expanded(
-                                  child: Text(
-                                    metrics[i].$1,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w700,
-                                      color: navy,
+                                  child: Align(
+                                    alignment: Alignment.centerLeft,
+                                    child: FittedBox(
+                                      fit: BoxFit.scaleDown,
+                                      alignment: Alignment.centerLeft,
+                                      child: Text(
+                                        metrics[i].$1,
+                                        maxLines: 1,
+                                        style: const TextStyle(
+                                          fontSize: 17,
+                                          fontWeight: FontWeight.w700,
+                                          color: navy,
+                                        ),
+                                      ),
                                     ),
                                   ),
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 4),
-                            FittedBox(
-                              fit: BoxFit.scaleDown,
-                              alignment: Alignment.centerLeft,
-                              child: Text(
-                                money(amounts[i]),
-                                maxLines: 1,
-                                style: const TextStyle(
-                                  fontSize: 23,
-                                  fontWeight: FontWeight.w800,
-                                  color: navy,
-                                  letterSpacing: -0.3,
+                            const SizedBox(height: 1),
+                            Padding(
+                              padding: const EdgeInsets.only(left: 8),
+                              child: SizedBox(
+                                width: double.infinity,
+                                child: FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  alignment: Alignment.centerLeft,
+                                  child: Text(
+                                    money(amounts[i]),
+                                    maxLines: 1,
+                                    softWrap: false,
+                                    style: const TextStyle(
+                                      fontSize: 23,
+                                      fontWeight: FontWeight.w800,
+                                      color: navy,
+                                      letterSpacing: -0.3,
+                                    ),
+                                  ),
                                 ),
                               ),
                             ),
