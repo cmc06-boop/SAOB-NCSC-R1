@@ -344,9 +344,7 @@ class _DashboardPageState extends State<DashboardPage> {
       'Overview of Budget Utilization',
       style: TextStyle(fontSize: 14, color: muted, height: 1.35),
     );
-    return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(28, 30, 28, 28),
-      child: Column(
+    final content = Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           LayoutBuilder(
@@ -357,7 +355,7 @@ class _DashboardPageState extends State<DashboardPage> {
                       title,
                       const SizedBox(height: 5),
                       subtitle,
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 8),
                       filters,
                     ],
                   )
@@ -382,7 +380,7 @@ class _DashboardPageState extends State<DashboardPage> {
                     ],
                   ),
           ),
-          const SizedBox(height: 22),
+          const SizedBox(height: 10),
           LayoutBuilder(
             builder: (context, c) {
               final cols = c.maxWidth >= 1000
@@ -403,16 +401,16 @@ class _DashboardPageState extends State<DashboardPage> {
                 t.balance,
               ];
               return Wrap(
-                spacing: 14,
-                runSpacing: 14,
+                spacing: 12,
+                runSpacing: 8,
                 children: [
                   for (var i = 0; i < metrics.length; i++)
                     SizedBox(
-                      width: (c.maxWidth - (cols - 1) * 14) / cols,
+                      width: (c.maxWidth - (cols - 1) * 12) / cols,
                       child: Container(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 18,
-                          vertical: 14,
+                          horizontal: 16,
+                          vertical: 8,
                         ),
                         decoration: BoxDecoration(
                           color: const Color(0xffe7eefc),
@@ -477,7 +475,7 @@ class _DashboardPageState extends State<DashboardPage> {
               );
             },
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 8),
           LayoutBuilder(
             builder: (context, c) {
               const gap = 12.0;
@@ -487,10 +485,10 @@ class _DashboardPageState extends State<DashboardPage> {
                   : c.maxWidth;
               // Keep the preview short; the dialog shows every program.
               // Both dashboard panels use identical dimensions.
-              const panelHeight = 225.0;
-              const previewDonutSize = 146.0;
+              const panelHeight = 205.0;
+              const previewDonutSize = 136.0;
               final chart = Panel(
-                padding: 14,
+                padding: 10,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -542,7 +540,7 @@ class _DashboardPageState extends State<DashboardPage> {
                 ),
               );
               final rates = Panel(
-                padding: 14,
+                padding: 12,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -600,21 +598,37 @@ class _DashboardPageState extends State<DashboardPage> {
                     );
             },
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 8),
           _DashboardAuditPreview(
             rows: widget.store.auditRows(year),
             onSeeAll: widget.onViewAuditTrail,
           ),
           if (rows.isEmpty)
             const Padding(
-              padding: EdgeInsets.only(top: 18),
+              padding: EdgeInsets.only(top: 5),
               child: Text(
                 'No budget records for these filters. Add a record, or import an Excel file from Add Record.',
                 style: TextStyle(color: muted),
               ),
             ),
         ],
-      ),
+      );
+    return LayoutBuilder(
+      builder: (context, viewport) {
+        // The normal desktop Dashboard stays fixed. On small windows or
+        // narrow layouts, keep a scroll fallback rather than clipping data.
+        final compactDesktop =
+            viewport.maxHeight >= 675 && viewport.maxWidth >= 1000;
+        return compactDesktop
+            ? Padding(
+                padding: const EdgeInsets.fromLTRB(22, 14, 22, 10),
+                child: content,
+              )
+            : SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(22, 14, 22, 10),
+                child: content,
+              );
+      },
     );
   }
 }
@@ -663,11 +677,13 @@ class _DashboardAuditPreview extends StatelessWidget {
     final label = Text(
       value,
       textAlign: center ? TextAlign.center : TextAlign.left,
-      softWrap: true,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      softWrap: false,
       style: style,
     );
     return Padding(
-      padding: EdgeInsets.fromLTRB(center ? 8 : 12, 8, 8, 8),
+      padding: EdgeInsets.fromLTRB(center ? 8 : 12, 5, 8, 5),
       child: tooltip == null || value.isEmpty
           ? label
           : Tooltip(message: tooltip, child: label),
@@ -683,7 +699,7 @@ class _DashboardAuditPreview extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),
+            padding: const EdgeInsets.fromLTRB(16, 6, 16, 4),
             child: Row(
               children: [
                 const AppIcon('history', color: blue, size: 20),
@@ -706,7 +722,7 @@ class _DashboardAuditPreview extends StatelessWidget {
             ),
           ),
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
             child: LayoutBuilder(
               builder: (context, constraints) => SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
