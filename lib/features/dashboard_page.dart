@@ -670,7 +670,7 @@ class _DashboardPageState extends State<DashboardPage> {
         // The normal desktop Dashboard stays fixed. On small windows or
         // narrow layouts, keep a scroll fallback rather than clipping data.
         final compactDesktop =
-            viewport.maxHeight >= 760 && viewport.maxWidth >= 1000;
+            viewport.maxHeight >= 710 && viewport.maxWidth >= 1000;
         return compactDesktop
             ? Padding(
                 padding: const EdgeInsets.fromLTRB(22, 14, 22, 10),
