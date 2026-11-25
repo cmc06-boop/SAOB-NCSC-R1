@@ -177,37 +177,51 @@ class _DashboardPageState extends State<DashboardPage> {
                     SizedBox(
                       width: (c.maxWidth - (cols - 1) * 14) / cols,
                       child: Container(
-                        padding: const EdgeInsets.fromLTRB(22, 22, 22, 20),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 18,
+                          vertical: 14,
+                        ),
                         decoration: BoxDecoration(
                           color: const Color(0xffe7eefc),
                           borderRadius: BorderRadius.circular(18),
                           border: Border.all(color: const Color(0xffd5e2f6)),
                         ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
-                            AppIcon(metrics[i].$2, size: 22, color: blue),
-                            const SizedBox(height: 18),
-                            Text(
-                              metrics[i].$1,
-                              style: const TextStyle(
-                                fontSize: 17,
-                                fontWeight: FontWeight.w800,
-                                color: navy,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            FittedBox(
-                              fit: BoxFit.scaleDown,
-                              alignment: Alignment.centerLeft,
-                              child: Text(
-                                money(amounts[i]),
-                                style: const TextStyle(
-                                  fontSize: 28,
-                                  fontWeight: FontWeight.w800,
-                                  color: navy,
-                                  letterSpacing: -0.3,
-                                ),
+                            AppIcon(metrics[i].$2, size: 32, color: blue),
+                            const SizedBox(width: 14),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    metrics[i].$1,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w700,
+                                      color: navy,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 5),
+                                  FittedBox(
+                                    fit: BoxFit.scaleDown,
+                                    alignment: Alignment.centerLeft,
+                                    child: Text(
+                                      money(amounts[i]),
+                                      maxLines: 1,
+                                      style: const TextStyle(
+                                        fontSize: 23,
+                                        fontWeight: FontWeight.w800,
+                                        color: navy,
+                                        letterSpacing: -0.3,
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ],
