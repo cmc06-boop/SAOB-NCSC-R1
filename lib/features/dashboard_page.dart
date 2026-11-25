@@ -28,6 +28,27 @@ class DashboardPage extends StatefulWidget {
 class _DashboardPageState extends State<DashboardPage> {
   int year = manilaNow().year;
   String program = '', item = '';
+  // Keep the donut center readable even for large regional totals.
+  // The KPI card and accessibility label continue to show exact pesos.
+  String _compactAllotment(int cents) {
+    final pesos = cents / 100;
+    final absolute = pesos.abs();
+    if (absolute < 100000) return money(cents);
+
+    String amount(double divisor, String suffix) {
+      final scaled = pesos / divisor;
+      final decimals = scaled.abs() < 10 ? 2 : scaled.abs() < 100 ? 1 : 0;
+      final value = scaled.toStringAsFixed(decimals);
+      return '₱${value.replaceFirst(RegExp(r'\\.?0+$'), '')}$suffix';
+    }
+
+    if (absolute >= 1e15) return amount(1e15, 'Q');
+    if (absolute >= 1e12) return amount(1e12, 'T');
+    if (absolute >= 1e9) return amount(1e9, 'B');
+    if (absolute >= 1e6) return amount(1e6, 'M');
+    return amount(1e3, 'K');
+  }
+
   Widget _programDonut(Map<String, int> shares, int allotment, double size) {
     return SizedBox(
       width: size,
@@ -43,17 +64,19 @@ class _DashboardPageState extends State<DashboardPage> {
               ),
             ),
             SizedBox(
-              width: size * 0.70,
+              width: size * 0.66,
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   FittedBox(
                     fit: BoxFit.scaleDown,
                     child: Text(
-                      money(allotment),
+                      _compactAllotment(allotment),
                       maxLines: 1,
+                      softWrap: false,
+                      textAlign: TextAlign.center,
                       style: const TextStyle(
-                        fontSize: 17,
+                        fontSize: size < 180 ? 13 : 15,
                         fontWeight: FontWeight.w800,
                         color: navy,
                       ),
