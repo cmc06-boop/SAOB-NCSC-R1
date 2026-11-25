@@ -315,7 +315,7 @@ class _ExcelDropZoneState extends State<ExcelDropZone> {
                     onPressed: session.busy
                         ? null
                         : () => session.browse(context),
-                    icon: AppSvgIcon(
+                    icon: AppIcon(
                       session.busy ? 'hourglass' : 'folder',
                       size: 16,
                     ),
