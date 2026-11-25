@@ -251,7 +251,6 @@ class _ReportsPageState extends State<ReportsPage> {
           width: 168,
           items: [
             ('', 'All Programs'),
-            (summarySelection, 'Summary'),
             for (final p in widget.store.programs)
               (p.code, p.code),
           ],
@@ -523,7 +522,12 @@ class _ReportsPageState extends State<ReportsPage> {
               IconButton.outlined(
                 key: const ValueKey('reports-back'),
                 tooltip: 'Back to Reports',
-                onPressed: busy ? null : () => setState(() => preview = false),
+                onPressed: busy
+                    ? null
+                    : () => setState(() {
+                        preview = false;
+                        if (program == summarySelection) program = '';
+                      }),
                 iconSize: 16,
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints.tightFor(width: 32, height: 32),
@@ -919,7 +923,14 @@ const _disbursed = Color(0xff1e3a8a);
 const _obligated = Color(0xff3b82f6);
 const _balanceBar = Color(0xffbfdbfe);
 
-class _UtilizationChart extends StatelessWidget {
+class _BarHover {
+  const _BarHover(this.program, this.label, this.amount, this.percent);
+  final String program, label;
+  final int amount;
+  final double? percent;
+}
+
+class _UtilizationChart extends StatefulWidget {
   const _UtilizationChart({
     required this.year,
     required this.records,
@@ -930,9 +941,17 @@ class _UtilizationChart extends StatelessWidget {
   final bool expand;
 
   @override
+  State<_UtilizationChart> createState() => _UtilizationChartState();
+}
+
+class _UtilizationChartState extends State<_UtilizationChart> {
+  _BarHover? hovered;
+  Offset? hoverPoint;
+
+  @override
   Widget build(BuildContext context) {
     final groups = <String, List<BudgetRecord>>{};
-    for (final r in records) {
+    for (final r in widget.records) {
       groups.putIfAbsent(r.program, () => []).add(r);
     }
     final totals = {for (final g in groups.entries) g.key: Totals(g.value)};
@@ -946,9 +965,82 @@ class _UtilizationChart extends StatelessWidget {
               style: TextStyle(color: muted),
             ),
           )
-        : CustomPaint(
-            painter: _UtilizationPainter(entries, byRecord: byRecord),
-            child: const SizedBox.expand(),
+        : LayoutBuilder(
+            builder: (context, limits) {
+              final painter = _UtilizationPainter(entries, byRecord: byRecord);
+              return MouseRegion(
+                onExit: (_) => setState(() {
+                  hovered = null;
+                  hoverPoint = null;
+                }),
+                onHover: (event) {
+                  final next = painter.barAt(
+                    event.localPosition,
+                    Size(limits.maxWidth, limits.maxHeight),
+                  );
+                  if (next?.program == hovered?.program &&
+                      next?.label == hovered?.label &&
+                      next?.amount == hovered?.amount) return;
+                  setState(() {
+                    hovered = next;
+                    hoverPoint = next == null ? null : event.localPosition;
+                  });
+                },
+                child: Stack(
+                  clipBehavior: Clip.hardEdge,
+                  children: [
+                    Positioned.fill(child: CustomPaint(painter: painter)),
+                    if (hovered != null && hoverPoint != null)
+                      Positioned(
+                        left: (hoverPoint!.dx + 12).clamp(
+                          0.0, math.max(0.0, limits.maxWidth - 215),
+                        ),
+                        top: (hoverPoint!.dy - 78).clamp(
+                          0.0, math.max(0.0, limits.maxHeight - 78),
+                        ),
+                        child: IgnorePointer(
+                          child: Container(
+                            constraints: const BoxConstraints(maxWidth: 215),
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: navy,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  hovered!.program + ' • ' + hovered!.label,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                Text(
+                                  money(hovered!.amount),
+                                  style: const TextStyle(
+                                    color: Colors.white, fontSize: 12,
+                                  ),
+                                ),
+                                if (hovered!.percent != null)
+                                  Text(
+                                    hovered!.percent!.toStringAsFixed(2) +
+                                        '% of allotment',
+                                    style: const TextStyle(
+                                      color: Colors.white, fontSize: 12,
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              );
+            },
           );
     return Panel(
       child: Column(
@@ -961,8 +1053,8 @@ class _UtilizationChart extends StatelessWidget {
               Expanded(
                 child: Text(
                   byRecord
-                      ? 'Budget Utilization – $year (% of allotment)'
-                      : 'Budget Utilization – $year',
+                      ? 'Budget Utilization – ${widget.year} (% of allotment)'
+                      : 'Budget Utilization – ${widget.year}',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
@@ -980,7 +1072,7 @@ class _UtilizationChart extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 18),
-          if (expand)
+          if (widget.expand)
             Expanded(child: plot)
           else
             SizedBox(height: 274, child: plot),
@@ -1025,6 +1117,54 @@ class _UtilizationPainter extends CustomPainter {
       }
     }
     return peak;
+  }
+
+  _BarHover? barAt(Offset cursor, Size size) {
+    if (groups.isEmpty) return null;
+    final percentTicks = _percentAxis(_percentPeak());
+    final pesoTicks = _axisTicks(_pesoPeak() <= 0 ? 1 : _pesoPeak());
+    final top = byRecord
+        ? percentTicks.last.toDouble()
+        : math.max(1, pesoTicks.last).toDouble();
+    final plot = Rect.fromLTRB(
+      byRecord ? 72.0 : 128.0,
+      8.0,
+      size.width - 6,
+      size.height - 48,
+    );
+    if (plot.width <= 0 || plot.height <= 0 || !plot.contains(cursor)) {
+      return null;
+    }
+    final slot = plot.width / groups.length;
+    const labels = ['Disbursed', 'Obligated', 'Balance'];
+    const gap = 4.0;
+    final barWidth = math.min(22.0, math.max(10.0, (slot - 28 - gap * 2) / 3));
+    final groupWidth = barWidth * 3 + gap * 2;
+    for (var g = 0; g < groups.length; g++) {
+      final t = groups[g].value;
+      final amounts = [t.disbursement, t.obligation, math.max(0, t.balance)];
+      final values = byRecord
+          ? _recordPercents(t)
+          : amounts.map((v) => v.toDouble()).toList();
+      var x = plot.left + slot * g + (slot - groupWidth) / 2;
+      for (var b = 0; b < 3; b++) {
+        final value = values[b];
+        final height = plot.height * (value / top).clamp(0.0, 1.0);
+        if (value > 0 &&
+            height >= 1 &&
+            Rect.fromLTWH(x, plot.bottom - height, barWidth, height)
+                .contains(cursor)) {
+          return _BarHover(
+            programLabel(groups[g].key),
+            labels[b],
+            amounts[b],
+            t.allotment > 0 ? amounts[b] * 100 / t.allotment : null,
+          );
+        }
+        x += barWidth + gap;
+      }
+    }
+    return null;
   }
 
   @override
