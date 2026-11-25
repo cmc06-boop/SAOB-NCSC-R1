@@ -120,7 +120,7 @@ class _LoginPageState extends State<LoginPage> {
     backgroundColor: const Color(0xffe6ecfb),
     body: SizedBox.expand(
       child: FittedBox(
-        fit: BoxFit.contain,
+        fit: BoxFit.fill,
         alignment: Alignment.center,
         child: SizedBox(
           width: _designWidth,
