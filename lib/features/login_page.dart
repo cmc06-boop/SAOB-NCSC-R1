@@ -390,15 +390,24 @@ class _LoginPageState extends State<LoginPage> {
                 color: Colors.white,
               ),
               SizedBox(width: compact ? 12 : 17),
-              Text(
-                'FINANCE SYSTEM',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: .4,
-                  fontSize: compact ? 19 : 28,
+              Expanded(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'FINANCE SYSTEM',
+                    maxLines: 1,
+                    softWrap: false,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: .4,
+                      fontSize: compact ? 19 : 28,
+                    ),
+                  ),
                 ),
               ),
+              const SizedBox(width: 20),
             ],
           ),
         ),
