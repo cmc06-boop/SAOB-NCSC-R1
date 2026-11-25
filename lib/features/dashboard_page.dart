@@ -63,6 +63,28 @@ class _DashboardPageState extends State<DashboardPage> {
     return amount(1e3, 'K');
   }
 
+  // Dashboard filters are independent of the Audit Trail page's filters.
+  // Older amount-only Updated logs cannot always be attributed to a UACS item.
+  List<DbRow> _dashboardAuditRows() {
+    final audit = widget.store.auditRows(year, program: program);
+    if (item.isEmpty) return audit;
+    final parts = item.split('\u0001');
+    if (parts.length != 2) return audit;
+    final selectedCode = codeKey(parts[1]);
+    final selectedRecord = widget.store
+        .records(year, program: parts[0])
+        .where((r) => codeKey(r.code) == selectedCode)
+        .toList();
+    final selectedName = selectedRecord.isEmpty
+        ? ''
+        : selectedRecord.first.name.toLowerCase().trim();
+    return audit.where((entry) {
+      final detail = '${entry['detail'] ?? ''}'.toLowerCase();
+      return detail.contains(selectedCode) ||
+          (selectedName.isNotEmpty && detail.contains(selectedName));
+    }).toList();
+  }
+
   Widget _programDonut(Map<String, int> shares, int allotment, double size) {
     return SizedBox(
       width: size,
@@ -344,7 +366,7 @@ class _DashboardPageState extends State<DashboardPage> {
       'Overview of Budget Utilization',
       style: TextStyle(fontSize: 14, color: muted, height: 1.35),
     );
-    final content = Column(
+    Widget buildContent(bool fillHeight) => Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           LayoutBuilder(
@@ -599,10 +621,19 @@ class _DashboardPageState extends State<DashboardPage> {
             },
           ),
           const SizedBox(height: 8),
-          _DashboardAuditPreview(
-            rows: widget.store.auditRows(year),
-            onSeeAll: widget.onViewAuditTrail,
-          ),
+          if (fillHeight)
+            Expanded(
+              child: _DashboardAuditPreview(
+                rows: _dashboardAuditRows(),
+                onSeeAll: widget.onViewAuditTrail,
+                fillHeight: true,
+              ),
+            )
+          else
+            _DashboardAuditPreview(
+              rows: _dashboardAuditRows(),
+              onSeeAll: widget.onViewAuditTrail,
+            ),
           if (rows.isEmpty)
             const Padding(
               padding: EdgeInsets.only(top: 5),
@@ -622,11 +653,11 @@ class _DashboardPageState extends State<DashboardPage> {
         return compactDesktop
             ? Padding(
                 padding: const EdgeInsets.fromLTRB(22, 14, 22, 10),
-                child: content,
+                child: buildContent(true),
               )
             : SingleChildScrollView(
                 padding: const EdgeInsets.fromLTRB(22, 14, 22, 10),
-                child: content,
+                child: buildContent(false),
               );
       },
     );
@@ -638,10 +669,12 @@ class _DashboardAuditPreview extends StatelessWidget {
   const _DashboardAuditPreview({
     required this.rows,
     required this.onSeeAll,
+    this.fillHeight = false,
   });
 
   final List<DbRow> rows;
   final VoidCallback? onSeeAll;
+  final bool fillHeight;
 
   static const _border = BorderSide(color: Color(0xffd5e1f2));
   static const _columns = <int, TableColumnWidth>{
@@ -673,6 +706,7 @@ class _DashboardAuditPreview extends StatelessWidget {
     TextStyle style = _body,
     bool center = false,
     String? tooltip,
+    double minHeight = 0,
   }) {
     final label = Text(
       value,
@@ -682,8 +716,10 @@ class _DashboardAuditPreview extends StatelessWidget {
       softWrap: false,
       style: style,
     );
-    return Padding(
+    return Container(
+      constraints: BoxConstraints(minHeight: minHeight),
       padding: EdgeInsets.fromLTRB(center ? 8 : 12, 5, 8, 5),
+      alignment: center ? Alignment.center : Alignment.centerLeft,
       child: tooltip == null || value.isEmpty
           ? label
           : Tooltip(message: tooltip, child: label),
@@ -693,7 +729,25 @@ class _DashboardAuditPreview extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final recent = rows.take(5).toList();
-    return Panel(
+    return LayoutBuilder(
+      builder: (context, bounds) {
+        // Stretch five rows across spare desktop height.
+        final rowHeight = fillHeight && bounds.hasBoundedHeight
+            ? math.max(28.0, (bounds.maxHeight - 88) / 6)
+            : 0.0;
+        Widget cell(
+          String value, {
+          TextStyle style = _body,
+          bool center = false,
+          String? tooltip,
+        }) => _cell(
+          value,
+          style: style,
+          center: center,
+          tooltip: tooltip,
+          minHeight: rowHeight,
+        );
+        return Panel(
       padding: 0,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -740,10 +794,10 @@ class _DashboardAuditPreview extends StatelessWidget {
                             TableCellVerticalAlignment.middle,
                         children: [
                           _row([
-                            _cell('Date', style: _header, center: true),
-                            _cell('Time', style: _header, center: true),
-                            _cell('Action', style: _header, center: true),
-                            _cell('Details', style: _header, center: true),
+                            cell('Date', style: _header, center: true),
+                            cell('Time', style: _header, center: true),
+                            cell('Action', style: _header, center: true),
+                            cell('Details', style: _header, center: true),
                           ], const Color(0xffeef3fb)),
                         ],
                       ),
@@ -758,10 +812,10 @@ class _DashboardAuditPreview extends StatelessWidget {
                         children: [
                           if (recent.isEmpty)
                             _row([
-                              _cell(''),
-                              _cell(''),
-                              _cell(''),
-                              _cell('No audit records found.',
+                              cell(''),
+                              cell(''),
+                              cell(''),
+                              cell('No audit records found.',
                                   style: const TextStyle(
                                     fontSize: 13,
                                     color: muted,
@@ -770,11 +824,11 @@ class _DashboardAuditPreview extends StatelessWidget {
                           else
                             for (final (i, record) in recent.indexed)
                               _row([
-                                _cell(dateOnly(record['at']), center: true),
-                                _cell(timeOnly(record['at']), center: true),
-                                _cell('${record['action'] ?? ''}',
+                                cell(dateOnly(record['at']), center: true),
+                                cell(timeOnly(record['at']), center: true),
+                                cell('${record['action'] ?? ''}',
                                     center: true),
-                                _cell(
+                                cell(
                                   auditDetailSentence(
                                     '${record['detail'] ?? ''}',
                                     action: '${record['action'] ?? ''}',
@@ -796,6 +850,8 @@ class _DashboardAuditPreview extends StatelessWidget {
 
         ],
       ),
+    );
+      },
     );
   }
 }
