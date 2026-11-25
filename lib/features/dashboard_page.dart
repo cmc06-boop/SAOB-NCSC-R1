@@ -244,18 +244,18 @@ class _DashboardPageState extends State<DashboardPage> {
               );
             },
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 14),
           LayoutBuilder(
             builder: (context, c) {
-              const gap = 16.0;
+              const gap = 12.0;
               final sideBySide = c.maxWidth >= 1000;
               final cardWidth = sideBySide
                   ? (c.maxWidth - gap) / 2
                   : c.maxWidth;
-              const donutSize = 220.0;
+              const donutSize = 190.0;
               final legendWidth = math.max(
                 96.0,
-                cardWidth - 52 - donutSize - 20,
+                cardWidth - 40 - donutSize - 12,
               );
               final amountWidth = math.min(168.0, legendWidth * 0.58);
               final nameWidth = math.max(
@@ -263,19 +263,19 @@ class _DashboardPageState extends State<DashboardPage> {
                 legendWidth - 10 - 8 - 12 - amountWidth,
               );
               final chart = Panel(
-                padding: 24,
+                padding: 18,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
                       'Utilization by Program',
                       style: TextStyle(
-                        fontSize: 22,
+                        fontSize: 20,
                         fontWeight: FontWeight.w800,
                         color: navy,
                       ),
                     ),
-                    const SizedBox(height: 22),
+                    const SizedBox(height: 12),
                     Builder(
                       builder: (context) {
                         final donut = SizedBox(
@@ -334,7 +334,7 @@ class _DashboardPageState extends State<DashboardPage> {
                             for (final e in shares.entries.indexed)
                               Padding(
                                 padding: const EdgeInsets.symmetric(
-                                  vertical: 9,
+                                  vertical: 5,
                                 ),
                                 child: Row(
                                   children: [
@@ -384,7 +384,7 @@ class _DashboardPageState extends State<DashboardPage> {
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
                             donut,
-                            const SizedBox(width: 20),
+                            const SizedBox(width: 12),
                             SizedBox(width: legendWidth, child: legend),
                           ],
                         );
@@ -394,21 +394,21 @@ class _DashboardPageState extends State<DashboardPage> {
                 ),
               );
               final rates = Panel(
-                padding: 24,
+                padding: 18,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
                       'Budget Utilization Rate',
                       style: TextStyle(
-                        fontSize: 22,
+                        fontSize: 20,
                         fontWeight: FontWeight.w800,
                         color: navy,
                       ),
                     ),
-                    const SizedBox(height: 36),
+                    const SizedBox(height: 18),
                     _Rate('Obligation Rate', t.obligation, t.allotment, blue),
-                    const SizedBox(height: 32),
+                    const SizedBox(height: 18),
                     _Rate(
                       'Disbursement Rate',
                       t.disbursement,
@@ -430,7 +430,7 @@ class _DashboardPageState extends State<DashboardPage> {
                   : Column(
                       children: [
                         chart,
-                        const SizedBox(height: 18),
+                        const SizedBox(height: 12),
                         SizedBox(width: double.infinity, child: rates),
                       ],
                     );
@@ -517,7 +517,7 @@ class _Rate extends StatelessWidget {
           color: navy,
         ),
       ),
-      const SizedBox(height: 14),
+      const SizedBox(height: 8),
       Row(
         children: [
           Expanded(
@@ -525,7 +525,7 @@ class _Rate extends StatelessWidget {
               borderRadius: BorderRadius.circular(99),
               child: LinearProgressIndicator(
                 value: total == 0 ? 0 : (value / total).clamp(0, 1),
-                minHeight: 18,
+                minHeight: 14,
                 color: color,
                 backgroundColor: const Color(0xffe6ebf3),
               ),
