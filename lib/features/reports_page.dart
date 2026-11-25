@@ -15,7 +15,7 @@ import '../data/report_pdf_sections.dart';
 import '../data/report_summary.dart';
 import 'summary_preview.dart';
 import '../ui/common.dart';
-import '../ui/svg_icon.dart';
+import '../ui/app_icon.dart';
 import '../ui/theme.dart';
 
 /// Compact native Material icons for PDF and Excel reports.
