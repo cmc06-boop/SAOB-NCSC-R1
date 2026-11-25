@@ -124,7 +124,7 @@ class _LoginPageState extends State<LoginPage> {
         final sy = constraints.maxHeight / _designHeight;
         final scale = sx < sy ? sx : sy;
         final showMessage = widget.store.needsAccount || _error != null;
-        final cardHeight = showMessage ? 640.0 : 580.0;
+        final cardHeight = showMessage ? 665.0 : 605.0;
         return Stack(
           fit: StackFit.expand,
           children: [
@@ -251,7 +251,7 @@ class _LoginPageState extends State<LoginPage> {
                   child: AppIcon('user-round', size: 52, color: _navy),
                 ),
               )),
-              Positioned(left: 35, top: showMessage ? 570 : 510, width: 450, height: 35, child: const Row(children: [
+              Positioned(left: 35, top: showMessage ? 595 : 535, width: 450, height: 35, child: const Row(children: [
                 Expanded(child: Divider(color: Color(0xffaab5c9))),
                 Expanded(flex: 8, child: Padding(padding: EdgeInsets.symmetric(horizontal: 16), child: FittedBox(fit: BoxFit.scaleDown, child: Text('For authorized NCSC personnel only', style: TextStyle(color: Color(0xff545f73), fontSize: 19))))),
                 Expanded(child: Divider(color: Color(0xffaab5c9))),
