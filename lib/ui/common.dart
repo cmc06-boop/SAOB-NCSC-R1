@@ -1037,7 +1037,7 @@ class CompactConfirmationDialog extends StatelessWidget {
       child: Container(
         key: surfaceKey,
         width: 320,
-        height: 264,
+        height: 238,
         decoration: BoxDecoration(
           color: Colors.white,
           gradient: destructive
@@ -1052,7 +1052,7 @@ class CompactConfirmationDialog extends StatelessWidget {
           children: [
             Positioned.fill(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(22, 25, 22, 22),
+                padding: const EdgeInsets.fromLTRB(22, 21, 22, 18),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
@@ -1071,7 +1071,7 @@ class CompactConfirmationDialog extends StatelessWidget {
                             : AppIcon('log-out', size: 20, color: accent),
                       ),
                     ),
-                    const SizedBox(height: 13),
+                    const SizedBox(height: 10),
                     Text(
                       title,
                       textAlign: TextAlign.center,
@@ -1081,7 +1081,7 @@ class CompactConfirmationDialog extends StatelessWidget {
                         color: ink,
                       ),
                     ),
-                    const SizedBox(height: 6),
+                    const SizedBox(height: 4),
                     Expanded(
                       child: Center(
                         child: SingleChildScrollView(
@@ -1089,8 +1089,8 @@ class CompactConfirmationDialog extends StatelessWidget {
                           child: Text(
                             detail,
                             textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: destructive ? 12 : 14,
+                            style: const TextStyle(
+                              fontSize: 14,
                               height: 1.4,
                               color: muted,
                             ),
@@ -1098,7 +1098,7 @@ class CompactConfirmationDialog extends StatelessWidget {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 9),
                     Row(
                       children: [
                         Expanded(
