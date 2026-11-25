@@ -649,7 +649,7 @@ class _DashboardPageState extends State<DashboardPage> {
           // grows with the desktop viewport, not the activity preview.
           SizedBox(
             width: double.infinity,
-            height: fillHeight ? 215 : 230,
+            height: 160,
             child: _DashboardAuditPreview(
               rows: _dashboardAuditRows(),
               onSeeAll: widget.onViewAuditTrail,
@@ -670,7 +670,7 @@ class _DashboardPageState extends State<DashboardPage> {
         // Use the entire available width. Only fall back to scrolling
         // when the window cannot comfortably contain the dashboard.
         final compactDesktop =
-            viewport.maxHeight >= 710 && viewport.maxWidth >= 1000;
+            viewport.maxHeight >= 655 && viewport.maxWidth >= 1044;
         return compactDesktop
             ? Padding(
                 padding: const EdgeInsets.fromLTRB(22, 14, 22, 10),
@@ -766,7 +766,7 @@ class _DashboardAuditPreview extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 3),
+            padding: const EdgeInsets.fromLTRB(16, 5, 16, 2),
             child: Row(
               children: [
                 const Expanded(
@@ -781,6 +781,11 @@ class _DashboardAuditPreview extends StatelessWidget {
                 ),
                 TextButton(
                   key: const ValueKey('dashboard-audit-see-all'),
+                  style: TextButton.styleFrom(
+                    minimumSize: Size.zero,
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
                   onPressed: onSeeAll,
                   child: const Text('See All'),
                 ),
