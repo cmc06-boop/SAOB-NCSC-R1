@@ -34,35 +34,6 @@ class DashboardPage extends StatefulWidget {
 class _DashboardPageState extends State<DashboardPage> {
   int year = manilaNow().year;
   String program = '', item = '';
-  // Keep the donut center readable even for large regional totals.
-  // The KPI card and accessibility label continue to show exact pesos.
-  String _compactAllotment(int cents) {
-    final pesos = cents / 100;
-    final absolute = pesos.abs();
-    if (absolute < 100000) return money(cents);
-
-    String amount(double divisor, String suffix) {
-      final scaled = pesos / divisor;
-      final decimals = scaled.abs() < 10 ? 2 : scaled.abs() < 100 ? 1 : 0;
-      var value = scaled.toStringAsFixed(decimals);
-      if (value.contains('.')) {
-        while (value.endsWith('0')) {
-          value = value.substring(0, value.length - 1);
-        }
-        if (value.endsWith('.')) {
-          value = value.substring(0, value.length - 1);
-        }
-      }
-      return '₱$value$suffix';
-    }
-
-    if (absolute >= 1e15) return amount(1e15, 'Q');
-    if (absolute >= 1e12) return amount(1e12, 'T');
-    if (absolute >= 1e9) return amount(1e9, 'B');
-    if (absolute >= 1e6) return amount(1e6, 'M');
-    return amount(1e3, 'K');
-  }
-
   // Dashboard filters are independent of the Audit Trail page's filters.
   // Older amount-only Updated logs cannot always be attributed to a UACS item.
   List<DbRow> _dashboardAuditRows() {
@@ -85,54 +56,53 @@ class _DashboardPageState extends State<DashboardPage> {
     }).toList();
   }
 
-  Widget _programDonut(Map<String, int> shares, int allotment, double size, List<Color> colors, {bool valid = true}) {
+  Widget _programDonut(
+    Map<String, int> shares,
+    double size,
+    List<Color> colors, {
+    required String centerValue,
+    required String centerLabel,
+    required bool valid,
+  }) {
     return SizedBox(
       width: size,
       height: size,
       child: Semantics(
-        label: 'Total allotment ${money(allotment)}',
+        label: '$centerValue $centerLabel',
         child: Stack(
           alignment: Alignment.center,
           children: [
             Positioned.fill(
               child: CustomPaint(
-                painter: _DonutPainter(valid ? shares.values.toList() : const <int>[], colors),
+                painter: _DonutPainter(
+                  valid ? shares.values.toList() : const <int>[],
+                  colors,
+                ),
               ),
             ),
             SizedBox(
               width: size * 0.66,
+              height: size * 0.66,
               child: FittedBox(
                 fit: BoxFit.scaleDown,
-                child: SizedBox(
-                  width: size * 0.66,
-                  child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  FittedBox(
-                    fit: BoxFit.scaleDown,
-                    child: Text(
-                      _compactAllotment(allotment),
-                      maxLines: 1,
-                      softWrap: false,
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: size < 180 ? 13 : 15,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      centerValue,
+                      key: const ValueKey('dashboard-donut-share'),
+                      style: const TextStyle(
+                        fontSize: 24,
                         fontWeight: FontWeight.w800,
                         color: navy,
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 3),
-                  const FittedBox(
-                    fit: BoxFit.scaleDown,
-                    child: Text(
-                      'Total Allotment',
-                      maxLines: 1,
-                      style: TextStyle(fontSize: 12, color: muted),
+                    const SizedBox(height: 3),
+                    Text(
+                      centerLabel,
+                      style: const TextStyle(fontSize: 12, color: muted),
                     ),
-                  ),
-                ],
-              ),
+                  ],
                 ),
               ),
             ),
@@ -181,9 +151,9 @@ class _DashboardPageState extends State<DashboardPage> {
                 Expanded(
                   flex: 3,
                   child: Tooltip(
-                    message: '${money(shown[i].value)} (${rate(shown[i].value, allotment)})',
+                    message: '${shown[i].key}: ${rate(shown[i].value, allotment)}',
                     child: Text(
-                      '${money(shown[i].value)} (${rate(shown[i].value, allotment)})',
+                      rate(shown[i].value, allotment),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       textAlign: TextAlign.right,
@@ -227,23 +197,40 @@ class _DashboardPageState extends State<DashboardPage> {
     for (final r in rows) {
       shares[r.program] = (shares[r.program] ?? 0) + r.allotment;
     }
-    final breakdown = program.isNotEmpty || item.isNotEmpty;
-    final validBreakdown = t.allotment >= 0 &&
-        t.disbursement >= 0 &&
-        t.obligation >= t.disbursement &&
-        t.allotment >= t.obligation;
-    final validDistribution = shares.values.every((amount) => amount >= 0);
-    final validDonut = breakdown ? validBreakdown : validDistribution;
-    final donutShares = breakdown
-        ? <String, int>{
-            'Disbursed': t.disbursement,
-            'Unpaid Obligations': t.obligation - t.disbursement,
-            'Unobligated Balance': t.allotment - t.obligation,
-          }
+    // Compare the selection against its parent budget, not itself.
+    final hasSelection = program.isNotEmpty || item.isNotEmpty;
+    final itemWithinProgram = item.isNotEmpty && program.isNotEmpty;
+    final comparisonRows = itemWithinProgram || program.isEmpty
+        ? all
+        : widget.store.records(year);
+    final comparisonAllotment = Totals(comparisonRows).allotment;
+    final remainder = comparisonAllotment - t.allotment;
+    final selectedLabel = item.isNotEmpty ? 'Selected Item' : program;
+    final otherLabel = itemWithinProgram
+        ? 'Other Items'
+        : item.isNotEmpty
+            ? 'Other Annual Items'
+            : 'Other Programs';
+    final donutShares = hasSelection
+        ? <String, int>{selectedLabel: t.allotment, otherLabel: remainder}
         : shares;
-    final donutColors = breakdown
-        ? const [navy, Color(0xff80a6e1), Color(0xffdce3ef)]
+    final donutColors = hasSelection
+        ? const [blue, Color(0xffdce3ef)]
         : chartColors;
+    final validDonut = comparisonRows.every((r) => r.allotment >= 0) &&
+        donutShares.values.every((amount) => amount >= 0);
+    final donutTitle = !hasSelection
+        ? 'Allotment by Program'
+        : itemWithinProgram
+            ? 'Item Share of Program'
+            : item.isNotEmpty
+                ? 'Item Share of Annual Budget'
+                : 'Program Share of Annual Budget';
+    final centerValue = validDonut && comparisonAllotment > 0
+        ? rate(hasSelection ? t.allotment : comparisonAllotment,
+            comparisonAllotment)
+        : '—';
+    final centerLabel = hasSelection ? 'Budget Share' : 'Annual Budget';
     final filters = Wrap(
       spacing: 16,
       runSpacing: 12,
@@ -316,7 +303,7 @@ class _DashboardPageState extends State<DashboardPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  breakdown ? 'Budget Breakdown' : 'Allotment by Program',
+                  donutTitle,
                   key: const ValueKey('dashboard-donut-title'),
                   style: const TextStyle(
                     fontSize: 18,
@@ -337,10 +324,11 @@ class _DashboardPageState extends State<DashboardPage> {
                         children: [
                           _programDonut(
                             donutShares,
-                            t.allotment,
                             size,
                             donutColors,
-                            valid: validDonut && t.allotment > 0,
+                            centerValue: centerValue,
+                            centerLabel: centerLabel,
+                            valid: validDonut && comparisonAllotment > 0,
                           ),
                           const SizedBox(width: 12),
                           Expanded(
@@ -352,14 +340,14 @@ class _DashboardPageState extends State<DashboardPage> {
                                       'Amounts are inconsistent with allotment. Review the budget records before interpreting the chart.',
                                       style: TextStyle(color: red, fontSize: 12),
                                     )
-                                  : t.allotment == 0
+                                  : comparisonAllotment == 0
                                       ? const Text(
                                           'No allotment for these filters.',
                                           style: TextStyle(color: muted, fontSize: 12),
                                         )
                                       : _programLegend(
                                           donutShares,
-                                          t.allotment,
+                                          comparisonAllotment,
                                           donutColors,
                                         ),
                             ),
