@@ -402,7 +402,7 @@ class _DashboardPageState extends State<DashboardPage> {
                     ],
                   ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 20),
           LayoutBuilder(
             builder: (context, c) {
               final cols = c.maxWidth >= 1000
@@ -510,7 +510,7 @@ class _DashboardPageState extends State<DashboardPage> {
               // Give the six primary cards priority over the Audit Trail.
               // On desktop, expand the charts into the free vertical space.
               final panelHeight = fillHeight
-                  ? math.max(240.0, availableHeight - 475.0)
+                  ? math.max(240.0, availableHeight - 490.0)
                   : 235.0;
               final previewDonutSize = math.min(
                 200.0,
@@ -628,19 +628,16 @@ class _DashboardPageState extends State<DashboardPage> {
             },
           ),
           const SizedBox(height: 8),
-          if (fillHeight)
-            Expanded(
-              child: _DashboardAuditPreview(
-                rows: _dashboardAuditRows(),
-                onSeeAll: widget.onViewAuditTrail,
-                fillHeight: true,
-              ),
-            )
-          else
-            _DashboardAuditPreview(
+          // Keep the Audit Trail compact and steady. Only the chart row
+          // grows with the desktop viewport, not the activity preview.
+          SizedBox(
+            width: double.infinity,
+            height: 240,
+            child: _DashboardAuditPreview(
               rows: _dashboardAuditRows(),
               onSeeAll: widget.onViewAuditTrail,
             ),
+          ),
           if (rows.isEmpty)
             const Padding(
               padding: EdgeInsets.only(top: 5),
@@ -656,7 +653,7 @@ class _DashboardPageState extends State<DashboardPage> {
         // The normal desktop Dashboard stays fixed. On small windows or
         // narrow layouts, keep a scroll fallback rather than clipping data.
         final compactDesktop =
-            viewport.maxHeight >= 730 && viewport.maxWidth >= 1000;
+            viewport.maxHeight >= 790 && viewport.maxWidth >= 1000;
         return compactDesktop
             ? Padding(
                 padding: const EdgeInsets.fromLTRB(22, 14, 22, 10),
