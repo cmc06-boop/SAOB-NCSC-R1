@@ -30,8 +30,6 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   assets:
-    - assets/login-reference-background.png
-    - assets/login-senior.png
     - assets/ncsc-logo-transparent.png
     - assets/fonts/DejaVuSans.ttf
     - assets/fonts/DejaVuSans-Bold.ttf
