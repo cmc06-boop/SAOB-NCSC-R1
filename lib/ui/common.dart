@@ -941,113 +941,16 @@ Future<bool> confirm(
     await showDialog<bool>(
       context: context,
       builder: (ctx) => title.trim().toLowerCase().startsWith('delete')
-          ? Dialog(
-              backgroundColor: Colors.white,
-              surfaceTintColor: Colors.transparent,
-              elevation: 0,
-              insetPadding: const EdgeInsets.all(24),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(28),
-              ),
-              clipBehavior: Clip.antiAlias,
-              child: SizedBox(
-                width: 360,
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(24, 30, 24, 28),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        width: 58,
-                        height: 58,
-                        decoration: const BoxDecoration(
-                          color: Color(0xffffe9e9),
-                          shape: BoxShape.circle,
-                        ),
-                        child: Center(
-                          child: Container(
-                            width: 46,
-                            height: 46,
-                            decoration: const BoxDecoration(
-                              color: Color(0xffffd5d5),
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(
-                              Icons.info_outline,
-                              size: 25,
-                              color: Color(0xffe52935),
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 22),
-                      Text(
-                        title,
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.w700,
-                          color: Color(0xff171717),
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      Text(
-                        detail,
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          fontSize: 13,
-                          height: 1.45,
-                          color: Color(0xff697182),
-                        ),
-                      ),
-                      const SizedBox(height: 26),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: SizedBox(
-                              height: 46,
-                              child: TextButton(
-                                key: const ValueKey('confirm-cancel'),
-                                onPressed: () => Navigator.pop(ctx, false),
-                                style: TextButton.styleFrom(
-                                  backgroundColor: const Color(0xffe9e9eb),
-                                  foregroundColor: const Color(0xff343434),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                ),
-                                child: const Text('Cancel',
-                                  style: TextStyle(fontWeight: FontWeight.w600)),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 14),
-                          Expanded(
-                            child: SizedBox(
-                              height: 46,
-                              child: FilledButton(
-                                key: const ValueKey('confirm-accept'),
-                                onPressed: () => Navigator.pop(ctx, true),
-                                style: FilledButton.styleFrom(
-                                  backgroundColor: const Color(0xffef252e),
-                                  foregroundColor: Colors.white,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                ),
-                                child: Text(
-                                  confirmLabel == 'Confirm' ? 'Delete' : confirmLabel,
-                                  style: const TextStyle(fontWeight: FontWeight.w600),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ),
+          ? CompactConfirmationDialog(
+              dialogKey: const ValueKey('delete-dialog'),
+              surfaceKey: const ValueKey('delete-surface'),
+              closeKey: const ValueKey('confirm-close'),
+              cancelKey: const ValueKey('confirm-cancel'),
+              acceptKey: const ValueKey('confirm-accept'),
+              title: title,
+              detail: detail,
+              confirmLabel: confirmLabel == 'Confirm' ? 'Delete' : confirmLabel,
+              destructive: true,
             )
           : AlertDialog(
         backgroundColor: Colors.white,
@@ -1098,3 +1001,162 @@ Future<bool> confirm(
       ),
     ) ??
     false;
+
+
+/// Shared, centered confirmation surface for Logout and Delete.
+class CompactConfirmationDialog extends StatelessWidget {
+  const CompactConfirmationDialog({
+    super.key,
+    required this.dialogKey,
+    required this.surfaceKey,
+    required this.closeKey,
+    required this.cancelKey,
+    required this.acceptKey,
+    required this.title,
+    required this.detail,
+    required this.confirmLabel,
+    this.destructive = false,
+  });
+
+  final Key dialogKey, surfaceKey, closeKey, cancelKey, acceptKey;
+  final String title, detail, confirmLabel;
+  final bool destructive;
+
+  @override
+  Widget build(BuildContext context) {
+    final accent = destructive ? const Color(0xffef252e) : navy;
+    return Dialog(
+      key: dialogKey,
+      alignment: Alignment.center,
+      backgroundColor: Colors.transparent,
+      surfaceTintColor: Colors.transparent,
+      elevation: 0,
+      insetPadding: const EdgeInsets.all(20),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      clipBehavior: Clip.antiAlias,
+      child: Container(
+        key: surfaceKey,
+        width: 320,
+        height: 264,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          gradient: destructive
+              ? null
+              : const LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [Colors.white, Color(0xffe5efff), Color(0xfff8fbff)],
+                ),
+        ),
+        child: Stack(
+          children: [
+            Positioned.fill(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(22, 25, 22, 22),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Container(
+                      width: 46,
+                      height: 46,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: destructive
+                            ? const Color(0xffffe9e9)
+                            : const Color(0xffe2eafa),
+                      ),
+                      child: Center(
+                        child: destructive
+                            ? Icon(Icons.info_outline, color: accent, size: 22)
+                            : AppIcon('log-out', size: 20, color: accent),
+                      ),
+                    ),
+                    const SizedBox(height: 13),
+                    Text(
+                      title,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        color: ink,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Expanded(
+                      child: Center(
+                        child: SingleChildScrollView(
+                          primary: false,
+                          child: Text(
+                            detail,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              height: 1.4,
+                              color: muted,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: SizedBox(
+                            height: 40,
+                            child: TextButton(
+                              key: cancelKey,
+                              onPressed: () => Navigator.pop(context, false),
+                              style: TextButton.styleFrom(
+                                backgroundColor: const Color(0xffe9e9eb),
+                                foregroundColor: ink,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
+                              child: const Text('Cancel',
+                                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: SizedBox(
+                            height: 40,
+                            child: FilledButton(
+                              key: acceptKey,
+                              onPressed: () => Navigator.pop(context, true),
+                              style: FilledButton.styleFrom(
+                                backgroundColor: accent,
+                                foregroundColor: Colors.white,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
+                              child: Text(confirmLabel,
+                                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            Positioned(
+              right: 8,
+              top: 8,
+              child: IconButton(
+                key: closeKey,
+                tooltip: 'Close confirmation',
+                onPressed: () => Navigator.pop(context, false),
+                icon: const AppIcon('x', size: 17, color: muted),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
