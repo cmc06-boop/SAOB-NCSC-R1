@@ -298,8 +298,8 @@ class _DashboardPageState extends State<DashboardPage> {
                                                   ...entries.where((e) => e.key != selectedKey),
                                                 ];
                                           final count = legendConstraints.maxWidth >= 308 ? 2 : 1;
-                                          const gap = 18.0;
-                                          final groupWidth = math.min(360.0, legendConstraints.maxWidth);
+                                          const gap = 42.0;
+                                          final groupWidth = math.min(404.0, legendConstraints.maxWidth);
                                           final cellWidth = (groupWidth - (count - 1) * gap) / count;
                                           return Align(
                                             alignment: Alignment.topCenter,
