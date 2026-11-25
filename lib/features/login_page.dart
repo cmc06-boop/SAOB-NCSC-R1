@@ -104,98 +104,109 @@ class _LoginPageState extends State<LoginPage> {
     ),
   );
 
+  // Visual language mirrors the supplied NCSC Finance System reference.
+  // Authentication, password handling, and error feedback remain unchanged.
   Widget _card({bool compact = false}) {
     final needsProvisioning = widget.store.needsAccount;
     return Container(
-      width: compact ? 470 : 475,
+      width: double.infinity,
+      constraints: BoxConstraints(maxWidth: compact ? 440 : 540),
       decoration: BoxDecoration(
-        color: const Color(0xfffcfdff),
-        borderRadius: BorderRadius.circular(30),
+        color: const Color(0xfff9faff),
+        borderRadius: BorderRadius.circular(32),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x29041c57),
-            blurRadius: 38,
-            offset: Offset(0, 18),
+            color: Color(0x30072658),
+            blurRadius: 42,
+            offset: Offset(0, 16),
           ),
         ],
       ),
       clipBehavior: Clip.antiAlias,
       child: Stack(
         children: [
-          Positioned(
-            top: -118,
-            right: -111,
-            child: Container(
-              width: 275,
-              height: 205,
-              decoration: const BoxDecoration(
-                color: Color(0xffd31c35),
-                borderRadius: BorderRadius.only(
-                  bottomLeft: Radius.circular(220),
-                ),
-              ),
-            ),
-          ),
-          Positioned(
-            top: -108,
-            right: -117,
-            child: Container(
-              width: 258,
-              height: 184,
-              decoration: const BoxDecoration(
-                color: Color(0xfffcfdff),
-                borderRadius: BorderRadius.only(
-                  bottomLeft: Radius.circular(220),
-                ),
-              ),
+          // The red quarter-circle motif belongs to the card itself.
+          const Positioned(
+            right: 0,
+            top: 0,
+            child: SizedBox(
+              width: 192,
+              height: 132,
+              child: CustomPaint(painter: _LoginCardCorner()),
             ),
           ),
           Padding(
             padding: EdgeInsets.fromLTRB(
-              compact ? 28 : 36,
+              compact ? 26 : 40,
+              compact ? 25 : 31,
+              compact ? 26 : 40,
               compact ? 26 : 32,
-              compact ? 28 : 36,
-              compact ? 25 : 30,
             ),
             child: AutofillGroup(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Container(
-                    width: 94,
-                    height: 88,
+                    width: compact ? 82 : 100,
+                    height: compact ? 78 : 96,
                     decoration: BoxDecoration(
-                      color: const Color(0xffeaf0fb),
-                      borderRadius: BorderRadius.circular(24),
+                      color: const Color(0xffe9effb),
+                      borderRadius: BorderRadius.circular(21),
                     ),
-                    child: const Center(
-                      child: AppIcon(
-                        'wallet',
-                        size: 52,
-                        color: navy,
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        const Positioned(
+                          left: 15,
+                          top: 12,
+                          child: Icon(
+                            Icons.calculate_outlined,
+                            size: 61,
+                            color: Color(0xff153d7c),
+                          ),
+                        ),
+                        Positioned(
+                          right: 8,
+                          bottom: 9,
+                          child: Container(
+                            padding: const EdgeInsets.all(2),
+                            decoration: BoxDecoration(
+                              color: const Color(0xffe9effb),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Icon(
+                              Icons.storage_rounded,
+                              size: 31,
+                              color: Color(0xffc91434),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  SizedBox(height: compact ? 12 : 16),
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      'NCSC Finance System',
+                      maxLines: 1,
+                      style: TextStyle(
+                        fontSize: compact ? 25 : 29,
+                        fontWeight: FontWeight.w800,
+                        color: const Color(0xff102c60),
                       ),
                     ),
                   ),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'NCSC Finance System',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 27,
-                      fontWeight: FontWeight.w800,
-                      color: navy,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 5),
                   const Text(
                     'Log in to your account',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 16,
-                      color: Color(0xff5b6477),
+                      color: Color(0xff5e6575),
                     ),
                   ),
-                  const SizedBox(height: 25),
+                  SizedBox(height: compact ? 23 : 29),
                   if (needsProvisioning) ...[
                     const Text(
                       'No Admin account is configured on this computer. '
@@ -203,30 +214,30 @@ class _LoginPageState extends State<LoginPage> {
                       textAlign: TextAlign.center,
                       style: TextStyle(fontSize: 13, color: red),
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 10),
                   ],
                   _field('Username', 'user-round', _username),
-                  const SizedBox(height: 13),
+                  const SizedBox(height: 14),
                   _field('Password', 'lock', _password, password: true),
                   if (_error != null)
                     Padding(
-                      padding: const EdgeInsets.only(top: 12),
+                      padding: const EdgeInsets.only(top: 10),
                       child: Text(
                         _error!,
                         textAlign: TextAlign.center,
                         style: const TextStyle(color: red, fontSize: 12),
                       ),
                     ),
-                  const SizedBox(height: 24),
+                  SizedBox(height: compact ? 28 : 38),
                   SizedBox(
                     width: double.infinity,
-                    height: 56,
+                    height: compact ? 54 : 61,
                     child: FilledButton.icon(
                       style: FilledButton.styleFrom(
-                        backgroundColor: const Color(0xffc9112e),
+                        backgroundColor: const Color(0xffcc0f2d),
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
+                          borderRadius: BorderRadius.circular(17),
                         ),
                       ),
                       onPressed: _busy || needsProvisioning ? null : _submit,
@@ -239,38 +250,38 @@ class _LoginPageState extends State<LoginPage> {
                                 color: Colors.white,
                               ),
                             )
-                          : const AppIcon('log-in', size: 22),
+                          : const AppIcon('log-in', size: 23),
                       label: const Text(
                         'Log In',
                         style: TextStyle(
-                          fontSize: 19,
-                          fontWeight: FontWeight.w700,
+                          fontSize: 20,
+                          fontWeight: FontWeight.w800,
                         ),
                       ),
                     ),
                   ),
-                  const SizedBox(height: 26),
+                  SizedBox(height: compact ? 23 : 31),
                   Row(
                     children: [
                       const Expanded(
-                        child: Divider(color: Color(0xffcdd5e3)),
+                        child: Divider(color: Color(0xffbec8d9)),
                       ),
-                      const SizedBox(width: 12),
-                      Flexible(
-                        flex: 8,
+                      const SizedBox(width: 10),
+                      const Flexible(
+                        flex: 9,
                         child: Text(
                           'For authorized NCSC personnel only',
                           maxLines: 2,
                           textAlign: TextAlign.center,
                           style: TextStyle(
-                            color: muted,
-                            fontSize: compact ? 11 : 12,
+                            fontSize: 12,
+                            color: Color(0xff576478),
                           ),
                         ),
                       ),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: 10),
                       const Expanded(
-                        child: Divider(color: Color(0xffcdd5e3)),
+                        child: Divider(color: Color(0xffbec8d9)),
                       ),
                     ],
                   ),
@@ -283,91 +294,119 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  Widget _leftContent({bool compact = false}) => Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    mainAxisSize: MainAxisSize.min,
-    children: [
-      Row(
-        children: [
-          Image.asset(
-            'assets/ncsc-logo-transparent.png',
-            width: compact ? 64 : 75,
-            height: compact ? 64 : 75,
-            fit: BoxFit.contain,
-            errorBuilder: (_, _, _) => const Text(
-              'NCSC',
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w800,
-                fontSize: 22,
-              ),
-            ),
-          ),
-          const SizedBox(width: 14),
-          const Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Republic of the Philippines',
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: Colors.white,
-                  ),
-                ),
-                SizedBox(height: 4),
-                Text(
-                  'NATIONAL COMMISSION\nOF SENIOR CITIZENS',
-                  style: TextStyle(
-                    fontSize: 17,
-                    height: 1.13,
-                    fontWeight: FontWeight.w800,
-                    color: Colors.white,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-      SizedBox(height: compact ? 24 : 45),
-      Container(
-        padding: const EdgeInsets.fromLTRB(16, 9, 30, 9),
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Color(0xffe01938), Color(0xff8c234f)],
-          ),
-          borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(9),
-            bottomLeft: Radius.circular(9),
-          ),
-        ),
-        child: const Text(
-          'FINANCE SYSTEM',
-          style: TextStyle(
-            fontSize: 17,
-            letterSpacing: 0.8,
-            fontWeight: FontWeight.w800,
+  Widget _agencyBrand({bool compact = false}) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Image.asset(
+          'assets/ncsc-logo-transparent.png',
+          width: compact ? 63 : 92,
+          height: compact ? 63 : 92,
+          fit: BoxFit.contain,
+          errorBuilder: (_, _, _) => const Icon(
+            Icons.account_balance_outlined,
+            size: 55,
             color: Colors.white,
           ),
         ),
+        SizedBox(width: compact ? 12 : 17),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'Republic of the Philippines',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: compact ? 10 : 14,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'NATIONAL COMMISSION\nOF SENIOR CITIZENS',
+              style: TextStyle(
+                color: Colors.white,
+                height: 1.08,
+                fontWeight: FontWeight.w800,
+                fontSize: compact ? 15 : 22,
+              ),
+            ),
+          ],
+        ),
+        SizedBox(width: compact ? 13 : 25),
+        Container(
+          height: compact ? 55 : 73,
+          width: 2,
+          color: Colors.white.withValues(alpha: 0.88),
+        ),
+        SizedBox(width: compact ? 13 : 26),
+        Flexible(
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              'Regional Office 1',
+              maxLines: 1,
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: compact ? 19 : 25,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _heroCopy({bool compact = false}) => Column(
+    mainAxisSize: MainAxisSize.min,
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      ClipPath(
+        clipper: _FinanceBannerClipper(),
+        child: Container(
+          height: compact ? 47 : 59,
+          width: compact ? 303 : 410,
+          padding: const EdgeInsets.only(left: 18),
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Color(0xffed1533), Color(0xff78265a)],
+            ),
+          ),
+          child: Row(
+            children: [
+              const Icon(Icons.storage_rounded, size: 26, color: Colors.white),
+              const SizedBox(width: 17),
+              Text(
+                'FINANCE SYSTEM',
+                style: TextStyle(
+                  color: Colors.white,
+                  letterSpacing: .4,
+                  fontSize: compact ? 19 : 27,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
-      const SizedBox(height: 12),
+      const SizedBox(height: 13),
       Text(
         'Financial Management\nInformation System',
         style: TextStyle(
-          fontSize: compact ? 28 : 39,
+          fontSize: compact ? 31 : 48,
+          height: 1.05,
           fontWeight: FontWeight.w800,
-          height: 1.1,
           color: Colors.white,
         ),
       ),
-      const SizedBox(height: 17),
+      const SizedBox(height: 20),
       Text(
-        'Budgeting  •  Disbursement  •  Accounting  •  Reporting',
+        'Budgeting   •   Disbursement   •   Accounting   •   Reporting',
         style: TextStyle(
-          fontSize: compact ? 12 : 15,
           color: const Color(0xffe2e9f7),
+          fontSize: compact ? 12 : 17,
         ),
       ),
     ],
@@ -376,152 +415,114 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) => Scaffold(
     body: LayoutBuilder(
-      builder: (context, constraints) {
-        final wide = constraints.maxWidth >= 900;
+      builder: (context, bounds) {
+        final desktop = bounds.maxWidth >= 1160;
+        final narrowDesktop = bounds.maxWidth < 1500;
+        if (!desktop) {
+          return Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [Color(0xff112e62), Color(0xffdbe6fa)],
+              ),
+            ),
+            child: SingleChildScrollView(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: bounds.maxHeight),
+                child: Column(
+                  children: [
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.fromLTRB(20, 22, 20, 32),
+                      decoration: const BoxDecoration(
+                        color: Color(0xff122c5b),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _agencyBrand(compact: true),
+                          const SizedBox(height: 23),
+                          _heroCopy(compact: true),
+                        ],
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 22, 16, 30),
+                      child: _card(compact: true),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        }
         return Stack(
           fit: StackFit.expand,
           children: [
-            const ColoredBox(color: Color(0xffe9effe)),
+            const DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topRight,
+                  end: Alignment.bottomLeft,
+                  colors: [
+                    Color(0xffe4ebfb),
+                    Color(0xfff3f6ff),
+                    Color(0xffcbdaf6),
+                  ],
+                ),
+              ),
+            ),
             const Positioned.fill(
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topRight,
-                    end: Alignment.bottomLeft,
-                    colors: [
-                      Color(0xffe5edfc),
-                      Color(0xfff5f7ff),
-                      Color(0xffd6e3f7),
-                    ],
+              child: CustomPaint(painter: _FinanceLoginPanel()),
+            ),
+            Positioned(
+              left: 0,
+              bottom: -18,
+              width: bounds.maxWidth * .60,
+              height: bounds.maxHeight * .45,
+              child: ClipPath(
+                clipper: _BuildingClipper(),
+                child: Opacity(
+                  opacity: .48,
+                  child: Image.asset(
+                    'assets/login-reference-background.png',
+                    fit: BoxFit.cover,
+                    alignment: Alignment.bottomCenter,
+                    errorBuilder: (_, _, _) => const SizedBox.shrink(),
                   ),
                 ),
               ),
             ),
-            if (wide) ...[
-              Positioned(
-                right: -110,
-                top: -210,
-                child: Transform.rotate(
-                  angle: -0.30,
-                  child: Container(
-                    width: 600,
-                    height: 420,
-                    color: const Color(0x55ffffff),
-                  ),
+            const Positioned.fill(
+              child: IgnorePointer(
+                child: CustomPaint(painter: _FinanceBottomRibbon()),
+              ),
+            ),
+            Positioned(
+              left: bounds.maxWidth * .056,
+              top: bounds.maxHeight * .095,
+              width: bounds.maxWidth * .51,
+              child: _agencyBrand(compact: narrowDesktop),
+            ),
+            Positioned(
+              left: bounds.maxWidth * .056,
+              top: bounds.maxHeight * .287,
+              width: bounds.maxWidth * .48,
+              child: _heroCopy(compact: narrowDesktop),
+            ),
+            Positioned(
+              right: bounds.maxWidth * .05,
+              top: 0,
+              bottom: 0,
+              width: narrowDesktop ? 435 : bounds.maxWidth * .357,
+              child: Center(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(vertical: 20),
+                  child: _card(compact: narrowDesktop),
                 ),
               ),
-              Positioned.fill(
-                child: ClipPath(
-                  clipper: _FinanceLoginClipper(),
-                  child: Stack(
-                    fit: StackFit.expand,
-                    children: [
-                      const DecoratedBox(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                            colors: [
-                              Color(0xff102d60),
-                              Color(0xff0b2858),
-                              Color(0xff214d88),
-                            ],
-                          ),
-                        ),
-                      ),
-                      Positioned(
-                        left: 0,
-                        bottom: -50,
-                        right: constraints.maxWidth * 0.36,
-                        height: constraints.maxHeight * 0.51,
-                        child: Opacity(
-                          opacity: 0.40,
-                          child: Image.asset(
-                            'assets/login-reference-background.png',
-                            fit: BoxFit.cover,
-                            alignment: Alignment.bottomLeft,
-                            errorBuilder: (_, _, _) =>
-                                const SizedBox.shrink(),
-                          ),
-                        ),
-                      ),
-                      Positioned.fill(
-                        child: DecoratedBox(
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.topCenter,
-                              end: Alignment.bottomCenter,
-                              colors: [
-                                const Color(0xff061d49).withValues(alpha: .10),
-                                const Color(0xff092758).withValues(alpha: .03),
-                                const Color(0xff051a45).withValues(alpha: .40),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                      Positioned(
-                        left: 0,
-                        right: 0,
-                        bottom: 0,
-                        height: 105,
-                        child: CustomPaint(
-                          painter: _FinanceRibbonPainter(),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              Positioned(
-                left: constraints.maxWidth * .052,
-                top: constraints.maxHeight * .095,
-                width: constraints.maxWidth * .47,
-                child: _leftContent(compact: constraints.maxWidth < 1200),
-              ),
-              Positioned(
-                right: constraints.maxWidth < 1200 ? 22 : constraints.maxWidth * .06,
-                top: 0,
-                bottom: 0,
-                width: constraints.maxWidth < 1200 ? 425 : 475,
-                child: Center(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.symmetric(vertical: 20),
-                    child: _card(compact: constraints.maxWidth < 1200),
-                  ),
-                ),
-              ),
-            ] else
-              SingleChildScrollView(
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(
-                    minHeight: constraints.maxHeight,
-                  ),
-                  child: Column(
-                    children: [
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.fromLTRB(28, 25, 28, 28),
-                        decoration: const BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [Color(0xff0a2558), Color(0xff24518c)],
-                          ),
-                        ),
-                        child: Center(
-                          child: ConstrainedBox(
-                            constraints: const BoxConstraints(maxWidth: 570),
-                            child: _leftContent(compact: true),
-                          ),
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 24, 16, 25),
-                        child: _card(compact: true),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
+            ),
           ],
         );
       },
@@ -529,31 +530,61 @@ class _LoginPageState extends State<LoginPage> {
   );
 }
 
-class _FinanceLoginClipper extends CustomClipper<Path> {
+class _FinanceLoginPanel extends CustomPainter {
+  const _FinanceLoginPanel();
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final path = Path()
+      ..moveTo(0, 0)
+      ..lineTo(size.width * .613, 0)
+      ..lineTo(size.width * .452, size.height)
+      ..lineTo(0, size.height)
+      ..close();
+    final paint = Paint()
+      ..shader = const LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [Color(0xff142d5b), Color(0xff183967), Color(0xff0d2a57)],
+      ).createShader(Offset.zero & size);
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+class _BuildingClipper extends CustomClipper<Path> {
   @override
   Path getClip(Size size) => Path()
     ..moveTo(0, 0)
-    ..lineTo(size.width * 0.63, 0)
-    ..lineTo(size.width * 0.44, size.height)
+    ..lineTo(size.width * .88, 0)
+    ..lineTo(size.width * .70, size.height)
     ..lineTo(0, size.height)
     ..close();
 
   @override
-  bool shouldReclip(covariant _FinanceLoginClipper oldClipper) => false;
+  bool shouldReclip(covariant CustomClipper<Path> oldClipper) => false;
 }
 
-class _FinanceRibbonPainter extends CustomPainter {
+class _FinanceBottomRibbon extends CustomPainter {
+  const _FinanceBottomRibbon();
+
   @override
   void paint(Canvas canvas, Size size) {
-    final strip = Path()
-      ..moveTo(0, size.height * .38)
-      ..lineTo(size.width * .24, size.height)
-      ..lineTo(0, size.height)
+    final bottom = size.height;
+    final redRibbon = Path()
+      ..moveTo(0, bottom * .841)
+      ..lineTo(size.width * .42, bottom)
+      ..lineTo(0, bottom)
       ..close();
-    canvas.drawPath(strip, Paint()..color = const Color(0xffd61631));
+    canvas.drawPath(
+      redRibbon,
+      Paint()..color = const Color(0xffd40e2c),
+    );
     canvas.drawLine(
-      Offset(0, size.height * .34),
-      Offset(size.width * .24, size.height),
+      Offset(0, bottom * .797),
+      Offset(size.width * .45, bottom),
       Paint()
         ..color = Colors.white
         ..strokeWidth = 3,
@@ -561,5 +592,56 @@ class _FinanceRibbonPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant _FinanceRibbonPainter oldDelegate) => false;
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+class _FinanceBannerClipper extends CustomClipper<Path> {
+  @override
+  Path getClip(Size size) => Path()
+    ..moveTo(0, 0)
+    ..lineTo(size.width, 0)
+    ..lineTo(size.width * .96, size.height)
+    ..lineTo(0, size.height)
+    ..close();
+
+  @override
+  bool shouldReclip(covariant CustomClipper<Path> oldClipper) => false;
+}
+
+class _LoginCardCorner extends CustomPainter {
+  const _LoginCardCorner();
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final background = Path()
+      ..moveTo(size.width * .06, 0)
+      ..lineTo(size.width, 0)
+      ..lineTo(size.width, size.height)
+      ..cubicTo(
+        size.width * .95,
+        size.height * .36,
+        size.width * .58,
+        size.height * .02,
+        size.width * .06,
+        0,
+      )
+      ..close();
+    canvas.drawPath(background, Paint()..color = const Color(0xffd61130));
+    final whiteSweep = Path()
+      ..moveTo(0, 0)
+      ..quadraticBezierTo(
+        size.width * .75,
+        size.height * .02,
+        size.width,
+        size.height * .90,
+      )
+      ..lineTo(size.width, size.height)
+      ..lineTo(size.width * .77, size.height * .78)
+      ..quadraticBezierTo(size.width * .50, size.height * .22, 0, 0)
+      ..close();
+    canvas.drawPath(whiteSweep, Paint()..color = const Color(0xfff9faff));
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
