@@ -177,14 +177,25 @@ class _LoginPageState extends State<LoginPage> {
                           width: 950,
                           height: 550,
                           child: Stack(children: [
-              const Positioned(left: 220, top: 98, width: 330, height: 115, child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Republic of the Philippines', style: TextStyle(color: Colors.white, fontSize: 20)),
-                  SizedBox(height: 6),
-                  Text('NATIONAL COMMISSION\nOF SENIOR CITIZENS', style: TextStyle(color: Colors.white, fontSize: 25, fontWeight: FontWeight.w800, height: 1.2)),
-                ],
-              )),
+              const Positioned(
+                left: 220,
+                top: 98,
+                width: 330,
+                height: 115,
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.topLeft,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Republic of the Philippines', maxLines: 1, softWrap: false, style: TextStyle(color: Colors.white, fontSize: 20)),
+                      SizedBox(height: 6),
+                      Text('NATIONAL COMMISSION\nOF SENIOR CITIZENS', maxLines: 2, softWrap: false, style: TextStyle(color: Colors.white, fontSize: 25, fontWeight: FontWeight.w800, height: 1.2)),
+                    ],
+                  ),
+                ),
+              ),
               const Positioned(left: 558, top: 105, width: 2, height: 73, child: VerticalDivider(color: Colors.white, width: 2, thickness: 2)),
               const Positioned(left: 586, top: 122, width: 360, height: 55, child: Text('Regional Office I', style: TextStyle(color: Colors.white, fontSize: 29, fontWeight: FontWeight.w800))),
               Positioned(left: 93, top: 272, width: 420, height: 62, child: ClipPath(
