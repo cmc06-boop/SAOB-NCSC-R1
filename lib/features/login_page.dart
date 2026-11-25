@@ -244,10 +244,10 @@ class _LoginPageState extends State<LoginPage> {
                 ]),
                 child: const CustomPaint(painter: _CardAccent()),
               )),
-              Positioned(left: 191, top: 31, width: 138, height: 112, child: Container(
-                decoration: BoxDecoration(color: const Color(0xffe8edf7), borderRadius: BorderRadius.circular(26)),
+              Positioned(left: 212, top: 40, width: 96, height: 96, child: Container(
+                decoration: const BoxDecoration(color: Color(0xffe8edf7), shape: BoxShape.circle),
                 child: const Center(
-                  child: AppIcon('user-round', size: 82, color: _navy),
+                  child: AppIcon('user-round', size: 52, color: _navy),
                 ),
               )),
               const Positioned(left: 35, top: 594, width: 450, height: 35, child: Row(children: [
@@ -280,14 +280,14 @@ class _LoginPageState extends State<LoginPage> {
               ),
               const Positioned(
                 left: 35,
-                top: 202,
+                top: 219,
                 width: 450,
                 height: 43,
                 child: ColoredBox(
                   color: _cardWhite,
                   child: Center(
                     child: Text(
-                      'Log In to your account',
+                      'Log In to your Account',
                       maxLines: 1,
                       style: TextStyle(
                         fontSize: 23,
@@ -300,14 +300,14 @@ class _LoginPageState extends State<LoginPage> {
 
               Positioned(
                 left: 35,
-                top: 260,
+                top: 282,
                 width: 450,
                 height: 72,
                 child: _field('Username', 'user-round', _username),
               ),
               Positioned(
                 left: 35,
-                top: 347,
+                top: 369,
                 width: 450,
                 height: 72,
                 child: _field(
@@ -321,7 +321,7 @@ class _LoginPageState extends State<LoginPage> {
               if (widget.store.needsAccount || _error != null)
                 Positioned(
                   left: 35,
-                  top: 425,
+                  top: 447,
                   width: 450,
                   height: 56,
                   child: Center(
@@ -342,10 +342,10 @@ class _LoginPageState extends State<LoginPage> {
                 ),
 
               Positioned(
-                left: 35,
-                top: 488,
-                width: 450,
-                height: 70,
+                left: 80,
+                top: 515,
+                width: 360,
+                height: 54,
                 child: DecoratedBox(
                   decoration: BoxDecoration(
                     gradient: const LinearGradient(
@@ -376,12 +376,12 @@ class _LoginPageState extends State<LoginPage> {
                               color: Colors.white,
                             ),
                           )
-                        : const AppIcon('log-in', size: 27),
+                        : const AppIcon('log-in', size: 21),
                     label: const Text(
-                      'LogIn',
+                      'LOGIN',
                       style: TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.w800,
+                        fontSize: 20,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ),
