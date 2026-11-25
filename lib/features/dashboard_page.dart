@@ -154,66 +154,75 @@ class _DashboardPageState extends State<DashboardPage> {
             ? [...entries.where((e) => (selectedShares?[e.key] ?? 0) != 0), ...entries.where((e) => (selectedShares?[e.key] ?? 0) == 0)]
             : entries;
     final shown = limit == null ? ordered : ordered.take(limit).toList();
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        for (var i = 0; i < shown.length; i++)
-          Padding(
-            padding: EdgeInsets.only(
-              top: limit == null ? 6 : 3,
-              bottom: limit == null ? 6 : 3,
-              right: 10,
-            ),
-            child: Row(
-              children: [
-                const SizedBox(width: 12),
-                Expanded(
-                  flex: 2,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        const gap = 12.0;
+        final width = math.max(0.0, constraints.maxWidth - 12);
+        final columns = width >= 220 ? 2 : 1;
+        final cellWidth = (width - (columns - 1) * gap) / columns;
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 6),
+          child: Wrap(
+            spacing: gap,
+            runSpacing: 7,
+            children: [
+              for (final entry in shown)
+                SizedBox(
+                  width: cellWidth,
                   child: Row(
-                    mainAxisAlignment: MainAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                Container(
-                  width: 10,
-                  height: 10,
-                  decoration: BoxDecoration(
-                    color: chartColors[entries.indexOf(shown[i]) % chartColors.length],
-                    borderRadius: BorderRadius.circular(3),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Flexible(
-                  child: Text(
-                    shown[i].key,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    textAlign: TextAlign.left,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 13,
-                    ),
-                  ),
-                ),
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4),
+                        child: Container(
+                          width: 10,
+                          height: 10,
+                          decoration: BoxDecoration(
+                            color: chartColors[entries.indexOf(entry) % chartColors.length],
+                            borderRadius: BorderRadius.circular(3),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Tooltip(
+                              message: entry.key,
+                              child: Text(
+                                entry.key,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Tooltip(
+                              message: '${money(entry.value)} (${rate(entry.value, allotment)})',
+                              child: FittedBox(
+                                fit: BoxFit.scaleDown,
+                                alignment: Alignment.centerLeft,
+                                child: Text(
+                                  '${money(entry.value)} (${rate(entry.value, allotment)})',
+                                  maxLines: 1,
+                                  style: const TextStyle(fontSize: 12, color: muted),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ],
                   ),
                 ),
-                const SizedBox(width: 10),
-                Expanded(
-                  flex: 3,
-                  child: Tooltip(
-                    message: '${money(shown[i].value)} (${rate(shown[i].value, allotment)})',
-                    child: Text(
-                      '${money(shown[i].value)} (${rate(shown[i].value, allotment)})',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      textAlign: TextAlign.right,
-                      style: const TextStyle(fontSize: 12, color: muted),
-                    ),
-                  ),
-                ),
-              ],
-            ),
+            ],
           ),
-      ],
+        );
+      },
     );
   }
 
