@@ -402,7 +402,7 @@ class _DashboardPageState extends State<DashboardPage> {
                     ],
                   ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 16),
           LayoutBuilder(
             builder: (context, c) {
               final cols = c.maxWidth >= 1000
@@ -423,12 +423,12 @@ class _DashboardPageState extends State<DashboardPage> {
                 t.balance,
               ];
               return Wrap(
-                spacing: 12,
+                spacing: 10,
                 runSpacing: 8,
                 children: [
                   for (var i = 0; i < metrics.length; i++)
                     SizedBox(
-                      width: (c.maxWidth - (cols - 1) * 12) / cols,
+                      width: (c.maxWidth - (cols - 1) * 10) / cols,
                       child: Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 16,
@@ -497,10 +497,10 @@ class _DashboardPageState extends State<DashboardPage> {
               );
             },
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 10),
           LayoutBuilder(
             builder: (context, c) {
-              const gap = 12.0;
+              const gap = 10.0;
               final sideBySide = c.maxWidth >= 1000;
               final cardWidth = sideBySide
                   ? (c.maxWidth - gap) / 2
@@ -627,7 +627,7 @@ class _DashboardPageState extends State<DashboardPage> {
                     );
             },
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 12),
           // Keep the Audit Trail compact and steady. Only the chart row
           // grows with the desktop viewport, not the activity preview.
           SizedBox(
