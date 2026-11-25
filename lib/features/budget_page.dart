@@ -91,7 +91,7 @@ class _BudgetPageState extends State<BudgetPage> {
     if (!await confirm(
       context,
       'Delete budget record?',
-      'Remove ${displayCode(record.code)} · ${record.name}?',
+      'Are you sure to delete this record?',
     )) {
       return;
     }
