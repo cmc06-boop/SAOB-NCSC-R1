@@ -62,7 +62,7 @@ class _HeaderFilter<T> extends StatelessWidget {
         style: const TextStyle(
           fontSize: 14,
           fontWeight: FontWeight.w600,
-          color: muted,
+          color: Colors.black,
         ),
       ),
       const SizedBox(width: 8),
@@ -76,7 +76,7 @@ class _HeaderFilter<T> extends StatelessWidget {
             fontFamily: 'Segoe UI',
             fontSize: 13,
             fontWeight: FontWeight.w600,
-            color: ink,
+            color: Colors.black,
           ),
           decoration: const InputDecoration(
             filled: true,
@@ -323,9 +323,9 @@ class _ReportsPageState extends State<ReportsPage> {
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    SizedBox(height: panelHeight, child: summary),
-                    const SizedBox(height: 16),
                     SizedBox(height: panelHeight, child: chart),
+                    const SizedBox(height: 16),
+                    SizedBox(height: panelHeight, child: summary),
                   ],
                 );
               }
@@ -334,9 +334,9 @@ class _ReportsPageState extends State<ReportsPage> {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    SizedBox(width: 360, child: summary),
-                    const SizedBox(width: 16),
                     Expanded(child: chart),
+                    const SizedBox(width: 16),
+                    SizedBox(width: 360, child: summary),
                   ],
                 ),
               );
