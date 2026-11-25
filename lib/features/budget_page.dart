@@ -727,7 +727,8 @@ class _RecordEditorState extends State<RecordEditor> {
                     SelectField(
                       label: 'Program *',
                       labelStyle: _recordEditorLabelStyle,
-                      arrowRightPadding: 2,
+                      arrowRightPadding: 0,
+                      arrowShiftRight: 9,
                       value: program,
                       dense: true,
                       width: double.infinity,
