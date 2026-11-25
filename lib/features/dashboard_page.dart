@@ -6,7 +6,7 @@ import '../core/format.dart';
 import '../data/finance_store.dart';
 import '../data/models.dart';
 import '../ui/common.dart';
-import '../ui/svg_icon.dart';
+import '../ui/app_icon.dart';
 import '../ui/theme.dart';
 
 const chartColors = [
