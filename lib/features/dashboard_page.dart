@@ -166,7 +166,7 @@ class _DashboardPageState extends State<DashboardPage> {
             ),
             child: Row(
               children: [
-                const SizedBox(width: 6),
+                const SizedBox(width: 12),
                 Expanded(
                   flex: 2,
                   child: Row(
