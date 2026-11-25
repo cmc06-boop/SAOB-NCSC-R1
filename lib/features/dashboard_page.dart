@@ -85,7 +85,7 @@ class _DashboardPageState extends State<DashboardPage> {
     }).toList();
   }
 
-  Widget _programDonut(Map<String, int> shares, int allotment, double size) {
+  Widget _programDonut(Map<String, int> shares, int allotment, double size, List<Color> colors, {bool valid = true}) {
     return SizedBox(
       width: size,
       height: size,
@@ -96,7 +96,7 @@ class _DashboardPageState extends State<DashboardPage> {
           children: [
             Positioned.fill(
               child: CustomPaint(
-                painter: _DonutPainter(shares.values.toList()),
+                painter: _DonutPainter(valid ? shares.values.toList() : const <int>[], colors),
               ),
             ),
             SizedBox(
@@ -138,11 +138,10 @@ class _DashboardPageState extends State<DashboardPage> {
 
   Widget _programLegend(
     Map<String, int> shares,
-    int allotment, {
-    int? limit,
-  }) {
-    final entries = shares.entries.toList();
-    final shown = limit == null ? entries : entries.take(limit).toList();
+    int allotment,
+    List<Color> colors,
+  ) {
+    final shown = shares.entries.toList();
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -155,7 +154,7 @@ class _DashboardPageState extends State<DashboardPage> {
                   width: 10,
                   height: 10,
                   decoration: BoxDecoration(
-                    color: chartColors[i % chartColors.length],
+                    color: colors[i % colors.length],
                     borderRadius: BorderRadius.circular(3),
                   ),
                 ),
@@ -164,7 +163,7 @@ class _DashboardPageState extends State<DashboardPage> {
                   flex: 2,
                   child: Text(
                     shown[i].key,
-                    maxLines: 1,
+                    maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
                       fontWeight: FontWeight.w600,
@@ -190,96 +189,6 @@ class _DashboardPageState extends State<DashboardPage> {
             ),
           ),
       ],
-    );
-  }
-
-  void _showAllPrograms(Map<String, int> shares, int allotment) {
-    showDialog<void>(
-      context: context,
-      builder: (dialogContext) {
-        final screen = MediaQuery.sizeOf(dialogContext);
-        final width = math.min(900.0, screen.width - 48);
-        final height = math.min(520.0, screen.height - 64);
-        return Dialog(
-          insetPadding: const EdgeInsets.all(24),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(18),
-          ),
-          child: SizedBox(
-            width: width,
-            height: height,
-            child: Padding(
-              padding: const EdgeInsets.all(22),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      const Expanded(
-                        child: Text(
-                          'Utilization by Program',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w800,
-                            color: navy,
-                          ),
-                        ),
-                      ),
-                      IconButton(
-                        tooltip: 'Close',
-                        onPressed: () => Navigator.pop(dialogContext),
-                        icon: const AppIcon('x', size: 19),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 14),
-                  Expanded(
-                    child: LayoutBuilder(
-                      builder: (context, constraints) {
-                        final horizontal = constraints.maxWidth >= 580;
-                        final donut = Center(
-                          child: _programDonut(
-                            shares,
-                            allotment,
-                            horizontal ? 220 : 165,
-                          ),
-                        );
-                        final legend = shares.isEmpty
-                            ? const Center(
-                                child: Text(
-                                  'No programs found.',
-                                  style: TextStyle(color: muted),
-                                ),
-                              )
-                            : SingleChildScrollView(
-                                child: _programLegend(shares, allotment),
-                              );
-                        if (!horizontal) {
-                          return Column(
-                            children: [
-                              donut,
-                              const SizedBox(height: 12),
-                              Expanded(child: legend),
-                            ],
-                          );
-                        }
-                        return Row(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            SizedBox(width: 245, child: donut),
-                            const SizedBox(width: 20),
-                            Expanded(child: legend),
-                          ],
-                        );
-                      },
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        );
-      },
     );
   }
 
@@ -312,6 +221,23 @@ class _DashboardPageState extends State<DashboardPage> {
     for (final r in rows) {
       shares[r.program] = (shares[r.program] ?? 0) + r.allotment;
     }
+    final breakdown = program.isNotEmpty || item.isNotEmpty;
+    final validBreakdown = t.allotment >= 0 &&
+        t.disbursement >= 0 &&
+        t.obligation >= t.disbursement &&
+        t.allotment >= t.obligation;
+    final validDistribution = shares.values.every((amount) => amount >= 0);
+    final validDonut = breakdown ? validBreakdown : validDistribution;
+    final donutShares = breakdown
+        ? <String, int>{
+            'Disbursed': t.disbursement,
+            'Unpaid Obligations': t.obligation - t.disbursement,
+            'Unobligated Balance': t.allotment - t.obligation,
+          }
+        : shares;
+    final donutColors = breakdown
+        ? const [navy, Color(0xff80a6e1), Color(0xffdce3ef)]
+        : chartColors;
     final filters = Wrap(
       spacing: 16,
       runSpacing: 12,
@@ -374,68 +300,66 @@ class _DashboardPageState extends State<DashboardPage> {
           final cardWidth = sideBySide
               ? (c.maxWidth - gap) / 2
               : c.maxWidth;
-          // Keep the preview short; the dialog shows every program.
-          // Both dashboard panels use identical dimensions.
-          // Give the six primary cards priority over the Audit Trail.
-          // Fill the remaining desktop height without scaling the page.
+          // Both panels keep their existing responsive dimensions.
           final panelHeight = chartHeight;
           final dense = panelHeight <= 240;
-          final previewDonutSize = math.min(
-            200.0,
-            math.max(90.0, panelHeight - (dense ? 82.0 : 90.0)),
-          );
           final chart = Panel(
             padding: dense ? 7 : 10,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Utilization by Program',
-                  style: TextStyle(
+                Text(
+                  breakdown ? 'Budget Breakdown' : 'Allotment by Program',
+                  key: const ValueKey('dashboard-donut-title'),
+                  style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w800,
                     color: navy,
                   ),
                 ),
-                const SizedBox(height: 2),
+                const SizedBox(height: 6),
                 Expanded(
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Transform.translate(
-                        offset: Offset(0, dense ? 0 : 9),
-                        child: _programDonut(
-                          shares,
-                          t.allotment,
-                          previewDonutSize,
-                        ),
-                      ),
-                      const SizedBox(width: 20),
-                      Expanded(
-                        child: LayoutBuilder(
-                          builder: (context, limits) => SingleChildScrollView(
-                            primary: false,
-                            child: _programLegend(
-                              shares,
-                              t.allotment,
-                              limit: 3,
+                  child: LayoutBuilder(
+                    builder: (context, limits) {
+                      final size = math.max(0.0, math.min(
+                        200.0,
+                        math.min(limits.maxHeight, limits.maxWidth * 0.40),
+                      ));
+                      return Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          _programDonut(
+                            donutShares,
+                            t.allotment,
+                            size,
+                            donutColors,
+                            valid: validDonut && t.allotment > 0,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: SingleChildScrollView(
+                              key: const ValueKey('dashboard-donut-legend'),
+                              primary: false,
+                              child: !validDonut
+                                  ? const Text(
+                                      'Amounts are inconsistent with allotment. Review the budget records before interpreting the chart.',
+                                      style: TextStyle(color: red, fontSize: 12),
+                                    )
+                                  : t.allotment == 0
+                                      ? const Text(
+                                          'No allotment for these filters.',
+                                          style: TextStyle(color: muted, fontSize: 12),
+                                        )
+                                      : _programLegend(
+                                          donutShares,
+                                          t.allotment,
+                                          donutColors,
+                                        ),
                             ),
                           ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: TextButton(
-                    style: TextButton.styleFrom(
-                      minimumSize: Size.zero,
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    ),
-                    onPressed: () => _showAllPrograms(shares, t.allotment),
-                    child: const Text('See All'),
+                        ],
+                      );
+                    },
                   ),
                 ),
               ],
@@ -987,12 +911,14 @@ class _Rate extends StatelessWidget {
 }
 
 class _DonutPainter extends CustomPainter {
-  _DonutPainter(this.amounts);
+  _DonutPainter(this.amounts, this.colors);
   final List<int> amounts;
+  final List<Color> colors;
   @override
   void paint(Canvas canvas, Size size) {
     final diameter = math.min(size.width, size.height);
-    final stroke = diameter <= 170 ? 20.0 : 24.0;
+    if (diameter < 12) return;
+    final stroke = math.min(diameter / 4, diameter <= 170 ? 20.0 : 24.0);
     final rect = Rect.fromCircle(
       center: size.center(Offset.zero),
       radius: diameter / 2 - stroke / 2 - 2,
@@ -1010,9 +936,9 @@ class _DonutPainter extends CustomPainter {
         canvas.drawArc(
           rect,
           start,
-          math.max(0, sweep - 0.012),
+          sweep >= 2 * math.pi - 0.001 ? sweep : math.max(0, sweep - 0.012),
           false,
-          paint..color = chartColors[i % chartColors.length],
+          paint..color = colors[i % colors.length],
         );
       }
       start += sweep;
