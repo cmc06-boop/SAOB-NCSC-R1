@@ -104,6 +104,7 @@ class SelectField<T> extends StatelessWidget {
     this.dense = false,
     this.boxKey,
     this.labelStyle,
+    this.arrowRightPadding = 8,
   });
   final String label;
   final T value;
@@ -113,6 +114,7 @@ class SelectField<T> extends StatelessWidget {
   final bool dense;
   final Key? boxKey;
   final TextStyle? labelStyle;
+  final double arrowRightPadding;
   @override
   Widget build(BuildContext context) => SizedBox(
     width: width,
@@ -128,6 +130,7 @@ class SelectField<T> extends StatelessWidget {
           onChanged: onChanged,
           dense: dense,
           decoratorKey: boxKey,
+          arrowRightPadding: arrowRightPadding,
           fieldTextStyle: const TextStyle(
             fontFamily: 'Segoe UI',
             fontSize: 13,
@@ -157,6 +160,7 @@ class AppDropdown<T> extends StatelessWidget {
     required this.decoration,
     this.decoratorKey,
     this.dense = true,
+    this.arrowRightPadding = 8,
     this.fieldTextStyle = const TextStyle(
       fontFamily: 'Segoe UI',
       fontSize: 13,
@@ -170,6 +174,7 @@ class AppDropdown<T> extends StatelessWidget {
   final InputDecoration decoration;
   final Key? decoratorKey;
   final bool dense;
+  final double arrowRightPadding;
   final TextStyle fieldTextStyle;
 
   @override
@@ -252,9 +257,9 @@ class AppDropdown<T> extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 6),
-                  const Padding(
-                    padding: EdgeInsets.only(right: 8),
-                    child: AppSvgIcon(
+                  Padding(
+                    padding: EdgeInsets.only(right: arrowRightPadding),
+                    child: const AppSvgIcon(
                       'chevron-down',
                       size: 18,
                       color: muted,
