@@ -85,7 +85,7 @@ class _DashboardPageState extends State<DashboardPage> {
     }).toList();
   }
 
-  Widget _programDonut(Map<String, int> shares, int allotment, double size) {
+  Widget _programDonut(Map<String, int> shares, int allotment, double size, int annualAllotment) {
     return SizedBox(
       width: size,
       height: size,
@@ -96,12 +96,15 @@ class _DashboardPageState extends State<DashboardPage> {
           children: [
             Positioned.fill(
               child: CustomPaint(
-                painter: _DonutPainter(shares.values.toList()),
+                painter: _DonutPainter(shares.values.toList(), annualAllotment),
               ),
             ),
             SizedBox(
               width: size * 0.66,
-              child: Column(
+              height: size * 0.66,
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   FittedBox(
@@ -129,6 +132,7 @@ class _DashboardPageState extends State<DashboardPage> {
                   ),
                 ],
               ),
+              ),
             ),
           ],
         ),
@@ -140,22 +144,26 @@ class _DashboardPageState extends State<DashboardPage> {
     Map<String, int> shares,
     int allotment, {
     int? limit,
+    Map<String, int>? selectedShares,
   }) {
     final entries = shares.entries.toList();
-    final shown = limit == null ? entries : entries.take(limit).toList();
+    final ordered = limit != null && (program.isNotEmpty || item.isNotEmpty)
+        ? [...entries.where((e) => (selectedShares?[e.key] ?? 0) != 0), ...entries.where((e) => (selectedShares?[e.key] ?? 0) == 0)]
+        : entries;
+    final shown = limit == null ? ordered : ordered.take(limit).toList();
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         for (var i = 0; i < shown.length; i++)
           Padding(
-            padding: const EdgeInsets.symmetric(vertical: 6),
+            padding: EdgeInsets.symmetric(vertical: limit == null ? 6 : 3),
             child: Row(
               children: [
                 Container(
                   width: 10,
                   height: 10,
                   decoration: BoxDecoration(
-                    color: chartColors[i % chartColors.length],
+                    color: chartColors[entries.indexOf(shown[i]) % chartColors.length],
                     borderRadius: BorderRadius.circular(3),
                   ),
                 ),
@@ -193,7 +201,7 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
-  void _showAllPrograms(Map<String, int> shares, int allotment) {
+  void _showAllPrograms(Map<String, int> shares, int allotment, int annualAllotment, Map<String, int> annualShares) {
     showDialog<void>(
       context: context,
       builder: (dialogContext) {
@@ -242,6 +250,7 @@ class _DashboardPageState extends State<DashboardPage> {
                             shares,
                             allotment,
                             horizontal ? 220 : 165,
+                            annualAllotment,
                           ),
                         );
                         final legend = shares.isEmpty
@@ -252,7 +261,7 @@ class _DashboardPageState extends State<DashboardPage> {
                                 ),
                               )
                             : SingleChildScrollView(
-                                child: _programLegend(shares, allotment),
+                                child: _programLegend(annualShares, annualAllotment),
                               );
                         if (!horizontal) {
                           return Column(
@@ -311,6 +320,14 @@ class _DashboardPageState extends State<DashboardPage> {
     };
     for (final r in rows) {
       shares[r.program] = (shares[r.program] ?? 0) + r.allotment;
+    }
+    final annualRows = program.isEmpty && item.isEmpty
+        ? rows
+        : widget.store.records(year);
+    final annualAllotment = Totals(annualRows).allotment;
+    final annualShares = <String, int>{for (final code in shares.keys) code: 0};
+    for (final r in annualRows) {
+      annualShares[r.program] = (annualShares[r.program] ?? 0) + r.allotment;
     }
     final filters = Wrap(
       spacing: 16,
@@ -409,6 +426,7 @@ class _DashboardPageState extends State<DashboardPage> {
                           shares,
                           t.allotment,
                           previewDonutSize,
+                          annualAllotment,
                         ),
                       ),
                       const SizedBox(width: 20),
@@ -417,9 +435,10 @@ class _DashboardPageState extends State<DashboardPage> {
                           builder: (context, limits) => SingleChildScrollView(
                             primary: false,
                             child: _programLegend(
-                              shares,
-                              t.allotment,
-                              limit: 3,
+                              annualShares,
+                              annualAllotment,
+                              limit: 5,
+                              selectedShares: shares,
                             ),
                           ),
                         ),
@@ -435,7 +454,7 @@ class _DashboardPageState extends State<DashboardPage> {
                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
                       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     ),
-                    onPressed: () => _showAllPrograms(shares, t.allotment),
+                    onPressed: () => _showAllPrograms(shares, t.allotment, annualAllotment, annualShares),
                     child: const Text('See All'),
                   ),
                 ),
@@ -993,12 +1012,14 @@ class _Rate extends StatelessWidget {
 }
 
 class _DonutPainter extends CustomPainter {
-  _DonutPainter(this.amounts);
+  _DonutPainter(this.amounts, this.annualAllotment);
   final List<int> amounts;
+  final int annualAllotment;
   @override
   void paint(Canvas canvas, Size size) {
     final diameter = math.min(size.width, size.height);
-    final stroke = diameter <= 170 ? 20.0 : 24.0;
+    if (diameter < 12) return;
+    final stroke = math.min(diameter / 4, diameter <= 170 ? 20.0 : 24.0);
     final rect = Rect.fromCircle(
       center: size.center(Offset.zero),
       radius: diameter / 2 - stroke / 2 - 2,
@@ -1007,16 +1028,16 @@ class _DonutPainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeWidth = stroke;
     canvas.drawOval(rect, paint..color = line);
-    final total = amounts.fold<int>(0, (a, b) => a + math.max(0, b));
-    if (total == 0) return;
+    final selectedTotal = amounts.fold<int>(0, (a, b) => a + math.max(0, b));
+    if (annualAllotment <= 0 || selectedTotal > annualAllotment || amounts.any((a) => a < 0)) return;
     var start = -math.pi / 2;
     for (var i = 0; i < amounts.length; i++) {
-      final sweep = math.max(0, amounts[i]) / total * math.pi * 2;
+      final sweep = math.max(0, amounts[i]) / annualAllotment * math.pi * 2;
       if (sweep > 0) {
         canvas.drawArc(
           rect,
           start,
-          math.max(0, sweep - 0.012),
+          sweep >= 2 * math.pi - 0.001 ? sweep : math.max(0, sweep - 0.012),
           false,
           paint..color = chartColors[i % chartColors.length],
         );
