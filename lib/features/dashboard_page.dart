@@ -732,8 +732,9 @@ class _DashboardAuditPreview extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, bounds) {
         // Stretch five rows across spare desktop height.
+        final rowCount = recent.isEmpty ? 1 : recent.length;
         final rowHeight = fillHeight && bounds.hasBoundedHeight
-            ? math.max(28.0, (bounds.maxHeight - 88) / 6)
+            ? math.max(28.0, (bounds.maxHeight - 56) / (rowCount + 1))
             : 0.0;
         Widget cell(
           String value, {
