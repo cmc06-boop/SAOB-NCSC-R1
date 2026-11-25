@@ -820,12 +820,11 @@ class _BudgetTableState extends State<BudgetTable> {
               ], const Color(0xffe7eefc)),
           ],
         );
-        // The first three identity columns never move horizontally.
-        // Both sections share one vertical scroll; header and body horizontal
-        // scroll positions are synchronized to keep financial labels aligned.
+        // Freeze only # and UACS Code. Expense joins the horizontal scroll.
+        // The entire table keeps a single vertical scroll.
         Table section(Table original, bool fixed) {
-          final first = fixed ? 0 : 3;
-          final last = fixed ? 3 : widths.length;
+          final first = fixed ? 0 : 2;
+          final last = fixed ? 2 : widths.length;
           return Table(
             border: original.border,
             columnWidths: {
@@ -843,15 +842,14 @@ class _BudgetTableState extends State<BudgetTable> {
           );
         }
 
-        final frozenWidth = widths[0] + widths[1] + widths[2];
+        final frozenWidth = widths[0] + widths[1];
         final movableWidth = content - frozenWidth;
         final frozenHeader = section(headerTable, true);
         final movingHeader = section(headerTable, false);
         final frozenBody = section(bodyTable, true);
         final movingBody = section(bodyTable, false);
         // One vertical scroll view owns both the frozen and moving rows.
-        // Financial headers have their own horizontal viewport, synchronized
-        // with the body; the first three identity columns stay in place.
+        // Headers and data move horizontally together while # and UACS stay fixed.
         final availableWidth = math.max(0.0, constraints.maxWidth - frozenWidth - 1);
         Widget movingViewport(
           Widget table,
