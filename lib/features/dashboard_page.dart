@@ -222,8 +222,13 @@ class _DashboardPageState extends State<DashboardPage> {
       context: context,
       builder: (dialogContext) {
         final screen = MediaQuery.sizeOf(dialogContext);
-        final width = math.min(900.0, screen.width - 48);
-        final height = math.min(520.0, screen.height - 64);
+        final width = math.min(680.0, screen.width - 48);
+        final horizontalLayout = width - 32 >= 460;
+        final legendHeight = math.max(170.0, annualShares.length * 30.0);
+        final desiredHeight = horizontalLayout
+            ? math.min(360.0, legendHeight + 76)
+            : math.min(460.0, legendHeight + 220);
+        final height = math.min(desiredHeight, screen.height - 64);
         return Dialog(
           insetPadding: const EdgeInsets.all(24),
           shape: RoundedRectangleBorder(
@@ -233,7 +238,7 @@ class _DashboardPageState extends State<DashboardPage> {
             width: width,
             height: height,
             child: Padding(
-              padding: const EdgeInsets.all(22),
+              padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -243,7 +248,7 @@ class _DashboardPageState extends State<DashboardPage> {
                         child: Text(
                           chartTitle,
                           style: const TextStyle(
-                            fontSize: 20,
+                            fontSize: 18,
                             fontWeight: FontWeight.w800,
                             color: navy,
                           ),
@@ -256,20 +261,23 @@ class _DashboardPageState extends State<DashboardPage> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 14),
+                  const SizedBox(height: 6),
                   Expanded(
                     child: LayoutBuilder(
                       builder: (context, constraints) {
-                        final horizontal = constraints.maxWidth >= 580;
+                        final horizontal = constraints.maxWidth >= 460;
+                        final donutSize = horizontal
+                            ? math.min(174.0, constraints.maxHeight)
+                            : math.min(140.0, constraints.maxHeight * 0.48);
                         final donut = Center(
                           child: _programDonut(
                             shares,
                             allotment,
-                            horizontal ? 220 : 165,
+                            donutSize,
                             annualAllotment,
                           ),
                         );
-                        final legend = shares.isEmpty
+                        final legend = annualShares.isEmpty
                             ? const Center(
                                 child: Text(
                                   'No allotment records found.',
@@ -277,13 +285,14 @@ class _DashboardPageState extends State<DashboardPage> {
                                 ),
                               )
                             : SingleChildScrollView(
+                                primary: false,
                                 child: _programLegend(annualShares, annualAllotment, selectedKey: selectedKey),
                               );
                         if (!horizontal) {
                           return Column(
                             children: [
                               donut,
-                              const SizedBox(height: 12),
+                              const SizedBox(height: 8),
                               Expanded(child: legend),
                             ],
                           );
@@ -291,8 +300,8 @@ class _DashboardPageState extends State<DashboardPage> {
                         return Row(
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
-                            SizedBox(width: 245, child: donut),
-                            const SizedBox(width: 20),
+                            SizedBox(width: 184, child: donut),
+                            const SizedBox(width: 12),
                             Expanded(child: legend),
                           ],
                         );
