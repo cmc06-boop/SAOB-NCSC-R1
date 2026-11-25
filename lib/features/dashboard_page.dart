@@ -377,8 +377,8 @@ class _DashboardPageState extends State<DashboardPage> {
           // Keep the preview short; the dialog shows every program.
           // Both dashboard panels use identical dimensions.
           // Give the six primary cards priority over the Audit Trail.
-          // On desktop, expand the charts into the free vertical space.
-          final panelHeight = chartHeight;
+          // Cap the chart panels to keep the audit preview at its original height.
+          final panelHeight = math.min(200.0, chartHeight);
           final dense = panelHeight < 220;
           final previewDonutSize = math.min(
             200.0,
@@ -403,7 +403,7 @@ class _DashboardPageState extends State<DashboardPage> {
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       Transform.translate(
-                        offset: const Offset(0, 9),
+                        offset: Offset(0, dense ? 0 : 9),
                         child: _programDonut(
                           shares,
                           t.allotment,
@@ -639,17 +639,20 @@ class _DashboardPageState extends State<DashboardPage> {
             Expanded(
               child: LayoutBuilder(
                 builder: (context, constraints) =>
-                    buildCharts(constraints.maxHeight),
+                    Align(
+                      alignment: Alignment.topCenter,
+                      child: buildCharts(constraints.maxHeight),
+                    ),
               ),
             )
           else
-            buildCharts(255.0),
+            buildCharts(200.0),
           const SizedBox(height: 12),
           // Keep the Audit Trail compact and steady. Only the chart row
           // grows with the desktop viewport, not the activity preview.
           SizedBox(
             width: double.infinity,
-            height: 160,
+            height: fillHeight ? 215 : 230,
             child: _DashboardAuditPreview(
               rows: _dashboardAuditRows(),
               onSeeAll: widget.onViewAuditTrail,
@@ -670,7 +673,7 @@ class _DashboardPageState extends State<DashboardPage> {
         // Use the entire available width. Only fall back to scrolling
         // when the window cannot comfortably contain the dashboard.
         final compactDesktop =
-            viewport.maxHeight >= 655 && viewport.maxWidth >= 1044;
+            viewport.maxHeight >= 690 && viewport.maxWidth >= 1044;
         return compactDesktop
             ? Padding(
                 padding: const EdgeInsets.fromLTRB(22, 14, 22, 10),
@@ -766,7 +769,7 @@ class _DashboardAuditPreview extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 5, 16, 2),
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 3),
             child: Row(
               children: [
                 const Expanded(
