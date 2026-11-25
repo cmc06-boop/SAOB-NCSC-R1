@@ -125,11 +125,11 @@ void main() {
       final store = createStore();
       await tester.pumpWidget(FinanceApp(store: store));
       await tester.pumpAndSettle();
-      expect(find.text('System Login'), findsOneWidget);
+      expect(find.text('NCSC Finance System'), findsOneWidget);
       expect(find.text('Set Up Account'), findsNothing);
       expect(find.text('Create Account'), findsNothing);
       expect(find.text('Forgot Password?'), findsNothing);
-      expect(find.text('NCSC-R1'), findsOneWidget);
+      expect(find.textContaining('NATIONAL COMMISSION'), findsOneWidget);
       expect(find.text('Username'), findsOneWidget);
       final password = tester.widget<TextField>(
         find.byKey(const ValueKey('Password')),
@@ -649,7 +649,7 @@ void main() {
     final store = FinanceStore(FinanceDatabase.open(path: ':memory:'));
     await tester.pumpWidget(FinanceApp(store: store));
     await tester.pumpAndSettle();
-    expect(find.text('System Login'), findsOneWidget);
+    expect(find.text('NCSC Finance System'), findsOneWidget);
     expect(
       find.textContaining('No Admin account is configured'),
       findsOneWidget,
@@ -657,7 +657,7 @@ void main() {
     expect(find.text('Create Account'), findsNothing);
     expect(find.text('Forgot Password?'), findsNothing);
     final login = tester.widget<FilledButton>(
-      find.widgetWithText(FilledButton, 'Login'),
+      find.widgetWithText(FilledButton, 'Log In'),
     );
     expect(login.onPressed, isNull);
     expect(tester.takeException(), isNull);
@@ -911,7 +911,7 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('logout-accept')));
     await tester.pumpAndSettle();
     expect(store.user, isNull);
-    expect(find.text('System Login'), findsOneWidget);
+    expect(find.text('NCSC Finance System'), findsOneWidget);
     expect(tester.takeException(), isNull);
     await tester.pumpWidget(const SizedBox());
   });
