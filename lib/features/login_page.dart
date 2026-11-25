@@ -346,7 +346,7 @@ class _LoginPageState extends State<LoginPage> {
               alignment: Alignment.centerLeft,
               fit: BoxFit.scaleDown,
               child: Text(
-                'NATIONAL COMMISSION\\nOF SENIOR CITIZENS',
+                'NATIONAL COMMISSION\nOF SENIOR CITIZENS',
                 style: TextStyle(
                   fontSize: compact ? 17 : 23,
                   height: 1.10,
