@@ -449,12 +449,15 @@ class _DashboardPageState extends State<DashboardPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  chartTitle,
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w800,
-                    color: navy,
+                Padding(
+                  padding: const EdgeInsets.only(left: 8),
+                  child: Text(
+                    chartTitle,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w800,
+                      color: navy,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 2),
@@ -519,12 +522,15 @@ class _DashboardPageState extends State<DashboardPage> {
                 child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Budget Utilization Rate',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w800,
-                    color: navy,
+                Padding(
+                  padding: const EdgeInsets.only(left: 8),
+                  child: Text(
+                    'Budget Utilization Rate',
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w800,
+                      color: navy,
+                    ),
                   ),
                 ),
                 SizedBox(height: compactRates ? 6 : 16),
