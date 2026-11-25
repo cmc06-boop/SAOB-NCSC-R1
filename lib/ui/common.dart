@@ -479,30 +479,32 @@ class BudgetTable extends StatefulWidget {
 
 class _BudgetTableState extends State<BudgetTable> {
   final _scroll = ScrollController();
+  final _movingVertical = ScrollController();
   final _horizontal = ScrollController();
-  final _headerHorizontal = ScrollController();
 
   @override
   void initState() {
     super.initState();
-    _horizontal.addListener(() => _syncHorizontal(_horizontal, _headerHorizontal));
-    _headerHorizontal.addListener(() => _syncHorizontal(_headerHorizontal, _horizontal));
+    _scroll.addListener(() => _syncVertical(_scroll, _movingVertical));
+    _movingVertical.addListener(() => _syncVertical(_movingVertical, _scroll));
   }
 
-  void _syncHorizontal(ScrollController from, ScrollController to) {
+  void _syncVertical(ScrollController from, ScrollController to) {
     if (!from.hasClients || !to.hasClients) return;
     final desired = from.offset.clamp(
       to.position.minScrollExtent,
       to.position.maxScrollExtent,
     );
-    if ((to.offset - desired).abs() > 0.5) to.jumpTo(desired);
+    if ((to.offset - desired).abs() > 0.5) {
+      to.jumpTo(desired);
+    }
   }
 
   @override
   void dispose() {
     _scroll.dispose();
+    _movingVertical.dispose();
     _horizontal.dispose();
-    _headerHorizontal.dispose();
     super.dispose();
   }
 
@@ -843,54 +845,62 @@ class _BudgetTableState extends State<BudgetTable> {
         final movingHeader = section(headerTable, false);
         final frozenBody = section(bodyTable, true);
         final movingBody = section(bodyTable, false);
-        return Column(
+        // Financial headers and values share a single horizontal viewport.
+        // The first three identity columns remain frozen at all times.
+        // Both vertical viewports are synchronized to keep rows aligned.
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Row(
-              children: [
-                SizedBox(width: frozenWidth, child: frozenHeader),
-                Expanded(
-                  child: SingleChildScrollView(
-                    controller: _headerHorizontal,
-                    scrollDirection: Axis.horizontal,
-                    child: SizedBox(
-                      width: movableWidth,
-                      child: movingHeader,
+            SizedBox(
+              width: frozenWidth,
+              child: Column(
+                children: [
+                  frozenHeader,
+                  Expanded(
+                    child: Scrollbar(
+                      controller: _scroll,
+                      thumbVisibility: true,
+                      notificationPredicate: (n) =>
+                          n.metrics.axis == Axis.vertical,
+                      child: SingleChildScrollView(
+                        controller: _scroll,
+                        scrollDirection: Axis.vertical,
+                        child: frozenBody,
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
+            ),
+            // Visible border between frozen Expense and moving Allotment.
+            const SizedBox(
+              width: 1,
+              child: ColoredBox(color: Color(0xffd5e1f2)),
             ),
             Expanded(
               child: Scrollbar(
-                controller: _scroll,
-                thumbVisibility: true,
+                controller: _horizontal,
+                thumbVisibility:
+                    movableWidth > constraints.maxWidth - frozenWidth - 1,
                 notificationPredicate: (n) =>
-                    n.metrics.axis == Axis.vertical,
+                    n.metrics.axis == Axis.horizontal,
                 child: SingleChildScrollView(
-                  controller: _scroll,
-                  scrollDirection: Axis.vertical,
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      SizedBox(width: frozenWidth, child: frozenBody),
-                      Expanded(
-                        child: Scrollbar(
-                          controller: _horizontal,
-                          thumbVisibility:
-                              content > constraints.maxWidth + 1,
-                          notificationPredicate: (n) =>
-                              n.metrics.axis == Axis.horizontal,
+                  controller: _horizontal,
+                  scrollDirection: Axis.horizontal,
+                  child: SizedBox(
+                    width: movableWidth,
+                    child: Column(
+                      children: [
+                        movingHeader,
+                        Expanded(
                           child: SingleChildScrollView(
-                            controller: _horizontal,
-                            scrollDirection: Axis.horizontal,
-                            child: SizedBox(
-                              width: movableWidth,
-                              child: movingBody,
-                            ),
+                            controller: _movingVertical,
+                            scrollDirection: Axis.vertical,
+                            child: movingBody,
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),
