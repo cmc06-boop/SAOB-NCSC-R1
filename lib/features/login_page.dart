@@ -5,7 +5,7 @@ import '../data/finance_store.dart';
 import '../ui/app_icon.dart';
 import '../ui/common.dart';
 
-/// Native Flutter login artwork and interactive form.
+/// Full-window image backdrop with native Flutter branding and interactive form.
 const _designWidth = 1672.0;
 const _designHeight = 941.0;
 const _cardWhite = Color(0xfff8f9fe);
@@ -126,24 +126,14 @@ class _LoginPageState extends State<LoginPage> {
         return Stack(
           fit: StackFit.expand,
           children: [
-            const CustomPaint(
-              key: ValueKey('login-native-background'),
-              painter: _LoginArtwork(),
-            ),
-            const IgnorePointer(child: CustomPaint(painter: _LoginRibbons())),
-            Positioned(
-              left: 0,
-              bottom: 65 * sy,
-              width: 880 * sx,
-              height: 295 * sy,
+            Positioned.fill(
               child: IgnorePointer(
                 child: Image.asset(
-                  'assets/ncsc-building.png',
-                  key: const ValueKey('login-building-image'),
-                  fit: BoxFit.contain,
-                  alignment: Alignment.bottomLeft,
-                  color: const Color(0x66204480),
-                  colorBlendMode: BlendMode.srcATop,
+                  'assets/login-background.png',
+                  key: const ValueKey('login-native-background'),
+                  fit: BoxFit.cover,
+                  alignment: Alignment.center,
+                  filterQuality: FilterQuality.high,
                   excludeFromSemantics: true,
                 ),
               ),
@@ -396,47 +386,6 @@ class _BannerClipper extends CustomClipper<Path> {
   Path getClip(Size s) => Path()..moveTo(0, 0)..lineTo(s.width, 0)..lineTo(s.width - 20, s.height)..lineTo(0, s.height)..close();
   @override
   bool shouldReclip(covariant _BannerClipper oldClipper) => false;
-}
-
-class _LoginArtwork extends CustomPainter {
-  const _LoginArtwork();
-  @override
-  void paint(Canvas canvas, Size s) {
-    canvas.save();
-    canvas.scale(s.width / _designWidth, s.height / _designHeight);
-    s = const Size(_designWidth, _designHeight);
-    final rect = Offset.zero & s;
-    canvas.drawRect(rect, Paint()..shader = const LinearGradient(
-      begin: Alignment.topLeft, end: Alignment.bottomRight,
-      colors: [Color(0xfffafbff), Color(0xffdce5f8)],
-    ).createShader(rect));
-    final blue = Path()..moveTo(0, 0)..lineTo(1030, 0)..lineTo(690, s.height)..lineTo(0, s.height)..close();
-    canvas.drawPath(blue, Paint()..shader = const LinearGradient(
-      begin: Alignment.topLeft, end: Alignment.bottomRight,
-      colors: [Color(0xff11244a), Color(0xff204b85)],
-    ).createShader(rect));
-    canvas.drawPath(Path()..moveTo(952, 0)..lineTo(1030, 0)..lineTo(690, s.height)..lineTo(620, s.height)..close(), Paint()..color = const Color(0x223c72b1));
-    canvas.restore();
-  }
-  @override
-  bool shouldRepaint(covariant _LoginArtwork oldDelegate) => false;
-}
-
-class _LoginRibbons extends CustomPainter {
-  const _LoginRibbons();
-  @override
-  void paint(Canvas canvas, Size s) {
-    canvas.save();
-    canvas.scale(s.width / _designWidth, s.height / _designHeight);
-    s = const Size(_designWidth, _designHeight);
-    final rect = Offset.zero & s;
-    canvas.drawPath(Path()..moveTo(0, 724)..lineTo(730, s.height)..lineTo(0, s.height)..close(), Paint()..color = Colors.white);
-    canvas.drawPath(Path()..moveTo(0, 731)..lineTo(707, s.height)..lineTo(0, s.height)..close(), Paint()..color = const Color(0xff102a59));
-    canvas.drawPath(Path()..moveTo(0, 785)..lineTo(690, s.height)..lineTo(0, s.height)..close(), Paint()..shader = const LinearGradient(colors: [Color(0xffed1734), Color(0xff8f071d)]).createShader(rect));
-    canvas.restore();
-  }
-  @override
-  bool shouldRepaint(covariant _LoginRibbons oldDelegate) => false;
 }
 
 class _CardAccent extends CustomPainter {
