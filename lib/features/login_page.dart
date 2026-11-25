@@ -128,6 +128,35 @@ class _LoginPageState extends State<LoginPage> {
           child: Stack(
             children: [
               const Positioned.fill(child: CustomPaint(key: ValueKey('login-native-background'), painter: _LoginArtwork())),
+              Positioned(
+                left: 0,
+                top: 535,
+                width: 920,
+                height: 406,
+                child: IgnorePointer(
+                  child: ClipPath(
+                    clipper: _BuildingPanelClipper(),
+                    child: ShaderMask(
+                      blendMode: BlendMode.dstIn,
+                      shaderCallback: (bounds) => const LinearGradient(
+                        begin: Alignment.centerLeft,
+                        end: Alignment.centerRight,
+                        colors: [Colors.white, Colors.white, Color(0x00ffffff)],
+                        stops: [0, 0.72, 1],
+                      ).createShader(bounds),
+                      child: Image.asset(
+                        'assets/ncsc-building.png',
+                        key: const ValueKey('login-building-image'),
+                        fit: BoxFit.contain,
+                        alignment: Alignment.bottomLeft,
+                        color: const Color(0x55204480),
+                        colorBlendMode: BlendMode.srcATop,
+                        excludeFromSemantics: true,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
               const Positioned.fill(child: IgnorePointer(child: CustomPaint(painter: _LoginRibbons()))),
               Positioned(left: 94, top: 90, width: 108, height: 108,
                 child: Image.asset('assets/ncsc-logo-transparent.png')),
@@ -360,4 +389,17 @@ class _CardAccent extends CustomPainter {
   }
   @override
   bool shouldRepaint(covariant _CardAccent oldDelegate) => false;
+}
+
+class _BuildingPanelClipper extends CustomClipper<Path> {
+  @override
+  Path getClip(Size s) => Path()
+    ..moveTo(0, 0)
+    ..lineTo(s.width * 0.91, 0)
+    ..lineTo(s.width * 0.75, s.height)
+    ..lineTo(0, s.height)
+    ..close();
+
+  @override
+  bool shouldReclip(covariant _BuildingPanelClipper oldClipper) => false;
 }
