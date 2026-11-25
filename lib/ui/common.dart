@@ -4,7 +4,7 @@ import 'package:material_ui/material_ui.dart';
 
 import '../core/format.dart';
 import '../data/models.dart';
-import 'svg_icon.dart';
+import 'app_icon.dart';
 import 'theme.dart';
 
 class PageFrame extends StatelessWidget {
@@ -266,7 +266,7 @@ class AppDropdown<T> extends StatelessWidget {
                     padding: EdgeInsets.only(right: arrowRightPadding),
                     child: Transform.translate(
                       offset: Offset(arrowShiftRight, 0),
-                      child: const AppSvgIcon(
+                      child: const AppIcon(
                         'chevron-down',
                         size: 18,
                         color: muted,
@@ -325,7 +325,7 @@ class SearchBox extends StatelessWidget {
       onChanged: onChanged,
       decoration: InputDecoration(
         hintText: hint,
-        prefixIcon: const AppSvgIcon('search', size: 20),
+        prefixIcon: const AppIcon('search', size: 20),
       ),
     ),
   );
@@ -348,7 +348,7 @@ class EmptyState extends StatelessWidget {
               color: const Color(0xffe8eef8),
               borderRadius: BorderRadius.circular(18),
             ),
-            child: const AppSvgIcon(
+            child: const AppIcon(
               'folder-open',
               size: 30,
               color: blue,
@@ -875,13 +875,13 @@ class Pager extends StatelessWidget {
           IconButton(
             tooltip: 'Previous page',
             onPressed: p > 1 ? () => onChanged(p - 1) : null,
-            icon: const AppSvgIcon('chevron-left'),
+            icon: const AppIcon('chevron-left'),
           ),
           Text('$p / $maxPage'),
           IconButton(
             tooltip: 'Next page',
             onPressed: p < maxPage ? () => onChanged(p + 1) : null,
-            icon: const AppSvgIcon('chevron-right'),
+            icon: const AppIcon('chevron-right'),
           ),
         ],
       ),
@@ -960,7 +960,7 @@ Future<bool> confirm(
               key: const ValueKey('confirm-close'),
               tooltip: 'Close confirmation',
               onPressed: () => Navigator.pop(ctx, false),
-              icon: const AppSvgIcon('x'),
+              icon: const AppIcon('x'),
             ),
           ],
         ),
