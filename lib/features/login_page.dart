@@ -256,11 +256,16 @@ class _LoginPageState extends State<LoginPage> {
                         child: Divider(color: Color(0xffcdd5e3)),
                       ),
                       const SizedBox(width: 12),
-                      Text(
-                        'For authorized NCSC personnel only',
-                        style: TextStyle(
-                          color: muted,
-                          fontSize: compact ? 11 : 12,
+                      Flexible(
+                        flex: 8,
+                        child: Text(
+                          'For authorized NCSC personnel only',
+                          maxLines: 2,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: muted,
+                            fontSize: compact ? 11 : 12,
+                          ),
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -372,7 +377,7 @@ class _LoginPageState extends State<LoginPage> {
   Widget build(BuildContext context) => Scaffold(
     body: LayoutBuilder(
       builder: (context, constraints) {
-        final wide = constraints.maxWidth >= 1100;
+        final wide = constraints.maxWidth >= 900;
         return Stack(
           fit: StackFit.expand,
           children: [
@@ -471,18 +476,18 @@ class _LoginPageState extends State<LoginPage> {
               Positioned(
                 left: constraints.maxWidth * .052,
                 top: constraints.maxHeight * .095,
-                width: constraints.maxWidth * .49,
-                child: _leftContent(),
+                width: constraints.maxWidth * .47,
+                child: _leftContent(compact: constraints.maxWidth < 1200),
               ),
               Positioned(
-                right: constraints.maxWidth * .06,
+                right: constraints.maxWidth < 1200 ? 22 : constraints.maxWidth * .06,
                 top: 0,
                 bottom: 0,
-                width: 475,
+                width: constraints.maxWidth < 1200 ? 425 : 475,
                 child: Center(
                   child: SingleChildScrollView(
                     padding: const EdgeInsets.symmetric(vertical: 20),
-                    child: _card(),
+                    child: _card(compact: constraints.maxWidth < 1200),
                   ),
                 ),
               ),
