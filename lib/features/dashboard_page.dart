@@ -631,9 +631,9 @@ class _DashboardAuditPreview extends StatelessWidget {
 
   static const _border = BorderSide(color: Color(0xffd5e1f2));
   static const _columns = <int, TableColumnWidth>{
-    0: FixedColumnWidth(145),
-    1: FixedColumnWidth(95),
-    2: FixedColumnWidth(128),
+    0: FixedColumnWidth(188),
+    1: FixedColumnWidth(112),
+    2: FixedColumnWidth(168),
     3: FlexColumnWidth(),
   };
   static const _header = TextStyle(
@@ -662,42 +662,45 @@ class _DashboardAuditPreview extends StatelessWidget {
   }) {
     final label = Text(
       value,
-      maxLines: 1,
-      overflow: TextOverflow.ellipsis,
       textAlign: center ? TextAlign.center : TextAlign.left,
+      softWrap: true,
       style: style,
     );
-    return SizedBox(
-      height: 43,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 10),
-        child: Align(
-          alignment: center ? Alignment.center : Alignment.centerLeft,
-          child: tooltip == null
-              ? label
-              : Tooltip(message: tooltip, child: label),
-        ),
-      ),
+    return Padding(
+      padding: EdgeInsets.fromLTRB(center ? 8 : 12, 8, 8, 8),
+      child: tooltip == null || value.isEmpty
+          ? label
+          : Tooltip(message: tooltip, child: label),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final recent = rows.take(4).toList();
+    final recent = rows.take(5).toList();
     return Panel(
       padding: 0,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Padding(
-            padding: EdgeInsets.fromLTRB(16, 16, 16, 12),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),
             child: Row(
               children: [
-                AppIcon('history', color: blue, size: 20),
-                SizedBox(width: 8),
-                Text(
-                  'Audit Trail',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                const AppIcon('history', color: blue, size: 20),
+                const SizedBox(width: 8),
+                const Expanded(
+                  child: Text(
+                    'Audit Trail',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+                TextButton(
+                  key: const ValueKey('dashboard-audit-see-all'),
+                  onPressed: onSeeAll,
+                  child: const Text('See All'),
                 ),
               ],
             ),
@@ -708,7 +711,7 @@ class _DashboardAuditPreview extends StatelessWidget {
               builder: (context, constraints) => SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 child: SizedBox(
-                  width: math.max(560.0, constraints.maxWidth),
+                  width: math.max(650.0, constraints.maxWidth),
                   child: Column(
                     children: [
                       Table(
@@ -774,17 +777,7 @@ class _DashboardAuditPreview extends StatelessWidget {
               ),
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-            child: Align(
-              alignment: Alignment.centerRight,
-              child: TextButton(
-                key: const ValueKey('dashboard-audit-see-all'),
-                onPressed: onSeeAll,
-                child: const Text('See All'),
-              ),
-            ),
-          ),
+
         ],
       ),
     );
