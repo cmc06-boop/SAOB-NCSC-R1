@@ -142,6 +142,8 @@ void main() {
       );
       expect(password.obscureText, isTrue);
       // TooltipVisibility is disabled globally; locate the actual icon.
+      await tester.ensureVisible(appIcon('eye-off'));
+      await tester.pumpAndSettle();
       await tester.tap(appIcon('eye-off'));
       await tester.pump();
       expect(
