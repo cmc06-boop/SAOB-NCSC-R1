@@ -327,7 +327,6 @@ class RecordEditor extends StatefulWidget {
 class _RecordEditorState extends State<RecordEditor> {
   late int year;
   late String program;
-  String selectedUacs = '';
   late final TextEditingController yearField,
       code,
       name,
@@ -542,7 +541,6 @@ class _RecordEditorState extends State<RecordEditor> {
           ? TextAlignVertical.top
           : TextAlignVertical.center,
       onChanged: (_) => setState(() {
-        if (identical(c, code)) selectedUacs = '';
         _fieldErrors.remove(c);
         error = null;
       }),
@@ -630,10 +628,6 @@ class _RecordEditorState extends State<RecordEditor> {
       for (final ref in uacsReferences)
         ref['code'] as String: ref['name'] as String,
     };
-    if (selectedUacs.isNotEmpty &&
-        !availableUacs.containsKey(selectedUacs)) {
-      selectedUacs = '';
-    }
     const gap = SizedBox(height: 14);
     Widget columnFields(List<Widget> children) => Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -717,34 +711,52 @@ class _RecordEditorState extends State<RecordEditor> {
                       ],
                       onChanged: (v) => setState(() => program = v),
                     ),
-                    SelectField<String>(
-                      label: 'Existing UACS Code (Optional)',
-                      labelStyle: _recordEditorLabelStyle,
-                      value: selectedUacs,
-                      dense: true,
-                      width: double.infinity,
-                      items: [
-                        ('', 'Manual Entry / New UACS Code'),
-                        for (final ref in availableUacs.entries)
-                          (ref.key, '${displayCode(ref.key)} - ${ref.value}'),
-                      ],
-                      onChanged: (selected) => setState(() {
-                        selectedUacs = selected;
-                        if (selected.isNotEmpty) {
-                          code.text = selected;
-                          name.text = availableUacs[selected]!;
-                          _fieldErrors.remove(code);
-                          _fieldErrors.remove(name);
-                          error = null;
-                        }
-                      }),
-                    ),
                     field(
                       'UACS Code *',
                       code,
                       digitsOnly: true,
                       focusNode: codeFocus,
                       hint: 'e.g. 5020101000',
+                      suffix: PopupMenuButton<String>(
+                        tooltip: 'Choose an existing UACS Code',
+                        position: PopupMenuPosition.under,
+                        constraints: const BoxConstraints(
+                          minWidth: 320,
+                          maxWidth: 440,
+                          maxHeight: 320,
+                        ),
+                        onSelected: (selected) => setState(() {
+                          code.text = selected;
+                          name.text = availableUacs[selected]!;
+                          _fieldErrors.remove(code);
+                          _fieldErrors.remove(name);
+                          error = null;
+                        }),
+                        itemBuilder: (context) => [
+                          if (availableUacs.isEmpty)
+                            const PopupMenuItem<String>(
+                              enabled: false,
+                              child: Text('No existing UACS Codes'),
+                            ),
+                          for (final ref in availableUacs.entries)
+                            PopupMenuItem<String>(
+                              value: ref.key,
+                              child: Text(
+                                '${displayCode(ref.key)} - ${ref.value}',
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                        ],
+                        child: const Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 8),
+                          child: AppSvgIcon(
+                            'chevron-down',
+                            size: 18,
+                            color: muted,
+                          ),
+                        ),
+                      ),
                     ),
                     field(
                       'Expense (UACS Name) *',
