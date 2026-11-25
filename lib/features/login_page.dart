@@ -5,7 +5,6 @@ import '../data/finance_store.dart';
 import '../ui/app_icon.dart';
 
 const _loginNavy = Color(0xff142d5a);
-const _loginBlue = Color(0xff193867);
 const _loginDeepRed = Color(0xffc5112a);
 const _loginOffWhite = Color(0xfff8f9fe);
 
