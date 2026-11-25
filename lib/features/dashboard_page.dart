@@ -159,7 +159,11 @@ class _DashboardPageState extends State<DashboardPage> {
       children: [
         for (var i = 0; i < shown.length; i++)
           Padding(
-            padding: EdgeInsets.symmetric(vertical: limit == null ? 6 : 3),
+            padding: EdgeInsets.only(
+              top: limit == null ? 6 : 3,
+              bottom: limit == null ? 6 : 3,
+              right: 10,
+            ),
             child: Row(
               children: [
                 const SizedBox(width: 6),
@@ -500,6 +504,13 @@ class _DashboardPageState extends State<DashboardPage> {
               ],
             ),
           );
+          Widget rateInset(Widget child) => Transform.translate(
+            offset: const Offset(-4, 0),
+            child: Padding(
+              padding: const EdgeInsets.only(right: 10),
+              child: child,
+            ),
+          );
           final rates = Panel(
             padding: dense ? 8 : 12,
             child: LayoutBuilder(
@@ -517,21 +528,21 @@ class _DashboardPageState extends State<DashboardPage> {
                   ),
                 ),
                 SizedBox(height: compactRates ? 6 : 16),
-                _Rate(
+                rateInset(_Rate(
                   'Obligation Rate',
                   t.obligation,
                   t.allotment,
                   blue,
                   compact: compactRates,
-                ),
+                )),
                 SizedBox(height: compactRates ? 7 : 14),
-                _Rate(
+                rateInset(_Rate(
                   'Disbursement Rate',
                   t.disbursement,
                   t.allotment,
                   navy,
                   compact: compactRates,
-                ),
+                )),
               ],
                 ),
               ),
