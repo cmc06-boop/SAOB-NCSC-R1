@@ -123,6 +123,8 @@ class _LoginPageState extends State<LoginPage> {
         final sx = constraints.maxWidth / _designWidth;
         final sy = constraints.maxHeight / _designHeight;
         final scale = sx < sy ? sx : sy;
+        final showMessage = widget.store.needsAccount || _error != null;
+        final cardHeight = showMessage ? 640.0 : 580.0;
         return Stack(
           fit: StackFit.expand,
           children: [
@@ -228,21 +230,20 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                     Positioned(
                       left: 1014 * sx,
-                      top: 134 * sy,
+                      top: ((_designHeight - cardHeight) / 2) * sy,
                       width: 520 * sx,
-                      height: 667 * sy,
+                      height: cardHeight * sy,
                       child: FittedBox(
                         fit: BoxFit.contain,
                         child: SizedBox(
                           width: 520,
-                          height: 667,
+                          height: cardHeight,
                           child: Stack(children: [
-              Positioned(left: 0, top: 0, width: 520, height: 667, child: Container(
+              Positioned(left: 0, top: 0, width: 520, height: cardHeight, child: Container(
                 clipBehavior: Clip.antiAlias,
                 decoration: BoxDecoration(color: _cardWhite, borderRadius: BorderRadius.circular(42), boxShadow: const [
                   BoxShadow(color: Color(0x30304c92), blurRadius: 40, offset: Offset(0, 20)),
                 ]),
-                child: const CustomPaint(painter: _CardAccent()),
               )),
               Positioned(left: 212, top: 40, width: 96, height: 96, child: Container(
                 decoration: const BoxDecoration(color: Color(0xffe8edf7), shape: BoxShape.circle),
@@ -250,7 +251,7 @@ class _LoginPageState extends State<LoginPage> {
                   child: AppIcon('user-round', size: 52, color: _navy),
                 ),
               )),
-              const Positioned(left: 35, top: 594, width: 450, height: 35, child: Row(children: [
+              Positioned(left: 35, top: showMessage ? 570 : 510, width: 450, height: 35, child: const Row(children: [
                 Expanded(child: Divider(color: Color(0xffaab5c9))),
                 Expanded(flex: 8, child: Padding(padding: EdgeInsets.symmetric(horizontal: 16), child: FittedBox(fit: BoxFit.scaleDown, child: Text('For authorized NCSC personnel only', style: TextStyle(color: Color(0xff545f73), fontSize: 19))))),
                 Expanded(child: Divider(color: Color(0xffaab5c9))),
@@ -318,7 +319,7 @@ class _LoginPageState extends State<LoginPage> {
                 ),
               ),
 
-              if (widget.store.needsAccount || _error != null)
+              if (showMessage)
                 Positioned(
                   left: 35,
                   top: 447,
@@ -343,7 +344,7 @@ class _LoginPageState extends State<LoginPage> {
 
               Positioned(
                 left: 80,
-                top: 515,
+                top: showMessage ? 510 : 458,
                 width: 360,
                 height: 54,
                 child: DecoratedBox(
@@ -407,16 +408,5 @@ class _BannerClipper extends CustomClipper<Path> {
   Path getClip(Size s) => Path()..moveTo(0, 0)..lineTo(s.width, 0)..lineTo(s.width - 20, s.height)..lineTo(0, s.height)..close();
   @override
   bool shouldReclip(covariant _BannerClipper oldClipper) => false;
-}
-
-class _CardAccent extends CustomPainter {
-  const _CardAccent();
-  @override
-  void paint(Canvas canvas, Size s) {
-    final path = Path()..moveTo(s.width - 190, 0)..lineTo(s.width, 0)..lineTo(s.width, 125)..quadraticBezierTo(s.width - 45, 35, s.width - 190, 0)..close();
-    canvas.drawPath(path, Paint()..shader = const LinearGradient(colors: [Color(0xffe41531), Color(0xffa90c28)]).createShader(Offset.zero & s));
-  }
-  @override
-  bool shouldRepaint(covariant _CardAccent oldDelegate) => false;
 }
 
