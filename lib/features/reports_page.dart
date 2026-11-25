@@ -4,7 +4,7 @@ import 'dart:math' as math;
 import 'package:file_selector/file_selector.dart';
 import 'package:intl/intl.dart' hide TextDirection;
 import 'package:material_ui/material_ui.dart';
-import 'package:flutter_svg/flutter_svg.dart';
+import 'package:flutter/material.dart' show Icon, Icons;
 
 import '../core/format.dart';
 import '../data/export_file.dart';
@@ -18,7 +18,7 @@ import '../ui/common.dart';
 import '../ui/svg_icon.dart';
 import '../ui/theme.dart';
 
-/// File-type SVG icons keep the red PDF and green Excel artwork distinct.
+/// Compact native Material icons for PDF and Excel reports.
 class _ReportFileIcon extends StatelessWidget {
   const _ReportFileIcon({required this.format});
 
@@ -27,15 +27,16 @@ class _ReportFileIcon extends StatelessWidget {
   @override
   Widget build(BuildContext context) => SizedBox(
     key: ValueKey('reports-file-icon-${format.toLowerCase()}'),
-    width: 24,
-    height: 26,
-    child: SvgPicture.asset(
+    width: 20,
+    height: 22,
+    child: Icon(
       format == 'PDF'
-          ? 'assets/icons/file-pdf.svg'
-          : 'assets/icons/file-excel.svg',
-      width: 24,
-      height: 26,
-      fit: BoxFit.contain,
+          ? Icons.picture_as_pdf_outlined
+          : Icons.table_chart_outlined,
+      size: 20,
+      color: format == 'PDF'
+          ? const Color(0xffdc2626)
+          : const Color(0xff15803d),
     ),
   );
 }
@@ -263,7 +264,7 @@ class _ReportsPageState extends State<ReportsPage> {
             minimumSize: Size.zero,
           ),
           onPressed: busy ? null : openPreview,
-          icon: const AppSvgIcon('file-text', size: 18),
+          icon: const AppIcon('file-text', size: 18),
           label: Text(busy ? 'Generating…' : 'Generate Report'),
         ),
       ],
@@ -469,7 +470,7 @@ class _ReportsPageState extends State<ReportsPage> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          AppSvgIcon(
+          AppIcon(
             selected ? 'circle-dot' : 'circle',
             size: 18,
             color: selected ? blue : muted,
@@ -507,7 +508,7 @@ class _ReportsPageState extends State<ReportsPage> {
         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
         visualDensity: VisualDensity.compact,
       ),
-      icon: const AppSvgIcon('download', size: 18),
+      icon: const AppIcon('download', size: 18),
       label: const Text('Export'),
     );
   }
@@ -538,7 +539,7 @@ class _ReportsPageState extends State<ReportsPage> {
                     borderRadius: BorderRadius.circular(8),
                   ),
                 ),
-                icon: const AppSvgIcon('arrow-left', size: 16),
+                icon: const AppIcon('arrow-left', size: 16),
               ),
               const SizedBox(width: 10),
               const Expanded(
@@ -1041,7 +1042,7 @@ class _UtilizationChartState extends State<_UtilizationChart> {
         children: [
           Row(
             children: [
-              const AppSvgIcon('chart-no-axes-column-increasing', color: blue, size: 22),
+              const AppIcon('chart-no-axes-column-increasing', color: blue, size: 22),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
@@ -1498,7 +1499,7 @@ class _SummaryCard extends StatelessWidget {
         children: [
           const Row(
             children: [
-              AppSvgIcon('clipboard-list', color: blue, size: 20),
+              AppIcon('clipboard-list', color: blue, size: 20),
               SizedBox(width: 8),
               Text(
                 'Summary',
@@ -1604,7 +1605,7 @@ class _HistoryCardState extends State<_HistoryCard> {
             padding: EdgeInsets.fromLTRB(16, 16, 16, 12),
             child: Row(
               children: [
-                AppSvgIcon('file-text', color: blue, size: 20),
+                AppIcon('file-text', color: blue, size: 20),
                 SizedBox(width: 8),
                 Text(
                   'Generated Reports',
