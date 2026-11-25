@@ -32,5 +32,6 @@ flutter:
   assets:
     - assets/login-design-reference.webp
     - assets/ncsc-logo-transparent.png
+    - assets/ncsc-building.png
     - assets/fonts/DejaVuSans.ttf
     - assets/fonts/DejaVuSans-Bold.ttf
