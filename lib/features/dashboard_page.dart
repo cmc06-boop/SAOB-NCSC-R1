@@ -1020,7 +1020,9 @@ class _Rate extends StatelessWidget {
   Widget build(BuildContext context) => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      Text(
+      Transform.translate(
+        offset: const Offset(-4, 0),
+        child: Text(
         label,
         style: TextStyle(
           fontSize: compact ? 15 : 18,
@@ -1028,11 +1030,14 @@ class _Rate extends StatelessWidget {
           color: navy,
         ),
       ),
+      ),
       SizedBox(height: compact ? 4 : 8),
       Row(
         children: [
           Expanded(
-            child: ClipRRect(
+            child: Transform.translate(
+              offset: const Offset(-4, 0),
+              child: ClipRRect(
               borderRadius: BorderRadius.circular(99),
               child: LinearProgressIndicator(
                 value: total == 0 ? 0 : (value / total).clamp(0, 1),
@@ -1041,6 +1046,7 @@ class _Rate extends StatelessWidget {
                 backgroundColor: const Color(0xffe6ebf3),
               ),
             ),
+          ),
           ),
           const SizedBox(width: 14),
           SizedBox(
