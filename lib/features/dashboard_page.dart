@@ -510,8 +510,8 @@ class _DashboardPageState extends State<DashboardPage> {
               // Give the six primary cards priority over the Audit Trail.
               // On desktop, expand the charts into the free vertical space.
               final panelHeight = fillHeight
-                  ? math.max(240.0, availableHeight - 490.0)
-                  : 235.0;
+                  ? math.max(225.0, availableHeight - 485.0)
+                  : 225.0;
               final previewDonutSize = math.min(
                 200.0,
                 math.max(146.0, panelHeight - 90.0),
@@ -632,7 +632,7 @@ class _DashboardPageState extends State<DashboardPage> {
           // grows with the desktop viewport, not the activity preview.
           SizedBox(
             width: double.infinity,
-            height: 240,
+            height: 210,
             child: _DashboardAuditPreview(
               rows: _dashboardAuditRows(),
               onSeeAll: widget.onViewAuditTrail,
@@ -653,7 +653,7 @@ class _DashboardPageState extends State<DashboardPage> {
         // The normal desktop Dashboard stays fixed. On small windows or
         // narrow layouts, keep a scroll fallback rather than clipping data.
         final compactDesktop =
-            viewport.maxHeight >= 790 && viewport.maxWidth >= 1000;
+            viewport.maxHeight >= 710 && viewport.maxWidth >= 1000;
         return compactDesktop
             ? Padding(
                 padding: const EdgeInsets.fromLTRB(22, 14, 22, 10),
@@ -722,7 +722,7 @@ class _DashboardAuditPreview extends StatelessWidget {
     );
     return Container(
       constraints: BoxConstraints(minHeight: minHeight),
-      padding: EdgeInsets.fromLTRB(center ? 8 : 12, 5, 8, 5),
+      padding: EdgeInsets.fromLTRB(center ? 8 : 12, 3, 8, 3),
       alignment: center ? Alignment.center : Alignment.centerLeft,
       child: tooltip == null || value.isEmpty
           ? label
@@ -758,7 +758,7 @@ class _DashboardAuditPreview extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 6, 16, 4),
+            padding: const EdgeInsets.fromLTRB(16, 3, 16, 2),
             child: Row(
               children: [
                 const AppIcon('history', color: blue, size: 20),
@@ -781,7 +781,7 @@ class _DashboardAuditPreview extends StatelessWidget {
             ),
           ),
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 5),
             child: LayoutBuilder(
               builder: (context, constraints) => SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
