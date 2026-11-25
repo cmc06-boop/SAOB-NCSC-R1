@@ -379,12 +379,13 @@ class _DashboardPageState extends State<DashboardPage> {
           // Give the six primary cards priority over the Audit Trail.
           // On desktop, expand the charts into the free vertical space.
           final panelHeight = chartHeight;
+          final dense = panelHeight < 220;
           final previewDonutSize = math.min(
             200.0,
-            math.max(146.0, panelHeight - 90.0),
+            math.max(90.0, panelHeight - (dense ? 82.0 : 90.0)),
           );
           final chart = Panel(
-            padding: 10,
+            padding: dense ? 7 : 10,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -436,7 +437,7 @@ class _DashboardPageState extends State<DashboardPage> {
             ),
           );
           final rates = Panel(
-            padding: 12,
+            padding: dense ? 8 : 12,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -448,14 +449,21 @@ class _DashboardPageState extends State<DashboardPage> {
                     color: navy,
                   ),
                 ),
-                const SizedBox(height: 12),
-                _Rate('Obligation Rate', t.obligation, t.allotment, blue),
-                const SizedBox(height: 12),
+                SizedBox(height: dense ? 6 : 12),
+                _Rate(
+                  'Obligation Rate',
+                  t.obligation,
+                  t.allotment,
+                  blue,
+                  compact: dense,
+                ),
+                SizedBox(height: dense ? 7 : 12),
                 _Rate(
                   'Disbursement Rate',
                   t.disbursement,
                   t.allotment,
                   navy,
+                  compact: dense,
                 ),
               ],
             ),
@@ -780,11 +788,13 @@ class _DashboardAuditPreview extends StatelessWidget {
               ],
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 3, 16, 5),
-            child: LayoutBuilder(
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 3, 16, 5),
+              child: LayoutBuilder(
               builder: (context, constraints) => SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
                 child: SizedBox(
                   width: math.max(650.0, constraints.maxWidth),
                   child: Column(
@@ -849,8 +859,10 @@ class _DashboardAuditPreview extends StatelessWidget {
                     ],
                   ),
                 ),
+                ),
               ),
             ),
+          ),
           ),
 
         ],
@@ -912,7 +924,8 @@ class _InlineFilter<T> extends StatelessWidget {
 }
 
 class _Rate extends StatelessWidget {
-  const _Rate(this.label, this.value, this.total, this.color);
+  const _Rate(this.label, this.value, this.total, this.color, {this.compact = false});
+  final bool compact;
   final String label;
   final int value, total;
   final Color color;
@@ -922,13 +935,13 @@ class _Rate extends StatelessWidget {
     children: [
       Text(
         label,
-        style: const TextStyle(
-          fontSize: 18,
+        style: TextStyle(
+          fontSize: compact ? 15 : 18,
           fontWeight: FontWeight.w800,
           color: navy,
         ),
       ),
-      const SizedBox(height: 8),
+      SizedBox(height: compact ? 4 : 8),
       Row(
         children: [
           Expanded(
@@ -936,7 +949,7 @@ class _Rate extends StatelessWidget {
               borderRadius: BorderRadius.circular(99),
               child: LinearProgressIndicator(
                 value: total == 0 ? 0 : (value / total).clamp(0, 1),
-                minHeight: 14,
+                minHeight: compact ? 10 : 14,
                 color: color,
                 backgroundColor: const Color(0xffe6ebf3),
               ),
@@ -948,8 +961,8 @@ class _Rate extends StatelessWidget {
             child: Text(
               rate(value, total),
               textAlign: TextAlign.right,
-              style: const TextStyle(
-                fontSize: 16,
+              style: TextStyle(
+                fontSize: compact ? 13 : 16,
                 fontWeight: FontWeight.w600,
                 color: Color(0xff4d5e7a),
               ),
