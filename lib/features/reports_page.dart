@@ -1011,14 +1011,6 @@ class _UtilizationChartState extends State<_UtilizationChart> {
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 Text(
-                                  hovered!.program + ' • ' + hovered!.label,
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                Text(
                                   money(hovered!.amount),
                                   style: const TextStyle(
                                     color: Colors.white, fontSize: 12,
@@ -1026,8 +1018,7 @@ class _UtilizationChartState extends State<_UtilizationChart> {
                                 ),
                                 if (hovered!.percent != null)
                                   Text(
-                                    hovered!.percent!.toStringAsFixed(2) +
-                                        '% of allotment',
+                                    hovered!.percent!.toStringAsFixed(2) + '%',
                                     style: const TextStyle(
                                       color: Colors.white, fontSize: 12,
                                     ),
