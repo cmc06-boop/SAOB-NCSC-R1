@@ -940,7 +940,116 @@ Future<bool> confirm(
 }) async =>
     await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
+      builder: (ctx) => title.trim().toLowerCase().startsWith('delete')
+          ? Dialog(
+              backgroundColor: Colors.white,
+              surfaceTintColor: Colors.transparent,
+              elevation: 0,
+              insetPadding: const EdgeInsets.all(24),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(28),
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: SizedBox(
+                width: 360,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 30, 24, 28),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 58,
+                        height: 58,
+                        decoration: const BoxDecoration(
+                          color: Color(0xffffe9e9),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Center(
+                          child: Container(
+                            width: 46,
+                            height: 46,
+                            decoration: const BoxDecoration(
+                              color: Color(0xffffd5d5),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.info_outline,
+                              size: 25,
+                              color: Color(0xffe52935),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 22),
+                      Text(
+                        title,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xff171717),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        detail,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          height: 1.45,
+                          color: Color(0xff697182),
+                        ),
+                      ),
+                      const SizedBox(height: 26),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: SizedBox(
+                              height: 46,
+                              child: TextButton(
+                                key: const ValueKey('confirm-cancel'),
+                                onPressed: () => Navigator.pop(ctx, false),
+                                style: TextButton.styleFrom(
+                                  backgroundColor: const Color(0xffe9e9eb),
+                                  foregroundColor: const Color(0xff343434),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                ),
+                                child: const Text('Cancel',
+                                  style: TextStyle(fontWeight: FontWeight.w600)),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: SizedBox(
+                              height: 46,
+                              child: FilledButton(
+                                key: const ValueKey('confirm-accept'),
+                                onPressed: () => Navigator.pop(ctx, true),
+                                style: FilledButton.styleFrom(
+                                  backgroundColor: const Color(0xffef252e),
+                                  foregroundColor: Colors.white,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                ),
+                                child: Text(
+                                  confirmLabel == 'Confirm' ? 'Delete' : confirmLabel,
+                                  style: const TextStyle(fontWeight: FontWeight.w600),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            )
+          : AlertDialog(
         backgroundColor: Colors.white,
         surfaceTintColor: Colors.transparent,
         titlePadding: const EdgeInsets.fromLTRB(24, 16, 16, 8),
