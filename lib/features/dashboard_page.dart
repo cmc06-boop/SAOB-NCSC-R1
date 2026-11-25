@@ -685,7 +685,7 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 }
 
-/// A short read-only snapshot of the same log displayed on the Audit Trail page.
+/// A scrollable read-only view of the filtered Audit Trail records.
 class _DashboardAuditPreview extends StatelessWidget {
   const _DashboardAuditPreview({
     required this.rows,
@@ -745,10 +745,9 @@ class _DashboardAuditPreview extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final recent = rows.take(5).toList();
     return LayoutBuilder(
       builder: (context, bounds) {
-        // Keep the Audit Trail a compact preview of five records.
+        // Keep the table header fixed while the records scroll.
         Widget cell(
           String value, {
           TextStyle style = _body,
@@ -796,79 +795,83 @@ class _DashboardAuditPreview extends StatelessWidget {
             child: Padding(
               padding: const EdgeInsets.fromLTRB(16, 3, 16, 5),
               child: LayoutBuilder(
-              builder: (context, constraints) => SingleChildScrollView(
-                child: SingleChildScrollView(
+                builder: (context, constraints) => SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
-                child: SizedBox(
-                  width: math.max(650.0, constraints.maxWidth),
-                  child: Column(
-                    children: [
-                      Table(
-                        border: const TableBorder(
-                          verticalInside: _border,
-                          bottom: _border,
-                        ),
-                        columnWidths: _columns,
-                        defaultVerticalAlignment:
-                            TableCellVerticalAlignment.middle,
-                        children: [
-                          _row([
-                            cell('Date', style: _header, center: true),
-                            cell('Time', style: _header, center: true),
-                            cell('Action', style: _header, center: true),
-                            cell('Details', style: _header, center: true),
-                          ], const Color(0xffeef3fb)),
-                        ],
-                      ),
-                      Table(
-                        border: const TableBorder(
-                          horizontalInside: _border,
-                          verticalInside: _border,
-                        ),
-                        columnWidths: _columns,
-                        defaultVerticalAlignment:
-                            TableCellVerticalAlignment.middle,
-                        children: [
-                          if (recent.isEmpty)
+                  child: SizedBox(
+                    width: math.max(650.0, constraints.maxWidth),
+                    height: constraints.maxHeight,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Table(
+                          border: const TableBorder(
+                            verticalInside: _border,
+                            bottom: _border,
+                          ),
+                          columnWidths: _columns,
+                          children: [
                             _row([
-                              cell(''),
-                              cell(''),
-                              cell(''),
-                              cell('No audit records found.',
-                                  style: const TextStyle(
-                                    fontSize: 13,
-                                    color: muted,
-                                  )),
-                            ], Colors.white)
-                          else
-                            for (final (i, record) in recent.indexed)
-                              _row([
-                                cell(dateOnly(record['at']), center: true),
-                                cell(timeOnly(record['at']), center: true),
-                                cell('${record['action'] ?? ''}',
-                                    center: true),
-                                cell(
-                                  auditDetailSentence(
-                                    '${record['detail'] ?? ''}',
-                                    action: '${record['action'] ?? ''}',
-                                    program: '${record['program'] ?? ''}',
-                                  ),
-                                  tooltip: '${record['detail'] ?? ''}',
+                              cell('Date', style: _header, center: true),
+                              cell('Time', style: _header, center: true),
+                              cell('Action', style: _header, center: true),
+                              cell('Details', style: _header, center: true),
+                            ], const Color(0xffeef3fb)),
+                          ],
+                        ),
+                        Expanded(
+                          child: ListView.builder(
+                            key: const ValueKey('dashboard-audit-records'),
+                            primary: false,
+                            padding: EdgeInsets.zero,
+                            itemCount: rows.isEmpty ? 1 : rows.length,
+                            itemBuilder: (context, i) {
+                              final record = rows.isEmpty ? null : rows[i];
+                              return Table(
+                                border: const TableBorder(
+                                  verticalInside: _border,
+                                  bottom: _border,
                                 ),
-                              ], i.isOdd
-                                  ? const Color(0xfff7f9fc)
-                                  : Colors.white),
-                        ],
-                      ),
-                    ],
+                                columnWidths: _columns,
+                                children: [
+                                  if (record == null)
+                                    _row([
+                                      cell(''),
+                                      cell(''),
+                                      cell(''),
+                                      cell('No audit records found.',
+                                          style: const TextStyle(
+                                            fontSize: 13,
+                                            color: muted,
+                                          )),
+                                    ], Colors.white)
+                                  else
+                                    _row([
+                                      cell(dateOnly(record['at']), center: true),
+                                      cell(timeOnly(record['at']), center: true),
+                                      cell('${record['action'] ?? ''}', center: true),
+                                      cell(
+                                        auditDetailSentence(
+                                          '${record['detail'] ?? ''}',
+                                          action: '${record['action'] ?? ''}',
+                                          program: '${record['program'] ?? ''}',
+                                        ),
+                                        tooltip: '${record['detail'] ?? ''}',
+                                      ),
+                                    ], i.isOdd
+                                        ? const Color(0xfff7f9fc)
+                                        : Colors.white),
+                                ],
+                              );
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
                 ),
               ),
             ),
           ),
-          ),
-
         ],
       ),
     );
