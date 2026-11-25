@@ -553,6 +553,18 @@ class _RecordEditorState extends State<RecordEditor> {
     final fieldError = identical(c, code) && _duplicateUacs
         ? 'This UACS Code already exists for the selected year, program and fund.'
         : _fieldErrors[c];
+    // Advisory only: some valid source records can exceed the recorded
+    // allotment. Never prevent saving solely because of this difference.
+    final enteredAllotment = parseCents(allotment.text);
+    final enteredObligation = parseCents(obligation.text);
+    final excessObligation = identical(c, obligation) &&
+            allotment.text.trim().isNotEmpty &&
+            obligation.text.trim().isNotEmpty &&
+            enteredAllotment != null &&
+            enteredObligation != null &&
+            enteredObligation > enteredAllotment
+        ? enteredObligation - enteredAllotment
+        : null;
     final input = TextField(
       key: boxKey,
       controller: c,
@@ -633,6 +645,16 @@ class _RecordEditorState extends State<RecordEditor> {
           Text(
             fieldError,
             style: const TextStyle(color: red, fontSize: 12),
+          ),
+        ],
+        if (excessObligation != null) ...[
+          const SizedBox(height: 4),
+          Text(
+            'Obligation exceeds the recorded allotment by ${money(excessObligation)}. Please verify the amounts.',
+            style: const TextStyle(
+              color: Color(0xffb45309),
+              fontSize: 12,
+            ),
           ),
         ],
       ],
