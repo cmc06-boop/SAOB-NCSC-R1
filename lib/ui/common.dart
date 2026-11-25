@@ -1089,8 +1089,8 @@ class CompactConfirmationDialog extends StatelessWidget {
                           child: Text(
                             detail,
                             textAlign: TextAlign.center,
-                            style: const TextStyle(
-                              fontSize: 12,
+                            style: TextStyle(
+                              fontSize: destructive ? 12 : 14,
                               height: 1.4,
                               color: muted,
                             ),
