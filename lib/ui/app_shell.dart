@@ -8,6 +8,7 @@ import '../features/dashboard_page.dart';
 import '../features/reports_page.dart';
 import '../features/settings_page.dart';
 import 'app_icon.dart';
+import 'common.dart';
 import 'theme.dart';
 
 const _menus = [
@@ -40,89 +41,15 @@ class _AppShellState extends State<AppShell> {
   Future<void> logout() async {
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (dialogContext) => Dialog(
-        key: const ValueKey('logout-dialog'),
-        backgroundColor: Colors.transparent,
-        surfaceTintColor: Colors.transparent,
-        elevation: 0,
-        insetPadding: const EdgeInsets.symmetric(
-          horizontal: 24,
-          vertical: 24,
-        ),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(24),
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: Container(
-          key: const ValueKey('logout-surface'),
-          width: 340,
-          padding: const EdgeInsets.fromLTRB(28, 26, 28, 22),
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                Colors.white,
-                Color(0xffe5efff),
-                Color(0xfff8fbff),
-              ],
-            ),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 58,
-                height: 58,
-                decoration: const BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Color(0xffe2eafa),
-                ),
-                child: const AppIcon(
-                  'log-out',
-                  size: 22,
-                  color: ink,
-                ),
-              ),
-              const SizedBox(height: 14),
-              const Text(
-                'Log Out?',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w700,
-                  color: ink,
-                ),
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                'Are you sure you want to log out?',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 13, color: ink),
-              ),
-              const SizedBox(height: 28),
-              Row(
-                children: [
-                  Expanded(
-                    child: TextButton(
-                      key: const ValueKey('logout-cancel'),
-                      onPressed: () => Navigator.pop(dialogContext, false),
-                      child: const Text('Cancel'),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: FilledButton(
-                      key: const ValueKey('logout-accept'),
-                      onPressed: () => Navigator.pop(dialogContext, true),
-                      child: const Text('Logout'),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
+      builder: (dialogContext) => const CompactConfirmationDialog(
+        dialogKey: ValueKey('logout-dialog'),
+        surfaceKey: ValueKey('logout-surface'),
+        closeKey: ValueKey('logout-close'),
+        cancelKey: ValueKey('logout-cancel'),
+        acceptKey: ValueKey('logout-accept'),
+        title: 'Log Out?',
+        detail: 'Are you sure you want to log out?',
+        confirmLabel: 'Logout',
       ),
     );
     if (confirmed == true && mounted) {
