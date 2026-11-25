@@ -366,7 +366,7 @@ class _DashboardPageState extends State<DashboardPage> {
       'Overview of Budget Utilization',
       style: TextStyle(fontSize: 14, color: muted, height: 1.35),
     );
-    Widget buildContent(bool fillHeight) => Column(
+    Widget buildContent(bool fillHeight, double availableHeight) => Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           LayoutBuilder(
@@ -432,7 +432,7 @@ class _DashboardPageState extends State<DashboardPage> {
                       child: Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 16,
-                          vertical: 8,
+                          vertical: 17,
                         ),
                         decoration: BoxDecoration(
                           color: const Color(0xffe7eefc),
@@ -507,8 +507,15 @@ class _DashboardPageState extends State<DashboardPage> {
                   : c.maxWidth;
               // Keep the preview short; the dialog shows every program.
               // Both dashboard panels use identical dimensions.
-              const panelHeight = 205.0;
-              const previewDonutSize = 136.0;
+              // Give the six primary cards priority over the Audit Trail.
+              // On desktop, expand the charts into the free vertical space.
+              final panelHeight = fillHeight
+                  ? math.max(240.0, availableHeight - 475.0)
+                  : 235.0;
+              final previewDonutSize = math.min(
+                200.0,
+                math.max(146.0, panelHeight - 90.0),
+              );
               final chart = Panel(
                 padding: 10,
                 child: Column(
@@ -649,15 +656,15 @@ class _DashboardPageState extends State<DashboardPage> {
         // The normal desktop Dashboard stays fixed. On small windows or
         // narrow layouts, keep a scroll fallback rather than clipping data.
         final compactDesktop =
-            viewport.maxHeight >= 675 && viewport.maxWidth >= 1000;
+            viewport.maxHeight >= 730 && viewport.maxWidth >= 1000;
         return compactDesktop
             ? Padding(
                 padding: const EdgeInsets.fromLTRB(22, 14, 22, 10),
-                child: buildContent(true),
+                child: buildContent(true, viewport.maxHeight),
               )
             : SingleChildScrollView(
                 padding: const EdgeInsets.fromLTRB(22, 14, 22, 10),
-                child: buildContent(false),
+                child: buildContent(false, viewport.maxHeight),
               );
       },
     );
