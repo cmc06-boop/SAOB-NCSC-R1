@@ -1041,7 +1041,7 @@ class _DashboardMetricCard extends StatelessWidget {
   Widget build(BuildContext context) => Container(
     height: 126,
     decoration: BoxDecoration(
-      color: Colors.white,
+      color: Color.alphaBlend(accent.withValues(alpha: .055), Colors.white),
       borderRadius: BorderRadius.circular(14),
       border: Border.all(color: accent.withValues(alpha: .16)),
       boxShadow: const [
@@ -1134,14 +1134,14 @@ class _MetricWavePainter extends CustomPainter {
       ..lineTo(w, h)
       ..lineTo(0, h)
       ..close();
-    canvas.drawPath(wave, Paint()..color = accent.withValues(alpha: .055));
+    canvas.drawPath(wave, Paint()..color = accent.withValues(alpha: .14));
     final lower = Path()
       ..moveTo(0, h * .86)
       ..cubicTo(w * .54, h * .98, w * .68, h * .35, w, h * .43)
       ..lineTo(w, h)
       ..lineTo(0, h)
       ..close();
-    canvas.drawPath(lower, Paint()..color = accent.withValues(alpha: .045));
+    canvas.drawPath(lower, Paint()..color = accent.withValues(alpha: .10));
   }
 
   @override
