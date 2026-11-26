@@ -78,14 +78,17 @@ class _ReferenceManagementPageState extends State<_ReferenceManagementPage> {
         subtitle: 'Manage programs and their associated names.',
         accent: false,
         expand: true,
-        besideSubtitle: FilledButton.icon(
-          style: FilledButton.styleFrom(
-            backgroundColor: const Color(0xff1e3a8a),
-            foregroundColor: Colors.white,
+        besideSubtitle: HoverScaleButton(
+          enabled: true,
+          child: FilledButton.icon(
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xff1e3a8a),
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () => editProgram(),
+            icon: const AppIcon('plus', size: 18),
+            label: const Text('Add Program'),
           ),
-          onPressed: () => editProgram(),
-          icon: const AppIcon('plus', size: 18),
-          label: const Text('Add Program'),
         ),
         children: [
           Expanded(
@@ -556,26 +559,32 @@ class _ReferenceEditorState extends State<ReferenceEditor> {
       actions: [
         SizedBox(
           height: 40,
-          child: TextButton(
-            style: dialogCancelStyle(),
-            key: const ValueKey('reference-editor-cancel'),
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+          child: HoverScaleButton(
+            enabled: true,
+            child: TextButton(
+              style: dialogCancelStyle(),
+              key: const ValueKey('reference-editor-cancel'),
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
           ),
         ),
         SizedBox(
           height: 40,
-          child: FilledButton(
-            key: const ValueKey('reference-editor-save'),
-            style: FilledButton.styleFrom(
-              minimumSize: const Size(88, 40),
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          child: HoverScaleButton(
+            enabled: true,
+            child: FilledButton(
+              key: const ValueKey('reference-editor-save'),
+              style: FilledButton.styleFrom(
+                minimumSize: const Size(88, 40),
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+              onPressed: save,
+              child: const Text('Save'),
             ),
-            onPressed: save,
-            child: const Text('Save'),
           ),
         ),
       ],
