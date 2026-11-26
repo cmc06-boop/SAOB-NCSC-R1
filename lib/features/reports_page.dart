@@ -369,17 +369,20 @@ class _ReportsPageState extends State<ReportsPage> {
           ],
           onChanged: busy ? null : (v) => change(() => program = v),
         ),
-        FilledButton.icon(
-          style: FilledButton.styleFrom(
-            backgroundColor: const Color(0xff1e3a8a),
-            foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            minimumSize: Size.zero,
+        HoverScaleButton(
+          enabled: !busy,
+          child: FilledButton.icon(
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xff1e3a8a),
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              minimumSize: Size.zero,
+            ),
+            onPressed: busy ? null : openPreview,
+            icon: const AppIcon('file-text', size: 18),
+            label: Text(busy ? 'Generating…' : 'Generate Report'),
           ),
-          onPressed: busy ? null : openPreview,
-          icon: const AppIcon('file-text', size: 18),
-          label: Text(busy ? 'Generating…' : 'Generate Report'),
         ),
       ],
     );
@@ -624,18 +627,21 @@ class _ReportsPageState extends State<ReportsPage> {
   }
 
   Widget _exportButton(List<BudgetRecord> records) {
-    return FilledButton.icon(
-      key: const ValueKey('reports-export'),
-      onPressed: busy || records.isEmpty ? null : () => generate(reportFormat),
-      style: FilledButton.styleFrom(
-        backgroundColor: blue,
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-        visualDensity: VisualDensity.compact,
+    return HoverScaleButton(
+      enabled: !busy && records.isNotEmpty,
+      child: FilledButton.icon(
+        key: const ValueKey('reports-export'),
+        onPressed: busy || records.isEmpty ? null : () => generate(reportFormat),
+        style: FilledButton.styleFrom(
+          backgroundColor: blue,
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          visualDensity: VisualDensity.compact,
+        ),
+        icon: const AppIcon('download', size: 18),
+        label: const Text('Export'),
       ),
-      icon: const AppIcon('download', size: 18),
-      label: const Text('Export'),
     );
   }
 
