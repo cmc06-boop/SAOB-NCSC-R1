@@ -895,12 +895,10 @@ class _AlignedRecordColumnsState extends State<_AlignedRecordColumns> {
                   ),
                 ),
               ),
+              const SizedBox(height: 14),
+              widget.summary,
             ],
           ),
-        ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: widget.summary,
         ),
       ],
     );
