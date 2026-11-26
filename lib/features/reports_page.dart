@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:math' as math;
 
 import 'package:file_selector/file_selector.dart';
+import 'package:path/path.dart' as path;
 import 'package:intl/intl.dart' hide TextDirection;
 import 'package:material_ui/material_ui.dart';
 
@@ -117,68 +118,32 @@ class _ReportsPageState extends State<ReportsPage> {
     setState(() => preview = true);
   }
 
-  Future<String?> _downloadName(String suggested, String extension, String folder) async {
-    var name = suggested;
-    String? error;
-    return showDialog<String>(
-      context: context,
-      builder: (dialogContext) => StatefulBuilder(
-        builder: (context, update) {
-          void download() {
-            final trimmed = name.trim();
-            final base = trimmed.toLowerCase().endsWith('.$extension')
-                ? trimmed.substring(0, trimmed.length - extension.length - 1)
-                : trimmed;
-            if (base.trim().isEmpty ||
-                base == '.' || base == '..' ||
-                base.endsWith('.') || base.endsWith(' ') ||
-                RegExp(r'[<>:"/\\|?*\x00-\x1f]').hasMatch(base) ||
-                RegExp(r'^(CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])(?:\.|$)', caseSensitive: false).hasMatch(base)) {
-              update(() => error = 'Enter a valid file name.');
-              return;
-            }
-            Navigator.pop(dialogContext, '$base.$extension');
-          }
-          return AlertDialog(
-            title: const Text('Download Report'),
-            content: SizedBox(
-              width: 360,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(folder, style: const TextStyle(fontSize: 12, color: muted)),
-                  const SizedBox(height: 12),
-                  TextFormField(
-                    initialValue: suggested,
-                    autofocus: true,
-                    decoration: InputDecoration(
-                      labelText: 'File name',
-                      suffixText: '.$extension',
-                      errorText: error,
-                    ),
-                    onChanged: (value) => update(() {
-                      name = value;
-                      error = null;
-                    }),
-                    onFieldSubmitted: (_) => download(),
-                  ),
-                  const SizedBox(height: 10),
-                  const Text(
-                    'An existing file will never be replaced. A new copy will be numbered automatically.',
-                    style: TextStyle(fontSize: 12, color: muted),
-                  ),
-                ],
-              ),
-            ),
-            actions: [
-              TextButton(onPressed: () => Navigator.pop(dialogContext), child: const Text('Cancel')),
-              FilledButton(onPressed: download, child: const Text('Download')),
-            ],
-          );
-        },
-      ),
-    );
+  // Suggest the next copy in the last destination before opening Save As.
+  // The exclusive writer still protects files if the destination changes.
+  Future<String> _nextDownloadName(String name) async {
+    final folder = lastExportFolder;
+    if (folder == null) return name;
+    final base = path.basenameWithoutExtension(name);
+    final extension = path.extension(name);
+    var highest = -1;
+    try {
+      await for (final entry in Directory(folder).list(followLinks: false)) {
+        final existing = path.basename(entry.path);
+        if (existing.toLowerCase() == name.toLowerCase()) {
+          highest = math.max(highest, 0);
+          continue;
+        }
+        if (path.extension(existing).toLowerCase() != extension.toLowerCase()) continue;
+        final stem = path.basenameWithoutExtension(existing);
+        final prefix = '$base (';
+        if (!stem.toLowerCase().startsWith(prefix.toLowerCase()) || !stem.endsWith(')')) continue;
+        final number = int.tryParse(stem.substring(prefix.length, stem.length - 1));
+        if (number != null && number >= 0) highest = math.max(highest, number);
+      }
+    } on FileSystemException {
+      return name;
+    }
+    return highest < 0 ? name : '$base (${highest + 1})$extension';
   }
 
   Future<void> generate(String fmt) async {
@@ -202,18 +167,24 @@ class _ReportsPageState extends State<ReportsPage> {
           : selectedProgram.isEmpty
               ? 'All'
               : selectedProgram;
-      final folderPath = await getDirectoryPath(
+      final suggestedName = await _nextDownloadName(
+        'NCSC-R1-$selectedYear-$fileLabel.$extension',
+      );
+      final location = await getSaveLocation(
         initialDirectory: lastExportFolder,
-        confirmButtonText: 'Select Folder',
+        suggestedName: suggestedName,
+        acceptedTypeGroups: [
+          XTypeGroup(label: fmt == 'PDF' ? 'PDF' : 'Excel', extensions: [extension]),
+        ],
+        confirmButtonText: 'Download',
       );
-      if (folderPath == null || !mounted) return;
+      if (location == null) return;
+      final folderPath = path.dirname(location.path);
       lastExportFolder = folderPath;
-      final fileName = await _downloadName(
-        'NCSC-R1-$selectedYear-$fileLabel',
-        extension,
-        folderPath,
-      );
-      if (fileName == null) return;
+      final chosenName = path.basename(location.path);
+      final fileName = chosenName.toLowerCase().endsWith('.$extension')
+          ? chosenName
+          : '$chosenName.$extension';
       // All Programs and one selected program share the exact same PDF
       // renderer, including letterhead, columns, TOTAL row and spacing.
       final bytes = fmt == 'PDF'
