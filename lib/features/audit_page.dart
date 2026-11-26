@@ -182,7 +182,7 @@ class _AuditTableState extends State<_AuditTable> {
         ], const Color(0xffeef3fb)),
       ],
     );
-    final bodyTable = Table(
+    final bodyTable = rows.isEmpty ? null : Table(
       border: const TableBorder(
         horizontalInside: _border,
         verticalInside: _border,
@@ -190,18 +190,6 @@ class _AuditTableState extends State<_AuditTable> {
       columnWidths: _columns,
       defaultVerticalAlignment: TableCellVerticalAlignment.middle,
       children: [
-        if (rows.isEmpty)
-          _row([
-            const _AuditCell(''),
-            const _AuditCell(''),
-            const _AuditCell(''),
-            const _AuditCell(''),
-            const _AuditCell(
-              'No records found.',
-              style: TextStyle(fontSize: 13, color: muted),
-            ),
-          ], Colors.white)
-        else
           for (final (i, r) in rows.indexed)
             _row([
               _AuditCell('${i + 1}', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: blue), align: TextAlign.center),
@@ -225,7 +213,9 @@ class _AuditTableState extends State<_AuditTable> {
       children: [
         headerTable,
         Expanded(
-          child: Scrollbar(
+          child: bodyTable == null
+              ? const Center(child: Text('No records found.', textAlign: TextAlign.center, style: TextStyle(fontSize: 13, color: muted)))
+              : Scrollbar(
             controller: _scroll,
             thumbVisibility: true,
             child: SingleChildScrollView(
