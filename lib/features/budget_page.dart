@@ -301,7 +301,7 @@ class _RecordEditorState extends State<RecordEditor> {
     );
   }
 
-  static const double _inputHeight = 46;
+  static const double _inputHeight = 54;
 
   void _bindFocus(FocusNode node) {
     node.addListener(() {
