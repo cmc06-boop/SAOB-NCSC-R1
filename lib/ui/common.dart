@@ -104,6 +104,7 @@ class SelectField<T> extends StatelessWidget {
     this.dense = false,
     this.boxKey,
     this.labelStyle,
+    this.matchFilterStyle = false,
     this.arrowRightPadding = 8,
     this.arrowShiftRight = 0,
   });
@@ -115,6 +116,7 @@ class SelectField<T> extends StatelessWidget {
   final bool dense;
   final Key? boxKey;
   final TextStyle? labelStyle;
+  final bool matchFilterStyle;
   final double arrowRightPadding;
   final double arrowShiftRight;
   @override
@@ -124,7 +126,7 @@ class SelectField<T> extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        FieldLabel(label, style: labelStyle),
+        FieldLabel(label, style: labelStyle ?? (matchFilterStyle ? const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: ink) : null)),
         SizedBox(height: dense ? 4 : 7),
         AppDropdown<T>(
           value: value,
@@ -134,14 +136,17 @@ class SelectField<T> extends StatelessWidget {
           decoratorKey: boxKey,
           arrowRightPadding: arrowRightPadding,
           arrowShiftRight: arrowShiftRight,
-          fieldTextStyle: const TextStyle(
+          fieldTextStyle: TextStyle(
             fontFamily: 'Segoe UI',
             fontSize: 13,
+            fontWeight: matchFilterStyle ? FontWeight.w700 : null,
             color: ink,
           ),
           decoration: InputDecoration(
             isDense: dense,
-            contentPadding: EdgeInsets.symmetric(
+            filled: matchFilterStyle ? true : null,
+            fillColor: matchFilterStyle ? Colors.white : null,
+            contentPadding: matchFilterStyle ? const EdgeInsets.fromLTRB(12, 10, 0, 10) : EdgeInsets.symmetric(
               horizontal: 12,
               vertical: dense ? 12 : 3,
             ),
@@ -325,7 +330,7 @@ class SearchBox extends StatelessWidget {
       onChanged: onChanged,
       decoration: InputDecoration(
         hintText: hint,
-        prefixIcon: const AppIcon('search', size: 20),
+        prefixIcon: const AppIcon('search', size: 22),
       ),
     ),
   );
