@@ -31,7 +31,6 @@ Future<Uint8List> pdfAllProgramsReport(
         maxPages: 2000,
         theme: pw.ThemeData.withFont(base: assets.$1, bold: assets.$2),
         header: (_) => _letterhead(assets.$3, year, 'Program: $program'),
-        footer: _footer,
         build: (_) => [
           _programTable(
             reportData('Budget Utilization Report', programRows),
@@ -61,7 +60,6 @@ Future<Uint8List> pdfSaobSummaryReport(
       maxPages: 2000,
       theme: pw.ThemeData.withFont(base: assets.$1, bold: assets.$2),
       header: (_) => _letterhead(assets.$3, year, 'SUMMARY'),
-      footer: _footer,
       build: (_) => [
         for (final section in saobSummarySections(records)) ...[
           // The section name is a table label, not a separate report title.
@@ -174,14 +172,6 @@ pw.Widget _letterhead(pw.MemoryImage logo, int year, String heading) =>
         pw.SizedBox(height: 10),
       ],
     );
-
-pw.Widget _footer(pw.Context context) => pw.Align(
-  alignment: pw.Alignment.centerRight,
-  child: pw.Text(
-    'Page ${context.pageNumber} of ${context.pagesCount}',
-    style: const pw.TextStyle(fontSize: 8),
-  ),
-);
 
 pw.Widget _programTable(
   ReportData data,
