@@ -111,44 +111,51 @@ class _BudgetPageState extends State<BudgetPage> {
         contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
       ),
     );
-    final actions = Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        FilledButton.icon(
-          style: FilledButton.styleFrom(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+    const actionWidth = 320.0;
+    final actions = SizedBox(
+      width: actionWidth,
+      child: Row(
+        children: [
+          Expanded(
+            child: FilledButton.icon(
+              style: FilledButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              ),
+              onPressed: canEncode ? () => edit() : null,
+              icon: const AppIcon('plus', size: 18),
+              label: const Text('Add Record'),
+            ),
           ),
-          onPressed: canEncode ? () => edit() : null,
-          icon: const AppIcon('plus', size: 18),
-          label: const Text('Add Record'),
-        ),
-        const SizedBox(width: 8),
-        OutlinedButton.icon(
-          key: const ValueKey('budget-import'),
-          style: OutlinedButton.styleFrom(
-            foregroundColor: blue,
-            backgroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          const SizedBox(width: 8),
+          Expanded(
+            child: FilledButton.icon(
+              key: const ValueKey('budget-import'),
+              style: FilledButton.styleFrom(
+                backgroundColor: const Color(0xff217346),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              ),
+              onPressed: canEncode ? () {
+                if (year != manilaNow().year) return;
+                showDialog<void>(
+                  context: context,
+                  barrierDismissible: false,
+                  builder: (_) => ExcelImportDialog(store: widget.store, year: year),
+                );
+              } : null,
+              icon: const AppIcon('upload', size: 18),
+              label: const Text('Import'),
+            ),
           ),
-          onPressed: canEncode ? () {
-            if (year != manilaNow().year) return;
-            showDialog<void>(
-              context: context,
-              barrierDismissible: false,
-              builder: (_) => ExcelImportDialog(store: widget.store, year: year),
-            );
-          } : null,
-          icon: const AppIcon('upload', size: 18),
-          label: const Text('Import'),
-        ),
-      ],
+        ],
+      ),
     );
     return PageFrame(
       title: 'Budget Utilization',
       subtitle:
           'Manage allotment, obligation, and disbursement records per program.',
       accent: false,
-      besideSubtitle: SizedBox(width: 320, child: searchField),
+      besideSubtitle: SizedBox(width: actionWidth, child: searchField),
       expand: true,
       children: [
         Row(
