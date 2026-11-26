@@ -21,7 +21,7 @@ import '../ui/common.dart';
 import '../ui/app_icon.dart';
 import '../ui/theme.dart';
 
-/// Compact native Material icons for PDF and Excel reports.
+/// Distinct document-format symbols, drawn locally without extra packages.
 class _ReportFileIcon extends StatelessWidget {
   const _ReportFileIcon({required this.format});
 
@@ -32,16 +32,80 @@ class _ReportFileIcon extends StatelessWidget {
     key: ValueKey('reports-file-icon-${format.toLowerCase()}'),
     width: 20,
     height: 22,
-    child: Icon(
-      format == 'PDF'
-          ? Icons.picture_as_pdf_outlined
-          : Icons.table_chart_outlined,
-      size: 20,
-      color: format == 'PDF'
-          ? const Color(0xffdc2626)
-          : const Color(0xff15803d),
+    child: CustomPaint(
+      painter: _ReportFilePainter(format == 'PDF'),
     ),
   );
+}
+
+class _ReportFilePainter extends CustomPainter {
+  const _ReportFilePainter(this.isPdf);
+  final bool isPdf;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    canvas.save();
+    canvas.scale(size.width / 24, size.height / 26);
+    final accent = isPdf ? const Color(0xffd42035) : const Color(0xff107c41);
+    final paper = Path()
+      ..moveTo(4, 1)
+      ..lineTo(16, 1)
+      ..lineTo(22, 7)
+      ..lineTo(22, 25)
+      ..lineTo(4, 25)
+      ..close();
+    canvas.drawPath(paper, Paint()..color = Colors.white);
+    final outline = Paint()
+      ..color = accent
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.2
+      ..strokeJoin = StrokeJoin.round;
+    canvas.drawPath(paper, outline);
+    canvas.drawPath(Path()..moveTo(16, 1)..lineTo(16, 7)..lineTo(22, 7), outline);
+    if (isPdf) {
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(const Rect.fromLTWH(0, 13, 24, 10), const Radius.circular(2)),
+        Paint()..color = accent,
+      );
+      _label(canvas, 'PDF', 8, const Offset(12, 18));
+    } else {
+      final grid = Paint()..color = accent..strokeWidth = .8;
+      canvas.drawRect(const Rect.fromLTWH(11, 10, 9, 12), outline);
+      canvas.drawLine(const Offset(15.5, 10), const Offset(15.5, 22), grid);
+      for (final y in [14.0, 18.0]) {
+        canvas.drawLine(Offset(11, y), Offset(20, y), grid);
+      }
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(const Rect.fromLTWH(0, 9, 13, 14), const Radius.circular(1.5)),
+        Paint()..color = accent,
+      );
+      _label(canvas, 'X', 12, const Offset(6.5, 16));
+    }
+    canvas.restore();
+  }
+
+  void _label(Canvas canvas, String label, double fontSize, Offset center) {
+    final text = TextPainter(
+      text: TextSpan(
+        text: label,
+        style: TextStyle(
+          fontFamily: 'Arial',
+          fontSize: fontSize,
+          fontWeight: FontWeight.w700,
+          color: Colors.white,
+          height: 1,
+        ),
+      ),
+      textDirection: TextDirection.ltr,
+      maxLines: 1,
+    )..layout();
+    text.paint(canvas, center - Offset(text.width / 2, text.height / 2));
+    text.dispose();
+  }
+
+  @override
+  bool shouldRepaint(covariant _ReportFilePainter oldDelegate) =>
+      oldDelegate.isPdf != isPdf;
 }
 
 class _HeaderFilter<T> extends StatelessWidget {
