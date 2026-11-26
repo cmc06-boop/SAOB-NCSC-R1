@@ -23,7 +23,9 @@ class _BudgetPageState extends State<BudgetPage> {
   void change(VoidCallback fn) => setState(fn);
   Future<void> edit([BudgetRecord? record]) async {
     if (year != manilaNow().year ||
-        (record != null && record.year != manilaNow().year)) return;
+        (record != null && record.year != manilaNow().year)) {
+      return;
+    }
     await showDialog<void>(
       context: context,
       barrierDismissible: false,
