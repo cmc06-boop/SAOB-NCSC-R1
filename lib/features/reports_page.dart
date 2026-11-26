@@ -314,9 +314,12 @@ class _ReportsPageState extends State<ReportsPage> {
         ),
       ],
     );
-    return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(28, 30, 28, 28),
-      child: Column(
+    return LayoutBuilder(
+      builder: (context, viewport) => SingleChildScrollView(
+        key: const ValueKey('reports-page-scroll'),
+        primary: false,
+        padding: const EdgeInsets.fromLTRB(28, 30, 28, 28),
+        child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           LayoutBuilder(
@@ -355,7 +358,11 @@ class _ReportsPageState extends State<ReportsPage> {
           const SizedBox(height: 22),
           LayoutBuilder(
             builder: (context, c) {
-              const panelHeight = 378.0;
+              // Keep the wide layout compact enough for desktop windows;
+              // narrower or shorter viewports scroll the complete page.
+              final panelHeight = c.maxWidth >= 900
+                  ? (viewport.maxHeight - 280).clamp(300.0, 378.0).toDouble()
+                  : 378.0;
               final summary = _SummaryCard(
                 totals: totals,
                 expand: true,
@@ -391,6 +398,7 @@ class _ReportsPageState extends State<ReportsPage> {
           const SizedBox(height: 16),
           _HistoryCard(history: history),
         ],
+        ),
       ),
     );
   }
@@ -795,13 +803,6 @@ class _BarHover {
   final String program, label;
   final int amount;
   final double? percent;
-  Color get color => switch (label) {
-    'Disbursed' => _disbursed,
-    'Obligated' => _obligated,
-    'Balance' => _balanceBar,
-    _ => navy,
-  };
-  Color get textColor => color == _disbursed ? Colors.white : navy;
 }
 
 class _UtilizationChart extends StatefulWidget {
@@ -879,7 +880,7 @@ class _UtilizationChartState extends State<_UtilizationChart> {
                             constraints: const BoxConstraints(maxWidth: 215),
                             padding: const EdgeInsets.all(10),
                             decoration: BoxDecoration(
-                              color: hovered!.color,
+                              color: navy,
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Column(
@@ -888,15 +889,15 @@ class _UtilizationChartState extends State<_UtilizationChart> {
                               children: [
                                 Text(
                                   money(hovered!.amount),
-                                  style: TextStyle(
-                                    color: hovered!.textColor, fontSize: 12,
+                                  style: const TextStyle(
+                                    color: Colors.white, fontSize: 12,
                                   ),
                                 ),
                                 if (hovered!.percent != null)
                                   Text(
                                     '${hovered!.percent!.toStringAsFixed(2)}%',
-                                    style: TextStyle(
-                                      color: hovered!.textColor, fontSize: 12,
+                                    style: const TextStyle(
+                                      color: Colors.white, fontSize: 12,
                                     ),
                                   ),
                               ],
