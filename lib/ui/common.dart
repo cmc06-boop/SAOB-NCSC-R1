@@ -71,6 +71,17 @@ class PageFrame extends StatelessWidget {
   }
 }
 
+// Match the Cancel action in the compact logout/delete confirmations.
+ButtonStyle dialogCancelStyle() => TextButton.styleFrom(
+  backgroundColor: const Color(0xffe9e9eb),
+  foregroundColor: ink,
+  minimumSize: const Size(88, 40),
+  padding: const EdgeInsets.symmetric(horizontal: 16),
+  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+  textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+);
+
 class Panel extends StatelessWidget {
   const Panel({super.key, required this.child, this.padding = 20});
   final Widget child;
@@ -1055,7 +1066,8 @@ Future<bool> confirm(
         actionsPadding: const EdgeInsets.fromLTRB(24, 12, 24, 18),
         actionsAlignment: MainAxisAlignment.center,
         actions: [
-          OutlinedButton(
+          TextButton(
+            style: dialogCancelStyle(),
             key: const ValueKey('confirm-cancel'),
             onPressed: () => Navigator.pop(ctx, false),
             child: const Text('Cancel'),
