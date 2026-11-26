@@ -347,42 +347,45 @@ class _LoginPageState extends State<LoginPage> {
                 top: showMessage ? 510 : 458,
                 width: 360,
                 height: 54,
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xffdf102f), Color(0xffa90a25)],
-                    ),
-                    borderRadius: BorderRadius.circular(18),
-                  ),
-                  child: FilledButton.icon(
-                    key: const ValueKey('login-submit'),
-                    onPressed: _busy || widget.store.needsAccount
-                        ? null
-                        : _submit,
-                    style: FilledButton.styleFrom(
-                      backgroundColor: Colors.transparent,
-                      shadowColor: Colors.transparent,
-                      elevation: 0,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(18),
+                child: HoverScaleButton(
+                  enabled: !_busy && !widget.store.needsAccount,
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xffdf102f), Color(0xffa90a25)],
                       ),
+                      borderRadius: BorderRadius.circular(18),
                     ),
-                    icon: _busy
-                        ? const SizedBox(
-                            width: 23,
-                            height: 23,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2.3,
-                              color: Colors.white,
-                            ),
-                          )
-                        : const AppIcon('log-in', size: 21),
-                    label: const Text(
-                      'LOGIN',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w600,
+                    child: FilledButton.icon(
+                      key: const ValueKey('login-submit'),
+                      onPressed: _busy || widget.store.needsAccount
+                          ? null
+                          : _submit,
+                      style: FilledButton.styleFrom(
+                        backgroundColor: Colors.transparent,
+                        shadowColor: Colors.transparent,
+                        elevation: 0,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(18),
+                        ),
+                      ),
+                      icon: _busy
+                          ? const SizedBox(
+                              width: 23,
+                              height: 23,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2.3,
+                                color: Colors.white,
+                              ),
+                            )
+                          : const AppIcon('log-in', size: 21),
+                      label: const Text(
+                        'LOGIN',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
                   ),
