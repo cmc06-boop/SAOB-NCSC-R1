@@ -1561,7 +1561,17 @@ class _HistoryCardState extends State<_HistoryCard> {
           ),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-            child: Column(
+            child: widget.history.isEmpty
+                ? const SizedBox(
+                    height: 5 * _rowHeight,
+                    child: Center(child: Text('No reports found for the selected filters.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontSize: 13, color: muted),
+                    )),
+                  )
+                : ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Table(
@@ -1584,9 +1594,7 @@ class _HistoryCardState extends State<_HistoryCard> {
                   // Reserve four rows of space even when the filters return
                   // fewer records or an empty result.
                   height: 4 * _rowHeight,
-                  child: widget.history.isEmpty
-                      ? const Center(child: Text('No reports found for the selected filters.', textAlign: TextAlign.center, style: TextStyle(fontSize: 13, color: muted)))
-                      : Scrollbar(
+                  child: Scrollbar(
                     controller: _historyScroll,
                     thumbVisibility: widget.history.length >= 5,
                     child: SingleChildScrollView(
@@ -1614,6 +1622,7 @@ class _HistoryCardState extends State<_HistoryCard> {
                   ),
                 ),
               ],
+            ),
             ),
           ),
         ],
