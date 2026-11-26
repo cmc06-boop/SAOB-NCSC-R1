@@ -1113,7 +1113,7 @@ Future<bool> confirm(
             ),
           ),
           HoverScaleButton(
-            enabled: confirmLabel == 'Delete',
+            enabled: confirmLabel == 'Delete' || confirmLabel == 'Logout',
             child: FilledButton(
               key: const ValueKey('confirm-accept'),
               onPressed: () => Navigator.pop(ctx, true),
@@ -1251,7 +1251,7 @@ class CompactConfirmationDialog extends StatelessWidget {
                           child: SizedBox(
                             height: 40,
                             child: HoverScaleButton(
-                              enabled: confirmLabel == 'Delete',
+                              enabled: confirmLabel == 'Delete' || confirmLabel == 'Logout',
                               child: FilledButton(
                                 key: acceptKey,
                                 onPressed: () => Navigator.pop(context, true),
