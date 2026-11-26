@@ -205,6 +205,9 @@ void main() {
     await tester.tap(find.text('Generate Report'));
     await tester.pumpAndSettle();
 
+    await tester.tap(find.byKey(const ValueKey('reports-format-excel')));
+    await tester.pumpAndSettle();
+
     final summaryField = tester
         .widgetList<SelectField<String>>(find.byType(SelectField<String>))
         .firstWhere(
@@ -479,11 +482,6 @@ void main() {
       // Report Type was removed from the UI; the preview sheet should not
       // repeat its old "Budget Utilization Report" heading.
       expect(find.text('Budget Utilization Report'), findsNothing);
-      expect(find.textContaining('Program: All Programs'), findsOneWidget);
-      expect(
-        tester.widget<Text>(find.text('Expense (UACS Name)')).textAlign,
-        TextAlign.center,
-      );
       expect(find.byKey(const ValueKey('reports-export')), findsOneWidget);
       expect(find.byKey(const ValueKey('reports-back')), findsOneWidget);
       expect(find.text('Report Format'), findsOneWidget);
@@ -580,6 +578,11 @@ void main() {
           matching: appIcon('circle'),
         ),
         findsOneWidget,
+      );
+      expect(find.textContaining('Program: All Programs'), findsOneWidget);
+      expect(
+        tester.widget<Text>(find.text('Expense (UACS Name)')).textAlign,
+        TextAlign.center,
       );
       final directExport = tester.widget<FilledButton>(
         find.byKey(const ValueKey('reports-export')),
