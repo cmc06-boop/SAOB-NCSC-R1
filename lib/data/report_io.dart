@@ -804,7 +804,7 @@ class ReportLetterhead {
         crossAxisAlignment: pw.CrossAxisAlignment.center,
         mainAxisAlignment: pw.MainAxisAlignment.center,
         children: [
-          pw.SizedBox(width: 60, height: 60,
+          pw.SizedBox(width: 54, height: 54,
               child: pw.Image(ncsc, fit: pw.BoxFit.contain)),
           pw.SizedBox(width: 14),
           pw.Column(
@@ -819,7 +819,7 @@ class ReportLetterhead {
               ],
           ),
           pw.SizedBox(width: 14),
-          pw.SizedBox(width: 60, height: 60,
+          pw.SizedBox(width: 54, height: 54,
               child: pw.Image(bagong, fit: pw.BoxFit.contain)),
         ],
       ),
