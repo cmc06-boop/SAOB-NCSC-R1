@@ -236,7 +236,7 @@ class _AuditTableState extends State<_AuditTable> {
 }
 
 class AuditActionBadge extends StatelessWidget {
-  const AuditActionBadge(this.action);
+  const AuditActionBadge(this.action, {super.key});
   final String action;
 
   @override
