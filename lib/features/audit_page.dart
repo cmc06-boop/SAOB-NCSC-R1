@@ -137,7 +137,7 @@ class _AuditTableState extends State<_AuditTable> {
   static const _columns = <int, TableColumnWidth>{
     0: FixedColumnWidth(188),
     1: FixedColumnWidth(112),
-    2: FixedColumnWidth(168),
+    2: FixedColumnWidth(210),
     3: FlexColumnWidth(),
   };
 
@@ -203,7 +203,7 @@ class _AuditTableState extends State<_AuditTable> {
             _row([
               _AuditCell(dateOnly(r['at']), style: body, align: TextAlign.center),
               _AuditCell(timeOnly(r['at']), style: body, align: TextAlign.center),
-              _AuditCell('${r['action']}', style: body, align: TextAlign.center),
+              _AuditActionBadge('${r['action']}'),
               _AuditCell(
                 auditDetailSentence(
                   '${r['detail'] ?? ''}',
@@ -231,6 +231,44 @@ class _AuditTableState extends State<_AuditTable> {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _AuditActionBadge extends StatelessWidget {
+  const _AuditActionBadge(this.action);
+  final String action;
+
+  @override
+  Widget build(BuildContext context) {
+    final (fill, foreground) = switch (action.trim().toLowerCase()) {
+      'deleted' => (const Color(0xffffe0e0), const Color(0xffb42332)),
+      'updated' => (const Color(0xfffff1c7), const Color(0xff805b00)),
+      'added' || 'imported' || 'generated' =>
+        (const Color(0xffdceaff), blue),
+      _ => (const Color(0xffeaf1fb), muted),
+    };
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      child: Center(
+        child: Container(
+          constraints: const BoxConstraints(minWidth: 96),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+          decoration: BoxDecoration(
+            color: fill,
+            borderRadius: BorderRadius.circular(7),
+          ),
+          child: Text(
+            action,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: foreground,
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
