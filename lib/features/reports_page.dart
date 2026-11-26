@@ -1580,9 +1580,10 @@ class _HistoryCardState extends State<_HistoryCard> {
                     ], const Color(0xffeef3fb), center: true),
                   ],
                 ),
-                ConstrainedBox(
-                  // Keep four rows visible; scroll the history from five on.
-                  constraints: const BoxConstraints(maxHeight: 4 * _rowHeight),
+                SizedBox(
+                  // Reserve four rows of space even when the filters return
+                  // fewer records or an empty result.
+                  height: 4 * _rowHeight,
                   child: Scrollbar(
                     controller: _historyScroll,
                     thumbVisibility: widget.history.length >= 5,
