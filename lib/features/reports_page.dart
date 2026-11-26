@@ -151,9 +151,8 @@ class _ReportsPageState extends State<ReportsPage> {
           : selectedProgram.isEmpty
               ? 'All'
               : selectedProgram;
-      final suggestedName = await _nextDownloadName(
-        'NCSC-R1-$selectedYear-$fileLabel.$extension',
-      );
+      final defaultName = 'NCSC-R1-$selectedYear-$fileLabel.$extension';
+      final suggestedName = await _nextDownloadName(defaultName);
       final location = await getSaveLocation(
         initialDirectory: lastExportFolder,
         suggestedName: suggestedName,
@@ -166,9 +165,16 @@ class _ReportsPageState extends State<ReportsPage> {
       final folderPath = path.dirname(location.path);
       lastExportFolder = folderPath;
       final chosenName = path.basename(location.path);
-      final fileName = chosenName.toLowerCase().endsWith('.$extension')
+      final normalizedName = chosenName.toLowerCase().endsWith('.$extension')
           ? chosenName
           : '$chosenName.$extension';
+      // Recalculate automatic numbering in the actual destination at save
+      // time. Never carry a stale suggested suffix into an empty folder.
+      final fileName = resolveExportRequest(
+        defaultName: defaultName,
+        suggestedName: suggestedName,
+        chosenName: normalizedName,
+      );
       // All Programs and one selected program share the exact same PDF
       // renderer, including letterhead, columns, TOTAL row and spacing.
       final bytes = fmt == 'PDF'
