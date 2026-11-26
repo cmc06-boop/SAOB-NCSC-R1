@@ -896,10 +896,12 @@ class Pager extends StatelessWidget {
 
 void showMessage(BuildContext context, String message, {bool error = false}) {
   const padding = EdgeInsets.symmetric(horizontal: 18, vertical: 14);
-  final messageStyle = TextStyle(
+  final noticeColor = error ? red : navy;
+  const messageStyle = TextStyle(
     fontSize: 13,
+    fontWeight: FontWeight.w600,
     height: 1.3,
-    color: error ? red : ink,
+    color: Colors.white,
   );
   final size = MediaQuery.sizeOf(context);
   final painter = TextPainter(
@@ -919,14 +921,14 @@ void showMessage(BuildContext context, String message, {bool error = false}) {
   ScaffoldMessenger.of(context).showSnackBar(
     SnackBar(
       content: Text(message, style: messageStyle),
-      backgroundColor: Colors.white,
+      backgroundColor: noticeColor,
       behavior: SnackBarBehavior.floating,
-      elevation: 5,
+      elevation: 8,
       padding: padding,
       margin: EdgeInsets.fromLTRB(left, 0, rightInset, 48),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(8),
-        side: const BorderSide(color: line),
+        side: BorderSide(color: noticeColor),
       ),
       duration: const Duration(seconds: 3),
     ),
