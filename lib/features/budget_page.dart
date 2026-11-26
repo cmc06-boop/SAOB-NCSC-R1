@@ -121,6 +121,8 @@ class _BudgetPageState extends State<BudgetPage> {
           Expanded(
             child: FilledButton.icon(
               style: FilledButton.styleFrom(
+                backgroundColor: const Color(0xff19458c),
+                foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               ),
               onPressed: canEncode ? () => edit() : null,
@@ -133,8 +135,8 @@ class _BudgetPageState extends State<BudgetPage> {
             child: FilledButton.icon(
               key: const ValueKey('budget-import'),
               style: FilledButton.styleFrom(
-                backgroundColor: const Color(0xff217346),
-                foregroundColor: Colors.white,
+                backgroundColor: const Color(0xffc5dcfa),
+                foregroundColor: const Color(0xff19458c),
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               ),
               onPressed: canEncode ? () {
