@@ -304,7 +304,7 @@ class _ExcelImportDialogState extends State<ExcelImportDialog> {
                   ),
                 ],
               ),
-              const SizedBox(height: 6),
+              const SizedBox(height: 12),
               ExcelDropZone(session: _session),
               const SizedBox(height: 16),
               Row(
