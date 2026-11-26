@@ -11,6 +11,16 @@ const cardShadow = [
   BoxShadow(color: Color(0x12061c52), blurRadius: 22, offset: Offset(0, 8)),
 ];
 
+// Higher-contrast state layers for desktop mouse and keyboard interaction.
+WidgetStateProperty<Color?> buttonInteraction(Color color) =>
+    WidgetStateProperty.resolveWith<Color?>((states) {
+      if (states.contains(WidgetState.disabled)) return Colors.transparent;
+      if (states.contains(WidgetState.pressed)) return color.withValues(alpha: 0.30);
+      if (states.contains(WidgetState.hovered)) return color.withValues(alpha: 0.20);
+      if (states.contains(WidgetState.focused)) return color.withValues(alpha: 0.20);
+      return null;
+    });
+
 ThemeData appTheme() => ThemeData(
   useMaterial3: true,
   colorScheme: ColorScheme.fromSeed(
@@ -59,18 +69,28 @@ ThemeData appTheme() => ThemeData(
       borderSide: const BorderSide(color: blue, width: 1.5),
     ),
   ),
+  hoverColor: const Color(0x33245cb6),
+  textButtonTheme: TextButtonThemeData(
+    style: ButtonStyle(overlayColor: buttonInteraction(blue)),
+  ),
+  iconButtonTheme: IconButtonThemeData(
+    style: ButtonStyle(overlayColor: buttonInteraction(blue)),
+  ),
+  elevatedButtonTheme: ElevatedButtonThemeData(
+    style: ButtonStyle(overlayColor: buttonInteraction(navy)),
+  ),
   filledButtonTheme: FilledButtonThemeData(
     style: FilledButton.styleFrom(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 17),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-    ),
+    ).copyWith(overlayColor: buttonInteraction(Colors.white)),
   ),
   outlinedButtonTheme: OutlinedButtonThemeData(
     style: OutlinedButton.styleFrom(
       padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 17),
       side: const BorderSide(color: line),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-    ),
+    ).copyWith(overlayColor: buttonInteraction(blue)),
   ),
   dataTableTheme: DataTableThemeData(
     headingRowColor: const WidgetStatePropertyAll(Color(0xffcdddf4)),
