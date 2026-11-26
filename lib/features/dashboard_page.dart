@@ -797,7 +797,7 @@ class _DashboardAuditPreview extends StatelessWidget {
   final List<DbRow> rows;
   final VoidCallback? onSeeAll;
 
-  static const _border = BorderSide(color: Color(0xffd5e1f2));
+  static const _border = BorderSide(color: Color(0xffc3d2e6));
   static const _columns = <int, TableColumnWidth>{
     0: FixedColumnWidth(48),
     1: FixedColumnWidth(188),
@@ -919,7 +919,7 @@ class _DashboardAuditPreview extends StatelessWidget {
                               cell('Time', style: _header, center: true),
                               cell('Action', style: _header, center: true),
                               cell('Details', style: _header, center: true),
-                            ], const Color(0xffeef3fb)),
+                            ], const Color(0xffcdddf4)),
                           ],
                         ),
                         Expanded(
@@ -953,7 +953,7 @@ class _DashboardAuditPreview extends StatelessWidget {
                                         tooltip: '${record['detail'] ?? ''}',
                                       ),
                                     ], i.isOdd
-                                        ? const Color(0xfff7f9fc)
+                                        ? const Color(0xfff8fafc)
                                         : Colors.white),
                                 ],
                               );
