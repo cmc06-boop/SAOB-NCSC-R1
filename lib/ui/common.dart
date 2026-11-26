@@ -103,6 +103,7 @@ class SelectField<T> extends StatelessWidget {
     this.width = 180,
     this.dense = false,
     this.boxKey,
+    this.fieldHeight,
     this.labelStyle,
     this.matchFilterStyle = false,
     this.arrowRightPadding = 8,
@@ -115,6 +116,7 @@ class SelectField<T> extends StatelessWidget {
   final double width;
   final bool dense;
   final Key? boxKey;
+  final double? fieldHeight;
   final TextStyle? labelStyle;
   final bool matchFilterStyle;
   final double arrowRightPadding;
@@ -128,7 +130,9 @@ class SelectField<T> extends StatelessWidget {
       children: [
         FieldLabel(label, style: labelStyle ?? (matchFilterStyle ? const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: ink) : null)),
         SizedBox(height: dense ? 4 : 7),
-        AppDropdown<T>(
+        SizedBox(
+          height: fieldHeight,
+          child: AppDropdown<T>(
           value: value,
           items: items,
           onChanged: onChanged,
@@ -148,8 +152,9 @@ class SelectField<T> extends StatelessWidget {
             fillColor: matchFilterStyle ? Colors.white : null,
             contentPadding: matchFilterStyle ? const EdgeInsets.fromLTRB(12, 10, 0, 10) : EdgeInsets.symmetric(
               horizontal: 12,
-              vertical: dense ? 12 : 3,
+              vertical: fieldHeight != null ? 6 : (dense ? 12 : 3),
             ),
+          ),
           ),
         ),
       ],
