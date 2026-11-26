@@ -1,6 +1,7 @@
 #include "win32_window.h"
 
 #include <dwmapi.h>
+#include <initializer_list>
 #include <flutter_windows.h>
 
 #include "resource.h"
@@ -142,6 +143,24 @@ bool Win32Window::Create(const std::wstring& title,
 
   if (!window) {
     return false;
+  }
+
+  // Explicitly assign both window icon sizes for the taskbar and title bar.
+  const HINSTANCE module = GetModuleHandle(nullptr);
+  for (const auto kind : {ICON_BIG, ICON_SMALL}) {
+    const int width = GetSystemMetrics(kind == ICON_BIG ? SM_CXICON : SM_CXSMICON);
+    const int height = GetSystemMetrics(kind == ICON_BIG ? SM_CYICON : SM_CYSMICON);
+    HICON icon = static_cast<HICON>(LoadImage(
+        module, MAKEINTRESOURCE(IDI_APP_ICON), IMAGE_ICON,
+        width, height, LR_SHARED));
+    if (!icon) {
+      icon = LoadIcon(module, MAKEINTRESOURCE(IDI_APP_ICON));
+    }
+    if (!icon) {
+      icon = LoadIcon(nullptr, IDI_APPLICATION);
+      OutputDebugStringW(L"NCSC application icon resource failed to load.\n");
+    }
+    SendMessage(window, WM_SETICON, kind, reinterpret_cast<LPARAM>(icon));
   }
 
   UpdateTheme(window);
