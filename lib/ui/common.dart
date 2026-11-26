@@ -857,17 +857,14 @@ class _BudgetTableState extends State<BudgetTable> {
           ],
         );
         if (bodyTable == null) {
-          return Column(
-            children: [
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: SizedBox(width: width, child: headerTable),
-              ),
-              const Expanded(child: Center(child: Text('No records found.', textAlign: TextAlign.center, style: TextStyle(fontSize: 13, color: muted)))),
-            ],
-          );
+          return const Center(child: Text('No records found.',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 13, color: muted),
+          ));
         }
-        return Scrollbar(
+        return ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: Scrollbar(
           controller: _scroll,
           thumbVisibility: true,
           notificationPredicate: (n) => n.metrics.axis == Axis.vertical,
@@ -893,6 +890,7 @@ class _BudgetTableState extends State<BudgetTable> {
                 ),
               ),
             ),
+          ),
           ),
         );
       },
