@@ -71,6 +71,42 @@ class PageFrame extends StatelessWidget {
   }
 }
 
+/// Paint-only scale keeps nearby controls in place while a mouse hovers.
+class HoverScaleButton extends StatefulWidget {
+  const HoverScaleButton({super.key, required this.child, this.enabled = true});
+  final Widget child;
+  final bool enabled;
+
+  @override
+  State<HoverScaleButton> createState() => _HoverScaleButtonState();
+}
+
+class _HoverScaleButtonState extends State<HoverScaleButton> {
+  bool _hovered = false;
+
+  @override
+  void didUpdateWidget(covariant HoverScaleButton oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!widget.enabled) _hovered = false;
+  }
+
+  @override
+  Widget build(BuildContext context) => MouseRegion(
+    onEnter: (_) {
+      if (widget.enabled) setState(() => _hovered = true);
+    },
+    onExit: (_) {
+      if (_hovered) setState(() => _hovered = false);
+    },
+    child: AnimatedScale(
+      scale: widget.enabled && _hovered ? 1.04 : 1.0,
+      duration: const Duration(milliseconds: 140),
+      curve: Curves.easeOutCubic,
+      child: widget.child,
+    ),
+  );
+}
+
 // Match the Cancel action in the compact logout/delete confirmations.
 ButtonStyle dialogCancelStyle() => TextButton.styleFrom(
   backgroundColor: const Color(0xffe9e9eb),
@@ -1067,16 +1103,22 @@ Future<bool> confirm(
         actionsPadding: const EdgeInsets.fromLTRB(24, 12, 24, 18),
         actionsAlignment: MainAxisAlignment.center,
         actions: [
-          TextButton(
-            style: dialogCancelStyle(),
-            key: const ValueKey('confirm-cancel'),
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
+          HoverScaleButton(
+            enabled: true,
+            child: TextButton(
+              style: dialogCancelStyle(),
+              key: const ValueKey('confirm-cancel'),
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Cancel'),
+            ),
           ),
-          FilledButton(
-            key: const ValueKey('confirm-accept'),
-            onPressed: () => Navigator.pop(ctx, true),
-            child: Text(confirmLabel),
+          HoverScaleButton(
+            enabled: confirmLabel == 'Delete',
+            child: FilledButton(
+              key: const ValueKey('confirm-accept'),
+              onPressed: () => Navigator.pop(ctx, true),
+              child: Text(confirmLabel),
+            ),
           ),
         ],
       ),
@@ -1185,19 +1227,22 @@ class CompactConfirmationDialog extends StatelessWidget {
                         Expanded(
                           child: SizedBox(
                             height: 40,
-                            child: TextButton(
-                              key: cancelKey,
-                              onPressed: () => Navigator.pop(context, false),
-                              style: TextButton.styleFrom(
-                                backgroundColor: const Color(0xffe9e9eb),
-                                foregroundColor: ink,
-                                overlayColor: navy.withValues(alpha: 0.20),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8),
+                            child: HoverScaleButton(
+                              enabled: true,
+                              child: TextButton(
+                                key: cancelKey,
+                                onPressed: () => Navigator.pop(context, false),
+                                style: TextButton.styleFrom(
+                                  backgroundColor: const Color(0xffe9e9eb),
+                                  foregroundColor: ink,
+                                  overlayColor: navy.withValues(alpha: 0.20),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
                                 ),
+                                child: const Text('Cancel',
+                                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
                               ),
-                              child: const Text('Cancel',
-                                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
                             ),
                           ),
                         ),
@@ -1205,18 +1250,21 @@ class CompactConfirmationDialog extends StatelessWidget {
                         Expanded(
                           child: SizedBox(
                             height: 40,
-                            child: FilledButton(
-                              key: acceptKey,
-                              onPressed: () => Navigator.pop(context, true),
-                              style: FilledButton.styleFrom(
-                                backgroundColor: accent,
-                                foregroundColor: Colors.white,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8),
+                            child: HoverScaleButton(
+                              enabled: confirmLabel == 'Delete',
+                              child: FilledButton(
+                                key: acceptKey,
+                                onPressed: () => Navigator.pop(context, true),
+                                style: FilledButton.styleFrom(
+                                  backgroundColor: accent,
+                                  foregroundColor: Colors.white,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
                                 ),
+                                child: Text(confirmLabel,
+                                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
                               ),
-                              child: Text(confirmLabel,
-                                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
                             ),
                           ),
                         ),
