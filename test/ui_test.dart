@@ -633,11 +633,11 @@ void main() {
         find.byKey(const ValueKey('budget-record-dialog-scroll')),
       );
       final recordPadding = recordScroll.padding! as EdgeInsets;
-      expect(recordPadding.bottom, 24);
+      expect(recordPadding.bottom, 12);
       final recordMinSize = tester.widget<ConstrainedBox>(
         find.byKey(const ValueKey('budget-record-dialog-size')),
       );
-      expect(recordMinSize.constraints.minHeight, 500);
+      expect(recordMinSize.constraints.minHeight, 440);
       expect(find.widgetWithText(FilledButton, 'Save'), findsOneWidget);
       expect(find.text('Save Record'), findsNothing);
       expect(tester.takeException(), isNull);
@@ -649,6 +649,16 @@ void main() {
       await tester.tap(cancel);
       await tester.pumpAndSettle();
       expect(find.text('Add Budget Record'), findsNothing);
+      await tester.tap(find.byKey(const ValueKey('budget-import')));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const ValueKey('budget-import-dialog')), findsOneWidget);
+      expect(find.text('Browse File'), findsOneWidget);
+      expect(tester.widget<FilledButton>(
+        find.byKey(const ValueKey('budget-import-save')),
+      ).onPressed, isNull);
+      await tester.tap(find.widgetWithText(TextButton, 'Cancel'));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const ValueKey('budget-import-dialog')), findsNothing);
       expect(tester.takeException(), isNull);
       await tester.pumpWidget(const SizedBox());
     });
