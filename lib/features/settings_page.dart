@@ -213,20 +213,27 @@ Widget _programAction({
       child: SizedBox(
         width: 88,
         height: 32,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            AppIcon(icon, size: 15, color: color),
-            const SizedBox(width: 6),
-            Text(
-              tooltip,
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: color,
-              ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 6),
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                AppIcon(icon, size: 15, color: color),
+                const SizedBox(width: 6),
+                Text(
+                  tooltip,
+                  maxLines: 1,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: color,
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     ),
