@@ -206,28 +206,12 @@ Widget _programAction({
   required Color color,
   required String icon,
   required VoidCallback onPressed,
-}) => Tooltip(
-  message: tooltip,
-  child: Material(
-    color: color,
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(6),
-      side: BorderSide(color: color),
-    ),
-    child: InkWell(
-      key: ValueKey('program-action-$tooltip'),
-      onTap: onPressed,
-      hoverColor: Colors.white.withValues(alpha: 0.20),
-      borderRadius: BorderRadius.circular(6),
-      child: SizedBox(
-        width: 36,
-        height: 32,
-        child: Center(
-          child: AppIcon(icon, size: 18, color: Colors.white, semanticLabel: tooltip),
-        ),
-      ),
-    ),
-  ),
+}) => HoverTableAction(
+  actionKey: ValueKey('program-action-$tooltip'),
+  label: tooltip,
+  color: color,
+  icon: icon,
+  onTap: onPressed,
 );
 
 class _SettingsTable extends StatelessWidget {
