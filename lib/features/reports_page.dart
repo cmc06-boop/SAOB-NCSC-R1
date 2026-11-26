@@ -65,8 +65,8 @@ class _HeaderFilter<T> extends StatelessWidget {
         '$label:',
         style: const TextStyle(
           fontSize: 14,
-          fontWeight: FontWeight.w600,
-          color: Colors.black,
+          fontWeight: FontWeight.w700,
+          color: ink,
         ),
       ),
       const SizedBox(width: 8),
@@ -79,14 +79,14 @@ class _HeaderFilter<T> extends StatelessWidget {
           fieldTextStyle: const TextStyle(
             fontFamily: 'Segoe UI',
             fontSize: 13,
-            fontWeight: FontWeight.w600,
-            color: Colors.black,
+            fontWeight: FontWeight.w700,
+            color: ink,
           ),
           decoration: const InputDecoration(
             filled: true,
             fillColor: Colors.white,
             isDense: true,
-            contentPadding: EdgeInsets.fromLTRB(12, 12, 0, 12),
+            contentPadding: EdgeInsets.fromLTRB(12, 10, 0, 10),
           ),
         ),
       ),
@@ -287,14 +287,14 @@ class _ReportsPageState extends State<ReportsPage> {
         _HeaderFilter<int>(
           label: 'Fiscal Year',
           value: year,
-          width: 132,
+          width: 108,
           items: [for (final y in widget.store.years) (y, '$y')],
           onChanged: busy ? null : (v) => change(() => year = v),
         ),
         _HeaderFilter<String>(
           label: 'Program',
           value: program,
-          width: 168,
+          width: 160,
           items: [
             ('', 'All Programs'),
             for (final p in widget.store.programs)
@@ -446,6 +446,7 @@ class _ReportsPageState extends State<ReportsPage> {
             label: 'Fiscal Year *',
             value: year,
             dense: true,
+            matchFilterStyle: true,
             width: double.infinity,
             items: [for (final y in widget.store.years) (y, '$y')],
             onChanged: busy ? null : (v) => change(() => year = v),
@@ -455,6 +456,7 @@ class _ReportsPageState extends State<ReportsPage> {
             label: 'Program *',
             value: program,
             dense: true,
+            matchFilterStyle: true,
             width: double.infinity,
             items: [
               ('', 'All Programs'),
