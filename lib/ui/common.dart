@@ -71,6 +71,85 @@ class PageFrame extends StatelessWidget {
   }
 }
 
+/// Compact table action: outlined at rest, filled and scaled on hover.
+class HoverTableAction extends StatefulWidget {
+  const HoverTableAction({
+    super.key,
+    required this.actionKey,
+    required this.label,
+    required this.icon,
+    required this.color,
+    required this.onTap,
+    this.disabledTooltip = 'Past years are view-only.',
+  });
+
+  final Key actionKey;
+  final String label, icon, disabledTooltip;
+  final Color color;
+  final VoidCallback? onTap;
+
+  @override
+  State<HoverTableAction> createState() => _HoverTableActionState();
+}
+
+class _HoverTableActionState extends State<HoverTableAction> {
+  bool _hovered = false;
+
+  @override
+  void didUpdateWidget(covariant HoverTableAction oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.onTap == null) _hovered = false;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final active = widget.onTap != null;
+    final filled = active && _hovered;
+    final accent = active ? widget.color : const Color(0xffa0a8b5);
+    return Tooltip(
+      message: active ? widget.label : widget.disabledTooltip,
+      child: MouseRegion(
+        cursor: active ? SystemMouseCursors.click : SystemMouseCursors.basic,
+        onEnter: (_) {
+          if (active) setState(() => _hovered = true);
+        },
+        onExit: (_) {
+          if (_hovered) setState(() => _hovered = false);
+        },
+        child: AnimatedScale(
+          scale: filled ? 1.04 : 1.0,
+          duration: const Duration(milliseconds: 140),
+          curve: Curves.easeOutCubic,
+          child: Material(
+            color: filled ? accent : Colors.white,
+            animationDuration: const Duration(milliseconds: 140),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(6),
+              side: BorderSide(color: accent),
+            ),
+            child: InkWell(
+              key: widget.actionKey,
+              onTap: widget.onTap,
+              hoverColor: Colors.transparent,
+              borderRadius: BorderRadius.circular(6),
+              child: SizedBox(
+                width: 36,
+                height: 32,
+                child: Center(
+                  child: AppIcon(widget.icon, size: 18,
+                    color: filled ? Colors.white : accent,
+                    semanticLabel: widget.label,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 /// Paint-only scale keeps nearby controls in place while a mouse hovers.
 class HoverScaleButton extends StatefulWidget {
   const HoverScaleButton({super.key, required this.child, this.enabled = true});
@@ -676,29 +755,12 @@ class _BudgetTableState extends State<BudgetTable> {
     Widget action(String label, String icon, Color color,
         ValueChanged<BudgetRecord>? callback) {
       final active = enabled && callback != null;
-      final fg = active ? color : const Color(0xffa0a8b5);
-      return Tooltip(
-        message: active ? label : 'Past years are view-only.',
-        child: Material(
-          color: fg,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(6),
-            side: BorderSide(color: fg),
-          ),
-          child: InkWell(
-            key: ValueKey('budget-${label.toLowerCase()}-${record.id}'),
-            onTap: active ? () => callback(record) : null,
-            hoverColor: Colors.white.withValues(alpha: 0.20),
-            borderRadius: BorderRadius.circular(6),
-            child: SizedBox(
-              width: 36,
-              height: 32,
-              child: Center(
-                child: AppIcon(icon, size: 18, color: Colors.white, semanticLabel: label),
-              ),
-            ),
-          ),
-        ),
+      return HoverTableAction(
+        actionKey: ValueKey('budget-${label.toLowerCase()}-${record.id}'),
+        label: label,
+        icon: icon,
+        color: color,
+        onTap: active ? () => callback(record) : null,
       );
     }
     return Padding(
