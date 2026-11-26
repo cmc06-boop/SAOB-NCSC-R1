@@ -1155,54 +1155,50 @@ class _Rate extends StatelessWidget {
   final String label;
   final int value, total;
   final Color color;
+
   @override
-  Widget build(BuildContext context) => Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Transform.translate(
-        offset: const Offset(10, 0),
-        child: Text(
-        label,
-        style: TextStyle(
-          fontSize: compact ? 15 : 18,
-          fontWeight: FontWeight.w800,
-          color: navy,
-        ),
-      ),
-      ),
-      SizedBox(height: compact ? 4 : 8),
-      Row(
-        children: [
-          Expanded(
-            child: Transform.translate(
-              offset: const Offset(10, 0),
-              child: ClipRRect(
-              borderRadius: BorderRadius.circular(99),
-              child: LinearProgressIndicator(
-                value: total == 0 ? 0 : (value / total).clamp(0, 1),
-                minHeight: compact ? 10 : 14,
-                color: color,
-                backgroundColor: const Color(0xffe6ebf3),
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.only(left: 10),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Expanded(
+              child: Text(
+                label,
+                style: TextStyle(
+                  fontSize: compact ? 15 : 18,
+                  fontWeight: FontWeight.w800,
+                  color: navy,
+                ),
               ),
             ),
-          ),
-          ),
-          const SizedBox(width: 14),
-          SizedBox(
-            width: 78,
-            child: Text(
+            const SizedBox(width: 8),
+            Text(
               rate(value, total),
               textAlign: TextAlign.right,
               style: TextStyle(
                 fontSize: compact ? 13 : 16,
                 fontWeight: FontWeight.w600,
-                color: Color(0xff4d5e7a),
+                color: const Color(0xff4d5e7a),
               ),
             ),
+          ],
+        ),
+        SizedBox(height: compact ? 4 : 8),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(99),
+          child: LinearProgressIndicator(
+            value: total == 0 ? 0 : (value / total).clamp(0, 1),
+            minHeight: compact ? 10 : 14,
+            color: color,
+            backgroundColor: const Color(0xffe6ebf3),
           ),
-        ],
-      ),
-    ],
+        ),
+      ],
+    ),
   );
 }
 
