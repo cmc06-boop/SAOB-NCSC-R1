@@ -1056,7 +1056,7 @@ class _DashboardMetricCard extends StatelessWidget {
             child: CustomPaint(painter: _MetricWavePainter(accent)),
           ),
           Padding(
-            padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
+            padding: const EdgeInsets.fromLTRB(14, 15, 14, 10),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -1085,7 +1085,7 @@ class _DashboardMetricCard extends StatelessWidget {
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 7),
                 Padding(
                   padding: const EdgeInsets.only(left: 20),
                   child: SizedBox(
