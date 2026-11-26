@@ -553,16 +553,29 @@ class _ReferenceEditorState extends State<ReferenceEditor> {
       actionsPadding: const EdgeInsets.fromLTRB(24, 12, 24, 18),
       actionsAlignment: MainAxisAlignment.end,
       actions: [
-        TextButton(
-          style: dialogCancelStyle(),
-          key: const ValueKey('reference-editor-cancel'),
-          onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel'),
+        SizedBox(
+          height: 40,
+          child: TextButton(
+            style: dialogCancelStyle(),
+            key: const ValueKey('reference-editor-cancel'),
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
         ),
-        FilledButton(
-          key: const ValueKey('reference-editor-save'),
-          onPressed: save,
-          child: const Text('Save'),
+        SizedBox(
+          height: 40,
+          child: FilledButton(
+            key: const ValueKey('reference-editor-save'),
+            style: FilledButton.styleFrom(
+              minimumSize: const Size(88, 40),
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            onPressed: save,
+            child: const Text('Save'),
+          ),
         ),
       ],
     );
