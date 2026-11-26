@@ -301,7 +301,8 @@ class _RecordEditorState extends State<RecordEditor> {
     );
   }
 
-  static const double _inputHeight = 54;
+  final _inputKey = GlobalKey();
+  double? _inputHeight;
 
   void _bindFocus(FocusNode node) {
     node.addListener(() {
@@ -312,7 +313,11 @@ class _RecordEditorState extends State<RecordEditor> {
     });
   }
 
-
+  void _matchInputHeight() {
+    final height = _inputKey.currentContext?.size?.height;
+    if (!mounted || height == null || height == _inputHeight) return;
+    setState(() => _inputHeight = height);
+  }
 
   @override
   void initState() {
@@ -451,6 +456,7 @@ class _RecordEditorState extends State<RecordEditor> {
     bool amount = false,
     bool digitsOnly = false,
     bool readOnly = false,
+    Key? boxKey,
     FocusNode? focusNode,
     String? hint,
     Widget? suffix,
@@ -483,8 +489,7 @@ class _RecordEditorState extends State<RecordEditor> {
         ? enteredObligation - enteredAllotment
         : null;
     final input = TextField(
-      key: ValueKey('budget-input-$label'),
-      style: const TextStyle(fontFamily: 'Segoe UI', fontSize: 14, height: 1.2, color: ink),
+      key: boxKey,
       controller: c,
       focusNode: focusNode,
       readOnly: readOnly,
@@ -522,14 +527,13 @@ class _RecordEditorState extends State<RecordEditor> {
               ? TextInputType.number
               : TextInputType.text,
       decoration: InputDecoration(
-        constraints: const BoxConstraints.tightFor(height: _inputHeight),
         isDense: true,
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 12,
-          vertical: 0,
+          vertical: 12,
         ),
         hintText: showHint ? (amount ? '₱  0.00' : hint) : null,
-        hintStyle: const TextStyle(color: Color(0xff9aabbf), fontSize: 14, height: 1.2),
+        hintStyle: const TextStyle(color: Color(0xff9aabbf), fontSize: 13),
         prefix: showPesoPrefix
             ? const Padding(
                 padding: EdgeInsets.only(right: 4),
@@ -582,6 +586,7 @@ class _RecordEditorState extends State<RecordEditor> {
 
   @override
   Widget build(BuildContext context) {
+    WidgetsBinding.instance.addPostFrameCallback((_) => _matchInputHeight());
     final a = parseCents(allotment.text) ?? 0,
         o = parseCents(obligation.text) ?? 0,
         d = parseCents(disbursement.text) ?? 0;
@@ -593,7 +598,7 @@ class _RecordEditorState extends State<RecordEditor> {
       for (final ref in uacsReferences)
         ref['code'] as String: ref['name'] as String,
     };
-    const gap = SizedBox(height: 6);
+    const gap = SizedBox(height: 14);
     Widget columnFields(List<Widget> children) => Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -623,13 +628,13 @@ class _RecordEditorState extends State<RecordEditor> {
       child: Dialog(
         key: const ValueKey('budget-record-dialog'),
         alignment: Alignment.center,
-        insetPadding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
+        insetPadding: const EdgeInsets.symmetric(horizontal: 40, vertical: 32),
         child: ConstrainedBox(
           key: const ValueKey('budget-record-dialog-size'),
-          constraints: const BoxConstraints(maxWidth: 700, minHeight: 460),
+          constraints: const BoxConstraints(maxWidth: 660, minHeight: 500),
           child: SingleChildScrollView(
             key: const ValueKey('budget-record-dialog-scroll'),
-            padding: const EdgeInsets.fromLTRB(18, 8, 18, 12),
+            padding: const EdgeInsets.fromLTRB(18, 14, 18, 24),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -655,18 +660,17 @@ class _RecordEditorState extends State<RecordEditor> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: 16),
                 _AlignedRecordColumns(
                   identity: columnFields([
                     field(
                       'Fiscal Year *',
                       yearField,
                       readOnly: true,
+                      boxKey: _inputKey,
                     ),
                     SelectField(
                       label: 'Program *',
-                      fieldHeight: _inputHeight,
-                      boxKey: const ValueKey('budget-input-Program *'),
                       labelStyle: _recordEditorLabelStyle,
                       arrowRightPadding: 0,
                       arrowShiftRight: 9,
@@ -762,7 +766,7 @@ class _RecordEditorState extends State<RecordEditor> {
                       remarks.text.isEmpty &&
                       !_focused.contains(remarksFocus),
                   summary: Container(
-                    padding: const EdgeInsets.fromLTRB(14, 8, 14, 8),
+                    padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
                     decoration: BoxDecoration(
                       color: const Color(0xffe7f0fb),
                       borderRadius: BorderRadius.circular(12),
@@ -781,11 +785,11 @@ class _RecordEditorState extends State<RecordEditor> {
                             color: blue,
                           ),
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: 14),
                         metric('Obligation Rate', rate(o, a)),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: 12),
                         metric('Balance', money(a - o)),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: 12),
                         metric('Disbursement Rate', rate(d, o)),
                       ],
                     ),
@@ -796,7 +800,7 @@ class _RecordEditorState extends State<RecordEditor> {
                     padding: const EdgeInsets.only(top: 14),
                     child: Text(error!, style: const TextStyle(color: red)),
                   ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 20),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
@@ -809,7 +813,7 @@ class _RecordEditorState extends State<RecordEditor> {
                       style: FilledButton.styleFrom(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 14,
-                          vertical: 6,
+                          vertical: 10,
                         ),
                         visualDensity: VisualDensity.compact,
                       ),
@@ -847,7 +851,7 @@ class _AlignedRecordColumns extends StatefulWidget {
 class _AlignedRecordColumnsState extends State<_AlignedRecordColumns> {
   final _leftKey = GlobalKey();
   final _remarksLabelKey = GlobalKey();
-  double _leftHeight = 360;
+  double _leftHeight = 450;
   double _labelHeight = 16;
 
   void _syncHeight() {
@@ -867,8 +871,8 @@ class _AlignedRecordColumnsState extends State<_AlignedRecordColumns> {
   @override
   Widget build(BuildContext context) {
     WidgetsBinding.instance.addPostFrameCallback((_) => _syncHeight());
-    final available = (_leftHeight - _labelHeight - 12).clamp(300.0, double.infinity).toDouble();
-    final summaryHeight = (available * .60).clamp(210.0, available - 90).toDouble();
+    final available = (_leftHeight - _labelHeight - 18).clamp(410.0, double.infinity).toDouble();
+    final summaryHeight = (available * .57).clamp(255.0, available - 150).toDouble();
     final remarksHeight = available - summaryHeight;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -879,7 +883,7 @@ class _AlignedRecordColumnsState extends State<_AlignedRecordColumns> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               widget.identity,
-              const SizedBox(height: 8),
+              const SizedBox(height: 14),
               widget.amounts,
             ],
           ),
@@ -919,7 +923,7 @@ class _AlignedRecordColumnsState extends State<_AlignedRecordColumns> {
                   ),
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 14),
               SizedBox(height: summaryHeight, child: widget.summary),
             ],
           ),
