@@ -580,6 +580,15 @@ class _DashboardPageState extends State<DashboardPage> {
                       minimumSize: Size.zero,
                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
                       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      overlayColor: Colors.transparent,
+                    ).copyWith(
+                      textStyle: WidgetStateProperty.resolveWith<TextStyle?>(
+                        (states) => TextStyle(
+                          decoration: states.contains(WidgetState.hovered) &&
+                              !states.contains(WidgetState.disabled)
+                              ? TextDecoration.underline : TextDecoration.none,
+                        ),
+                      ),
                     ),
                     onPressed: () => _showAllPrograms(chartShares, t.allotment, chartBase, chartLegend, chartTitle: chartTitle, selectedKey: selectedLegendKey),
                     child: const Text('See All'),
@@ -887,6 +896,15 @@ class _DashboardAuditPreview extends StatelessWidget {
                     minimumSize: Size.zero,
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    overlayColor: Colors.transparent,
+                  ).copyWith(
+                    textStyle: WidgetStateProperty.resolveWith<TextStyle?>(
+                      (states) => TextStyle(
+                        decoration: states.contains(WidgetState.hovered) &&
+                            !states.contains(WidgetState.disabled)
+                            ? TextDecoration.underline : TextDecoration.none,
+                      ),
+                    ),
                   ),
                   onPressed: onSeeAll,
                   child: const Text('See All'),
