@@ -750,7 +750,12 @@ class _DashboardPageState extends State<DashboardPage> {
                         label: metrics[i].$1,
                         icon: metrics[i].$2,
                         amount: money(amounts[i]),
-                        accent: i == 3 ? red : blue,
+                        accent: const [
+                          Color(0xff2875c7),
+                          Color(0xff245cb6),
+                          Color(0xff1e3a8a),
+                          red,
+                        ][i],
                       ),
                     ),
                 ],
@@ -1057,7 +1062,7 @@ class _InlineFilter<T> extends StatelessWidget {
   );
 }
 
-/// Compact financial cards with a softly tinted wave and bottom accent.
+/// Full-color financial cards with translucent decorative bubbles.
 class _DashboardMetricCard extends StatelessWidget {
   const _DashboardMetricCard({
     required this.label,
@@ -1073,9 +1078,9 @@ class _DashboardMetricCard extends StatelessWidget {
   Widget build(BuildContext context) => Container(
     height: 126,
     decoration: BoxDecoration(
-      color: Color.alphaBlend(accent.withValues(alpha: .055), Colors.white),
+      color: accent,
       borderRadius: BorderRadius.circular(14),
-      border: Border.all(color: accent.withValues(alpha: .16)),
+      border: Border.all(color: Colors.white.withValues(alpha: .16)),
       boxShadow: const [
         BoxShadow(color: Color(0x12061c52), blurRadius: 8, offset: Offset(0, 3)),
       ],
@@ -1085,7 +1090,7 @@ class _DashboardMetricCard extends StatelessWidget {
       child: Stack(
         children: [
           Positioned.fill(
-            child: CustomPaint(painter: _MetricWavePainter(accent)),
+            child: const CustomPaint(painter: _MetricBubblePainter()),
           ),
           Padding(
             padding: const EdgeInsets.fromLTRB(14, 15, 14, 10),
@@ -1099,11 +1104,12 @@ class _DashboardMetricCard extends StatelessWidget {
                       width: 39,
                       height: 39,
                       decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: accent.withValues(alpha: .15),
+                        borderRadius: BorderRadius.circular(10),
+                        color: Colors.white.withValues(alpha: .16),
+                        border: Border.all(color: Colors.white.withValues(alpha: .25)),
                       ),
                       alignment: Alignment.center,
-                      child: AppIcon(icon, size: 23, color: accent),
+                      child: AppIcon(icon, size: 23, color: Colors.white),
                     ),
                     const SizedBox(width: 10),
                     Expanded(
@@ -1111,7 +1117,7 @@ class _DashboardMetricCard extends StatelessWidget {
                         alignment: Alignment.centerLeft,
                         fit: BoxFit.scaleDown,
                         child: Text(label, maxLines: 1, style: const TextStyle(
-                          fontFamily: 'Arial', fontSize: 20, fontWeight: FontWeight.w700, color: navy,
+                          fontFamily: 'Arial', fontSize: 20, fontWeight: FontWeight.w700, color: Colors.white,
                         )),
                       ),
                     ),
@@ -1126,7 +1132,7 @@ class _DashboardMetricCard extends StatelessWidget {
                       alignment: Alignment.centerLeft,
                       fit: BoxFit.scaleDown,
                       child: Text(amount, maxLines: 1, style: const TextStyle(
-                        fontSize: 23, fontWeight: FontWeight.w800, color: navy,
+                        fontSize: 23, fontWeight: FontWeight.w800, color: Colors.white,
                         letterSpacing: -.4,
                       )),
                     ),
@@ -1135,50 +1141,31 @@ class _DashboardMetricCard extends StatelessWidget {
               ],
             ),
           ),
-          Positioned(
-            bottom: 0, left: 0, right: 0,
-            child: Container(
-              height: 5,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [accent, accent.withValues(alpha: .35)],
-                ),
-              ),
-            ),
-          ),
         ],
       ),
     ),
   );
 }
 
-class _MetricWavePainter extends CustomPainter {
-  const _MetricWavePainter(this.accent);
-  final Color accent;
+class _MetricBubblePainter extends CustomPainter {
+  const _MetricBubblePainter();
 
   @override
   void paint(Canvas canvas, Size size) {
     final w = size.width;
     final h = size.height;
-    final wave = Path()
-      ..moveTo(0, h * .46)
-      ..cubicTo(w * .46, h * .78, w * .55, h * .05, w, h * .16)
-      ..lineTo(w, h)
-      ..lineTo(0, h)
-      ..close();
-    canvas.drawPath(wave, Paint()..color = accent.withValues(alpha: .14));
-    final lower = Path()
-      ..moveTo(0, h * .86)
-      ..cubicTo(w * .54, h * .98, w * .68, h * .35, w, h * .43)
-      ..lineTo(w, h)
-      ..lineTo(0, h)
-      ..close();
-    canvas.drawPath(lower, Paint()..color = accent.withValues(alpha: .10));
+    final paint = Paint()..color = Colors.white.withValues(alpha: .13);
+    canvas.drawCircle(Offset(w - 8, 5), 52, paint);
+    canvas.drawCircle(Offset(w - 76, 19), 18, paint);
+    paint.color = Colors.white.withValues(alpha: .10);
+    canvas.drawCircle(Offset(w - 28, h - 19), 36, paint);
+    canvas.drawCircle(Offset(w - 70, h - 48), 14, paint);
+    paint.color = Colors.white.withValues(alpha: .08);
+    canvas.drawCircle(Offset(14, h + 2), 33, paint);
   }
 
   @override
-  bool shouldRepaint(covariant _MetricWavePainter oldDelegate) =>
-      oldDelegate.accent != accent;
+  bool shouldRepaint(covariant _MetricBubblePainter oldDelegate) => false;
 }
 
 class _Rate extends StatelessWidget {
