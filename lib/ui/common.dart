@@ -640,7 +640,7 @@ class _BudgetTableState extends State<BudgetTable> {
           ),
           child: InkWell(
             key: ValueKey('budget-${label.toLowerCase()}-${record.id}'),
-            onTap: active ? () => callback!(record) : null,
+            onTap: active ? () => callback(record) : null,
             borderRadius: BorderRadius.circular(6),
             child: SizedBox(
               width: 88,
