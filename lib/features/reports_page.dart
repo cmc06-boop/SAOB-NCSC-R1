@@ -1584,7 +1584,9 @@ class _HistoryCardState extends State<_HistoryCard> {
                   // Reserve four rows of space even when the filters return
                   // fewer records or an empty result.
                   height: 4 * _rowHeight,
-                  child: Scrollbar(
+                  child: widget.history.isEmpty
+                      ? const Center(child: Text('No reports found for the selected filters.', textAlign: TextAlign.center, style: TextStyle(fontSize: 13, color: muted)))
+                      : Scrollbar(
                     controller: _historyScroll,
                     thumbVisibility: widget.history.length >= 5,
                     child: SingleChildScrollView(
@@ -1598,17 +1600,6 @@ class _HistoryCardState extends State<_HistoryCard> {
                         columnWidths: _columns,
                         defaultVerticalAlignment: TableCellVerticalAlignment.middle,
                         children: [
-                          if (widget.history.isEmpty)
-                            _row([
-                              _cell(''),
-                              _cell(
-                                'No reports found for the selected filters.',
-                                style: const TextStyle(fontSize: 13, color: muted),
-                              ),
-                              _cell(''),
-                              _cell(''),
-                            ], Colors.white)
-                          else
                             for (var i = 0; i < widget.history.length; i++)
                               _row([
                                 _cell('${i + 1}', number: true),
