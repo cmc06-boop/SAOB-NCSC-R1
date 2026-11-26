@@ -123,27 +123,11 @@ class _ReportsPageState extends State<ReportsPage> {
   Future<String> _nextDownloadName(String name) async {
     final folder = lastExportFolder;
     if (folder == null) return name;
-    final base = path.basenameWithoutExtension(name);
-    final extension = path.extension(name);
-    var highest = -1;
     try {
-      await for (final entry in Directory(folder).list(followLinks: false)) {
-        final existing = path.basename(entry.path);
-        if (existing.toLowerCase() == name.toLowerCase()) {
-          highest = math.max(highest, 0);
-          continue;
-        }
-        if (path.extension(existing).toLowerCase() != extension.toLowerCase()) continue;
-        final stem = path.basenameWithoutExtension(existing);
-        final prefix = '$base (';
-        if (!stem.toLowerCase().startsWith(prefix.toLowerCase()) || !stem.endsWith(')')) continue;
-        final number = int.tryParse(stem.substring(prefix.length, stem.length - 1));
-        if (number != null && number >= 0) highest = math.max(highest, number);
-      }
+      return await nextExportName(folder, name);
     } on FileSystemException {
       return name;
     }
-    return highest < 0 ? name : '$base (${highest + 1})$extension';
   }
 
   Future<void> generate(String fmt) async {
