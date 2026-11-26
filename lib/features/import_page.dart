@@ -304,12 +304,7 @@ class _ExcelImportDialogState extends State<ExcelImportDialog> {
                   ),
                 ],
               ),
-              const SizedBox(height: 8),
-              Text('Fiscal Year: ${widget.year}',
-                textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 13, color: muted),
-              ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 6),
               ExcelDropZone(session: _session),
               const SizedBox(height: 16),
               Row(
