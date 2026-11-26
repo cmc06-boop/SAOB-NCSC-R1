@@ -311,6 +311,7 @@ class _ExcelImportDialogState extends State<ExcelImportDialog> {
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   TextButton(
+                    style: dialogCancelStyle(),
                     onPressed: _session.busy ? null : () => Navigator.pop(context),
                     child: const Text('Cancel'),
                   ),
