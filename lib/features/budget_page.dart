@@ -111,13 +111,37 @@ class _BudgetPageState extends State<BudgetPage> {
         contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
       ),
     );
-    final actions = FilledButton.icon(
-      style: FilledButton.styleFrom(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      ),
-      onPressed: canEncode ? () => edit() : null,
-      icon: const AppIcon('plus', size: 18),
-      label: const Text('Add Record'),
+    final actions = Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        FilledButton.icon(
+          style: FilledButton.styleFrom(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          ),
+          onPressed: canEncode ? () => edit() : null,
+          icon: const AppIcon('plus', size: 18),
+          label: const Text('Add Record'),
+        ),
+        const SizedBox(width: 8),
+        OutlinedButton.icon(
+          key: const ValueKey('budget-import'),
+          style: OutlinedButton.styleFrom(
+            foregroundColor: blue,
+            backgroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          ),
+          onPressed: canEncode ? () {
+            if (year != manilaNow().year) return;
+            showDialog<void>(
+              context: context,
+              barrierDismissible: false,
+              builder: (_) => ExcelImportDialog(store: widget.store, year: year),
+            );
+          } : null,
+          icon: const AppIcon('upload', size: 18),
+          label: const Text('Import'),
+        ),
+      ],
     );
     return PageFrame(
       title: 'Budget Utilization',
@@ -272,10 +296,6 @@ class _RecordEditorState extends State<RecordEditor> {
 
   final _inputKey = GlobalKey();
   double? _inputHeight;
-  late final ImportController _imports;
-  void _onImports() {
-    if (mounted) setState(() {});
-  }
 
   void _bindFocus(FocusNode node) {
     node.addListener(() {
@@ -330,19 +350,10 @@ class _RecordEditorState extends State<RecordEditor> {
     ]) {
       _bindFocus(n);
     }
-    _imports = ImportController(
-      widget.store,
-      year: year,
-      onImported: () {
-        if (mounted) Navigator.pop(context);
-      },
-    )..addListener(_onImports);
   }
 
   @override
   void dispose() {
-    _imports.removeListener(_onImports);
-    _imports.dispose();
     for (final c in [
       yearField,
       code,
@@ -775,7 +786,6 @@ class _RecordEditorState extends State<RecordEditor> {
                       ],
                     ),
                   ),
-                  importZone: ExcelDropZone(session: _imports),
                 ),
                 if (error != null)
                   Padding(
@@ -821,9 +831,8 @@ class _AlignedRecordColumns extends StatefulWidget {
     required this.remarksFocus,
     required this.showRemarksHint,
     required this.summary,
-    required this.importZone,
   });
-  final Widget identity, amounts, summary, importZone;
+  final Widget identity, amounts, summary;
   final TextEditingController remarks;
   final FocusNode remarksFocus;
   final bool showRemarksHint;
@@ -832,42 +841,8 @@ class _AlignedRecordColumns extends StatefulWidget {
 }
 
 class _AlignedRecordColumnsState extends State<_AlignedRecordColumns> {
-  final _importKey = GlobalKey();
-  final _amountsKey = GlobalKey();
-  final _summaryKey = GlobalKey();
-  final _labelKey = GlobalKey();
-  double _inputHeight = 160;
-  double _topPad = 0;
-
-  void _sync() {
-    if (!mounted) return;
-    final importHeight = _importKey.currentContext?.size?.height;
-    final amountsHeight = _amountsKey.currentContext?.size?.height;
-    final summaryHeight = _summaryKey.currentContext?.size?.height;
-    final labelHeight = _labelKey.currentContext?.size?.height;
-    if (importHeight == null ||
-        amountsHeight == null ||
-        summaryHeight == null ||
-        labelHeight == null) {
-      return;
-    }
-    // Align Remarks input top with Import top; same height as Import box.
-    final remarksChrome = 14.0 + labelHeight + 4.0;
-    final targetTop = summaryHeight + 12;
-    final currentTop = amountsHeight + remarksChrome;
-    final topPad = (targetTop - currentTop).clamp(0.0, 400.0);
-    if ((importHeight - _inputHeight).abs() > 0.5 ||
-        (topPad - _topPad).abs() > 0.5) {
-      setState(() {
-        _inputHeight = importHeight;
-        _topPad = topPad;
-      });
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
-    WidgetsBinding.instance.addPostFrameCallback((_) => _sync());
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -877,19 +852,12 @@ class _AlignedRecordColumnsState extends State<_AlignedRecordColumns> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              KeyedSubtree(key: _amountsKey, child: widget.amounts),
-              if (_topPad > 0) SizedBox(height: _topPad),
+              widget.amounts,
               const SizedBox(height: 14),
-              KeyedSubtree(
-                key: _labelKey,
-                child: const FieldLabel(
-                  'Remarks',
-                  style: _recordEditorLabelStyle,
-                ),
-              ),
+              const FieldLabel('Remarks', style: _recordEditorLabelStyle),
               const SizedBox(height: 4),
               SizedBox(
-                height: _inputHeight,
+                height: 120,
                 child: TextField(
                   controller: widget.remarks,
                   focusNode: widget.remarksFocus,
@@ -918,14 +886,7 @@ class _AlignedRecordColumnsState extends State<_AlignedRecordColumns> {
         ),
         const SizedBox(width: 16),
         Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              KeyedSubtree(key: _summaryKey, child: widget.summary),
-              const SizedBox(height: 12),
-              KeyedSubtree(key: _importKey, child: widget.importZone),
-            ],
-          ),
+          child: widget.summary,
         ),
       ],
     );
