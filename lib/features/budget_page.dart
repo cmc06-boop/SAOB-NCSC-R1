@@ -119,36 +119,42 @@ class _BudgetPageState extends State<BudgetPage> {
       child: Row(
         children: [
           Expanded(
-            child: FilledButton.icon(
-              style: FilledButton.styleFrom(
-                backgroundColor: const Color(0xff1e3a8a),
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            child: HoverScaleButton(
+              enabled: canEncode,
+              child: FilledButton.icon(
+                style: FilledButton.styleFrom(
+                  backgroundColor: const Color(0xff1e3a8a),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                ),
+                onPressed: canEncode ? () => edit() : null,
+                icon: const AppIcon('plus', size: 18),
+                label: const Text('Add Record'),
               ),
-              onPressed: canEncode ? () => edit() : null,
-              icon: const AppIcon('plus', size: 18),
-              label: const Text('Add Record'),
             ),
           ),
           const SizedBox(width: 8),
           Expanded(
-            child: FilledButton.icon(
-              key: const ValueKey('budget-import'),
-              style: FilledButton.styleFrom(
-                backgroundColor: const Color(0xff3b82f6),
-                foregroundColor: const Color(0xff061c52),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            child: HoverScaleButton(
+              enabled: canEncode,
+              child: FilledButton.icon(
+                key: const ValueKey('budget-import'),
+                style: FilledButton.styleFrom(
+                  backgroundColor: const Color(0xff3b82f6),
+                  foregroundColor: const Color(0xff061c52),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                ),
+                onPressed: canEncode ? () {
+                  if (year != manilaNow().year) return;
+                  showDialog<void>(
+                    context: context,
+                    barrierDismissible: false,
+                    builder: (_) => ExcelImportDialog(store: widget.store, year: year),
+                  );
+                } : null,
+                icon: const AppIcon('upload', size: 18),
+                label: const Text('Import'),
               ),
-              onPressed: canEncode ? () {
-                if (year != manilaNow().year) return;
-                showDialog<void>(
-                  context: context,
-                  barrierDismissible: false,
-                  builder: (_) => ExcelImportDialog(store: widget.store, year: year),
-                );
-              } : null,
-              icon: const AppIcon('upload', size: 18),
-              label: const Text('Import'),
             ),
           ),
         ],
@@ -808,22 +814,28 @@ class _RecordEditorState extends State<RecordEditor> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    TextButton(
-                      style: dialogCancelStyle(),
-                      onPressed: () => Navigator.pop(context),
-                      child: const Text('Cancel'),
+                    HoverScaleButton(
+                      enabled: true,
+                      child: TextButton(
+                        style: dialogCancelStyle(),
+                        onPressed: () => Navigator.pop(context),
+                        child: const Text('Cancel'),
+                      ),
                     ),
                     const SizedBox(width: 8),
-                    FilledButton(
-                      style: FilledButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 10,
+                    HoverScaleButton(
+                      enabled: program.isNotEmpty,
+                      child: FilledButton(
+                        style: FilledButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 10,
+                          ),
+                          visualDensity: VisualDensity.compact,
                         ),
-                        visualDensity: VisualDensity.compact,
+                        onPressed: program.isEmpty ? null : save,
+                        child: const Text('Save'),
                       ),
-                      onPressed: program.isEmpty ? null : save,
-                      child: const Text('Save'),
                     ),
                   ],
                 ),
