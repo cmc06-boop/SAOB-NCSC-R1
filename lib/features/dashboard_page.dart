@@ -1079,22 +1079,25 @@ class _DashboardMetricCard extends StatelessWidget {
                         alignment: Alignment.centerLeft,
                         fit: BoxFit.scaleDown,
                         child: Text(label, maxLines: 1, style: const TextStyle(
-                          fontSize: 19, fontWeight: FontWeight.w800, color: navy,
+                          fontSize: 20, fontWeight: FontWeight.w500, color: navy,
                         )),
                       ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 12),
-                SizedBox(
-                  width: double.infinity,
-                  child: FittedBox(
-                    alignment: Alignment.centerLeft,
-                    fit: BoxFit.scaleDown,
-                    child: Text(amount, maxLines: 1, style: const TextStyle(
-                      fontSize: 23, fontWeight: FontWeight.w800, color: navy,
-                      letterSpacing: -.4,
-                    )),
+                Padding(
+                  padding: const EdgeInsets.only(left: 8),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: FittedBox(
+                      alignment: Alignment.centerLeft,
+                      fit: BoxFit.scaleDown,
+                      child: Text(amount, maxLines: 1, style: const TextStyle(
+                        fontSize: 23, fontWeight: FontWeight.w800, color: navy,
+                        letterSpacing: -.4,
+                      )),
+                    ),
                   ),
                 ),
               ],
