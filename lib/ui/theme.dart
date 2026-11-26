@@ -73,7 +73,7 @@ ThemeData appTheme() => ThemeData(
     ),
   ),
   dataTableTheme: DataTableThemeData(
-    headingRowColor: const WidgetStatePropertyAll(Color(0xffedf2fb)),
+    headingRowColor: const WidgetStatePropertyAll(Color(0xffcdddf4)),
     headingTextStyle: const TextStyle(
       fontSize: 12,
       fontWeight: FontWeight.w700,
