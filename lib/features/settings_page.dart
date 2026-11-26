@@ -96,7 +96,7 @@ class _ReferenceManagementPageState extends State<_ReferenceManagementPage> {
                 widths: const {
                   0: FixedColumnWidth(200),
                   1: FlexColumnWidth(),
-                  2: FixedColumnWidth(160),
+                  2: FixedColumnWidth(220),
                 },
                 rows: [
                   for (final p in programs)
@@ -109,14 +109,14 @@ class _ReferenceManagementPageState extends State<_ReferenceManagementPage> {
                       Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          _boxedIcon(
+                          _programAction(
                             tooltip: 'Edit',
                             color: blue,
                             icon: 'pencil',
                             onPressed: () => editProgram(p),
                           ),
                           const SizedBox(width: 8),
-                          _boxedIcon(
+                          _programAction(
                             tooltip: 'Delete',
                             color: red,
                             icon: 'trash-2',
@@ -194,7 +194,7 @@ class _ReferenceManagementPageState extends State<_ReferenceManagementPage> {
 }
 
 
-Widget _boxedIcon({
+Widget _programAction({
   required String tooltip,
   required Color color,
   required String icon,
@@ -211,9 +211,23 @@ Widget _boxedIcon({
       onTap: onPressed,
       borderRadius: BorderRadius.circular(6),
       child: SizedBox(
-        width: 30,
-        height: 30,
-        child: AppIcon(icon, size: 15, color: color),
+        width: 88,
+        height: 32,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            AppIcon(icon, size: 15, color: color),
+            const SizedBox(width: 6),
+            Text(
+              tooltip,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: color,
+              ),
+            ),
+          ],
+        ),
       ),
     ),
   ),
