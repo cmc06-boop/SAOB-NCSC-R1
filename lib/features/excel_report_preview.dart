@@ -11,6 +11,7 @@ import 'package:xml/xml.dart';
 import '../data/models.dart';
 import '../data/report_io.dart';
 import '../data/report_summary.dart';
+import '../ui/theme.dart' show blue, background;
 
 String _columnName(int index) {
   var name = '';
@@ -388,16 +389,16 @@ class _ExcelReportPreviewState extends State<ExcelReportPreview> {
                     alignment: Alignment.center,
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     decoration: BoxDecoration(
-                      color: i == _selected ? Colors.white : Colors.transparent,
+                      color: i == _selected ? background : Colors.transparent,
                       border: Border(bottom: BorderSide(
-                        color: i == _selected ? const Color(0xff15803d) : Colors.transparent,
+                        color: i == _selected ? blue : Colors.transparent,
                         width: 2,
                       )),
                     ),
                     child: Text(_sheets[i].name, style: TextStyle(
                       fontSize: 12,
                       fontWeight: i == _selected ? FontWeight.w700 : FontWeight.w400,
-                      color: i == _selected ? const Color(0xff15803d) : const Color(0xff526274),
+                      color: i == _selected ? blue : const Color(0xff526274),
                     )),
                   ),
                 ),
