@@ -337,14 +337,23 @@ class _SettingsTable extends StatelessWidget {
             ], i.isOdd ? const Color(0xfff8fafc) : Colors.white),
       ],
     );
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        headerTable,
-        Expanded(child: bodyTable == null
-            ? const Center(child: Text('No records found.', textAlign: TextAlign.center, style: TextStyle(fontSize: 13, color: muted)))
-            : _SettingsScroller(child: bodyTable)),
-      ],
+    if (bodyTable == null) {
+      return const Center(child: Text('No records found.',
+        textAlign: TextAlign.center,
+        style: TextStyle(fontSize: 13, color: muted),
+      ));
+    }
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          headerTable,
+          Expanded(
+            child: _SettingsScroller(child: bodyTable),
+          ),
+        ],
+      ),
     );
   }
 }
