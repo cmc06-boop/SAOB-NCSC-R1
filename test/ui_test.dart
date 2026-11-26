@@ -221,22 +221,11 @@ void main() {
     summaryField.onChanged!(summarySelection);
     await tester.pumpAndSettle();
 
-    expect(find.text('SUMMARY'), findsOneWidget);
+    expect(find.byKey(const ValueKey('excel-workbook-preview')), findsOneWidget);
+    expect(find.byKey(const ValueKey('excel-sheet-SUMMARY')), findsOneWidget);
+    expect(find.text('SUMMARY  |  FISCAL YEAR ${manilaNow().year}'), findsOneWidget);
     expect(find.text('CURRENT APPRO'), findsOneWidget);
     expect(find.text('CONTINUING APPRO'), findsOneWidget);
-    expect(
-      tester.widget<Text>(find.text('CURRENT APPRO')).textAlign,
-      TextAlign.center,
-    );
-    expect(
-      tester.widget<Text>(find.text('CONTINUING APPRO')).textAlign,
-      TextAlign.center,
-    );
-    expect(find.byKey(const ValueKey('summary-table-current')), findsOneWidget);
-    expect(
-      find.byKey(const ValueKey('summary-table-continuing')),
-      findsOneWidget,
-    );
     expect(find.text('PAP'), findsNWidgets(2));
     expect(find.text('TOTAL'), findsNWidgets(2));
     expect(find.byKey(const ValueKey('reports-export')), findsOneWidget);
@@ -579,11 +568,10 @@ void main() {
         ),
         findsOneWidget,
       );
-      expect(find.textContaining('Program: All Programs'), findsOneWidget);
-      expect(
-        tester.widget<Text>(find.text('Expense (UACS Name)')).textAlign,
-        TextAlign.center,
-      );
+      expect(find.byKey(const ValueKey('excel-workbook-preview')), findsOneWidget);
+      expect(find.text('REGION I'), findsOneWidget);
+      expect(find.text('UACs Name'), findsOneWidget);
+      expect(find.byKey(const ValueKey('excel-sheet-SUMMARY')), findsOneWidget);
       final directExport = tester.widget<FilledButton>(
         find.byKey(const ValueKey('reports-export')),
       );
