@@ -119,43 +119,24 @@ Future<Uint8List> pdfSaobSummaryReport(
   return doc.save();
 }
 
-Future<(pw.Font, pw.Font, pw.MemoryImage)> _loadAssets() async {
+Future<(pw.Font, pw.Font, ReportLetterhead)> _loadAssets() async {
   // In Flutter widget tests, asset loads can complete synchronously.
   // Await each asset individually instead of passing these futures to
   // Future.wait, which can produce an empty result with SynchronousFuture.
   final regular = await rootBundle.load('assets/fonts/DejaVuSans.ttf');
   final bold = await rootBundle.load('assets/fonts/DejaVuSans-Bold.ttf');
-  final logo = await rootBundle.load('assets/ncsc-logo-transparent.png');
+  final letterhead = await ReportLetterhead.load();
   return (
     pw.Font.ttf(regular),
     pw.Font.ttf(bold),
-    pw.MemoryImage(logo.buffer.asUint8List()),
+    letterhead,
   );
 }
 
-pw.Widget _letterhead(pw.MemoryImage logo, int year, String heading) =>
+pw.Widget _letterhead(ReportLetterhead letterhead, int year, String heading) =>
     pw.Column(
       children: [
-        pw.Row(
-          mainAxisAlignment: pw.MainAxisAlignment.center,
-          children: [
-            pw.Image(logo, width: 42, height: 42),
-            pw.SizedBox(width: 10),
-            pw.Column(
-              crossAxisAlignment: pw.CrossAxisAlignment.start,
-              children: [
-                pw.Text(
-                  'NATIONAL COMMISSION OF SENIOR CITIZENS',
-                  style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold),
-                ),
-                pw.Text(
-                  'REGION I',
-                  style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold),
-                ),
-              ],
-            ),
-          ],
-        ),
+        letterhead.build(),
         pw.SizedBox(height: 8),
         pw.Center(
           child: pw.Text(
