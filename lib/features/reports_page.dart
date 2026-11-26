@@ -361,8 +361,8 @@ class _ReportsPageState extends State<ReportsPage> {
               // Keep the wide layout compact enough for desktop windows;
               // narrower or shorter viewports scroll the complete page.
               final panelHeight = c.maxWidth >= 900
-                  ? (viewport.maxHeight - 400).clamp(252.0, 300.0).toDouble()
-                  : 280.0;
+                  ? (viewport.maxHeight - 365).clamp(282.0, 335.0).toDouble()
+                  : 310.0;
               final summary = _SummaryCard(
                 totals: totals,
                 expand: true,
@@ -1411,16 +1411,6 @@ class _HistoryCardState extends State<_HistoryCard> {
     (report['format'] as String? ?? ''),
   );
 
-  // The list is newest-first; restart display numbering at each date.
-  List<int> _dailyNumbers() {
-    final counts = <String, int>{};
-    return [
-      for (final report in widget.history)
-        counts.update(dateOnly(report['at']), (count) => count + 1,
-            ifAbsent: () => 1),
-    ];
-  }
-
   static const _rowHeight = 32.0;
   static const _border = BorderSide(color: Color(0xffd5e1f2));
   static const _columns = <int, TableColumnWidth>{
@@ -1481,7 +1471,6 @@ class _HistoryCardState extends State<_HistoryCard> {
 
   @override
   Widget build(BuildContext context) {
-    final dailyNumbers = _dailyNumbers();
     return Panel(
       padding: 0,
       child: Column(
@@ -1551,7 +1540,7 @@ class _HistoryCardState extends State<_HistoryCard> {
                           else
                             for (var i = 0; i < widget.history.length; i++)
                               _row([
-                                _cell('${dailyNumbers[i]}', number: true),
+                                _cell('${widget.history[i]['daily_number']}', number: true),
                                 _cell(_reportName(widget.history[i])),
                                 _cell('${widget.history[i]['year']}', center: true),
                                 _cell(dateLabel(widget.history[i]['at']), center: true),
