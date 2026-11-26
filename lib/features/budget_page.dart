@@ -301,8 +301,7 @@ class _RecordEditorState extends State<RecordEditor> {
     );
   }
 
-  final _inputKey = GlobalKey();
-  double? _inputHeight;
+  static const double _inputHeight = 38;
 
   void _bindFocus(FocusNode node) {
     node.addListener(() {
@@ -313,11 +312,7 @@ class _RecordEditorState extends State<RecordEditor> {
     });
   }
 
-  void _matchInputHeight() {
-    final height = _inputKey.currentContext?.size?.height;
-    if (!mounted || height == null || height == _inputHeight) return;
-    setState(() => _inputHeight = height);
-  }
+
 
   @override
   void initState() {
@@ -456,7 +451,6 @@ class _RecordEditorState extends State<RecordEditor> {
     bool amount = false,
     bool digitsOnly = false,
     bool readOnly = false,
-    Key? boxKey,
     FocusNode? focusNode,
     String? hint,
     Widget? suffix,
@@ -489,7 +483,6 @@ class _RecordEditorState extends State<RecordEditor> {
         ? enteredObligation - enteredAllotment
         : null;
     final input = TextField(
-      key: boxKey,
       controller: c,
       focusNode: focusNode,
       readOnly: readOnly,
@@ -586,7 +579,6 @@ class _RecordEditorState extends State<RecordEditor> {
 
   @override
   Widget build(BuildContext context) {
-    WidgetsBinding.instance.addPostFrameCallback((_) => _matchInputHeight());
     final a = parseCents(allotment.text) ?? 0,
         o = parseCents(obligation.text) ?? 0,
         d = parseCents(disbursement.text) ?? 0;
@@ -667,10 +659,10 @@ class _RecordEditorState extends State<RecordEditor> {
                       'Fiscal Year *',
                       yearField,
                       readOnly: true,
-                      boxKey: _inputKey,
                     ),
                     SelectField(
                       label: 'Program *',
+                      fieldHeight: _inputHeight,
                       labelStyle: _recordEditorLabelStyle,
                       arrowRightPadding: 0,
                       arrowShiftRight: 9,
