@@ -806,7 +806,7 @@ class ReportLetterhead {
         children: [
           pw.SizedBox(width: 60, height: 60,
               child: pw.Image(ncsc, fit: pw.BoxFit.contain)),
-          pw.SizedBox(width: 8),
+          pw.SizedBox(width: 14),
           pw.Column(
               mainAxisAlignment: pw.MainAxisAlignment.center,
               children: [
@@ -818,7 +818,7 @@ class ReportLetterhead {
                 line('City of San Fernando, 2500 La Union', 10),
               ],
           ),
-          pw.SizedBox(width: 8),
+          pw.SizedBox(width: 14),
           pw.SizedBox(width: 60, height: 60,
               child: pw.Image(bagong, fit: pw.BoxFit.contain)),
         ],
