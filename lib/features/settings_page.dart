@@ -208,6 +208,7 @@ Widget _programAction({
       side: BorderSide(color: color),
     ),
     child: InkWell(
+      key: ValueKey('program-action-$tooltip'),
       onTap: onPressed,
       borderRadius: BorderRadius.circular(6),
       child: SizedBox(
