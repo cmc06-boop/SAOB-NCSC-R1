@@ -87,4 +87,20 @@ void main() {
       {0, 1, 2},
     );
   });
+  test('existing numbered filename advances to highest copy without overwriting', () async {
+    final original = File(p.join(folder.path, 'report.pdf'));
+    final numbered = File(p.join(folder.path, 'report (3).pdf'));
+    await original.writeAsBytes([1]);
+    await numbered.writeAsBytes([3]);
+    expect(await nextExportName(folder.path, 'report.pdf'), 'report (4).pdf');
+    final saved = await saveExportCopy(
+      folderPath: folder.path,
+      fileName: 'report (3).pdf',
+      bytes: [4],
+    );
+    expect(p.basename(saved), 'report (4).pdf');
+    expect(await original.readAsBytes(), [1]);
+    expect(await numbered.readAsBytes(), [3]);
+    expect(await File(saved).readAsBytes(), [4]);
+  });
 }
