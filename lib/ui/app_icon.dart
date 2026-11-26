@@ -38,6 +38,7 @@ class AppIcon extends StatelessWidget {
     'pencil' => Icons.edit_outlined,
     'trash-2' => Icons.delete_outline_rounded,
     'download' => Icons.file_download_outlined,
+    'upload' => Icons.file_upload_outlined,
     'search' => Icons.search_rounded,
     'chevron-down' => Icons.keyboard_arrow_down_rounded,
     'chevron-left' => Icons.chevron_left_rounded,
