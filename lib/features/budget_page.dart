@@ -627,7 +627,7 @@ class _RecordEditorState extends State<RecordEditor> {
       canPop: false,
       child: Dialog(
         key: const ValueKey('budget-record-dialog'),
-        alignment: const Alignment(0.45, 0),
+        alignment: Alignment.center,
         insetPadding: const EdgeInsets.symmetric(horizontal: 40, vertical: 32),
         child: ConstrainedBox(
           key: const ValueKey('budget-record-dialog-size'),
