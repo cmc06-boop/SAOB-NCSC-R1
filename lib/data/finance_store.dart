@@ -718,8 +718,21 @@ class FinanceStore extends ChangeNotifier {
     return db.rows('$sql ORDER BY id DESC', args);
   }
 
-  List<DbRow> get reportHistory =>
-      db.rows('SELECT * FROM report_history ORDER BY id DESC LIMIT 20');
+  List<DbRow> get reportHistory => filteredReportHistory();
+
+  List<DbRow> filteredReportHistory({int? year, String program = ''}) {
+    var sql = 'SELECT * FROM report_history WHERE 1=1';
+    final args = <Object?>[];
+    if (year != null) {
+      sql += ' AND year=?';
+      args.add(year);
+    }
+    if (program.isNotEmpty) {
+      sql += ' AND program=?';
+      args.add(program);
+    }
+    return db.rows('$sql ORDER BY id DESC LIMIT 20', args);
+  }
   void logReport(String type, int year, String program, String format) {
     require('reports');
     db.transaction(() {
