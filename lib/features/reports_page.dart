@@ -1540,7 +1540,7 @@ class _HistoryCardState extends State<_HistoryCard> {
                           else
                             for (var i = 0; i < widget.history.length; i++)
                               _row([
-                                _cell('${widget.history[i]['daily_number']}', number: true),
+                                _cell('${i + 1}', number: true),
                                 _cell(_reportName(widget.history[i])),
                                 _cell('${widget.history[i]['year']}', center: true),
                                 _cell(dateLabel(widget.history[i]['at']), center: true),
