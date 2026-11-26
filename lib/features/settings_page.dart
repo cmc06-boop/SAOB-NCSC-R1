@@ -57,7 +57,7 @@ class _ReferenceManagementPageState extends State<_ReferenceManagementPage> {
     if (!await confirm(
       context,
       'Delete program?',
-      'Remove ${program.code} · ${program.name}?',
+      'Are you sure to delete this program?',
     )) {
       return;
     }
