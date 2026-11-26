@@ -3,7 +3,7 @@ import 'dart:math' as math;
 import 'package:material_ui/material_ui.dart';
 
 import '../core/format.dart';
-import 'audit_page.dart' show auditDetailSentence;
+import 'audit_page.dart' show auditDetailSentence, AuditActionBadge;
 import '../data/finance_store.dart';
 import '../data/models.dart';
 import '../ui/common.dart';
@@ -866,7 +866,7 @@ class _DashboardAuditPreview extends StatelessWidget {
   static const _columns = <int, TableColumnWidth>{
     0: FixedColumnWidth(188),
     1: FixedColumnWidth(112),
-    2: FixedColumnWidth(168),
+    2: FixedColumnWidth(210),
     3: FlexColumnWidth(),
   };
   static const _header = TextStyle(
@@ -1015,7 +1015,7 @@ class _DashboardAuditPreview extends StatelessWidget {
                                     _row([
                                       cell(dateOnly(record['at']), center: true),
                                       cell(timeOnly(record['at']), center: true),
-                                      cell('${record['action'] ?? ''}', center: true),
+                                      AuditActionBadge('${record['action'] ?? ''}'),
                                       cell(
                                         auditDetailSentence(
                                           '${record['detail'] ?? ''}',
