@@ -162,7 +162,7 @@ class _BudgetPageState extends State<BudgetPage> {
       style: const TextStyle(fontSize: 14),
       decoration: const InputDecoration(
         hintText: 'Search UACS Code or Expense...',
-        prefixIcon: AppIcon('search', size: 16),
+        prefixIcon: AppIcon('search', size: 22),
         isDense: true,
         contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
       ),
