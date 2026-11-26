@@ -79,6 +79,10 @@ class _ReferenceManagementPageState extends State<_ReferenceManagementPage> {
         accent: false,
         expand: true,
         besideSubtitle: FilledButton.icon(
+          style: FilledButton.styleFrom(
+            backgroundColor: const Color(0xff19458c),
+            foregroundColor: Colors.white,
+          ),
           onPressed: () => editProgram(),
           icon: const AppIcon('plus', size: 18),
           label: const Text('Add Program'),
