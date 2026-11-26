@@ -548,7 +548,7 @@ void _writeSaobSummarySheet(
       dart,
       0,
       TextCellValue(title),
-      _saobStyle(bold: true, size: 10, fill: navy, color: ExcelColor.white, align: HorizontalAlign.Center),
+      _saobStyle(bold: true, size: 10, align: HorizontalAlign.Center, border: false),
     );
   }
 
