@@ -2,7 +2,6 @@ import 'dart:io';
 import 'dart:math' as math;
 
 import 'package:file_selector/file_selector.dart';
-import 'package:path/path.dart' as path;
 import 'package:intl/intl.dart' hide TextDirection;
 import 'package:material_ui/material_ui.dart';
 
@@ -118,6 +117,70 @@ class _ReportsPageState extends State<ReportsPage> {
     setState(() => preview = true);
   }
 
+  Future<String?> _downloadName(String suggested, String extension, String folder) async {
+    var name = suggested;
+    String? error;
+    return showDialog<String>(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, update) {
+          void download() {
+            final trimmed = name.trim();
+            final base = trimmed.toLowerCase().endsWith('.$extension')
+                ? trimmed.substring(0, trimmed.length - extension.length - 1)
+                : trimmed;
+            if (base.trim().isEmpty ||
+                base == '.' || base == '..' ||
+                base.endsWith('.') || base.endsWith(' ') ||
+                RegExp(r'[<>:"/\\|?*\x00-\x1f]').hasMatch(base) ||
+                RegExp(r'^(CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])(?:\.|$)', caseSensitive: false).hasMatch(base)) {
+              update(() => error = 'Enter a valid file name.');
+              return;
+            }
+            Navigator.pop(dialogContext, '$base.$extension');
+          }
+          return AlertDialog(
+            title: const Text('Download Report'),
+            content: SizedBox(
+              width: 360,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(folder, style: const TextStyle(fontSize: 12, color: muted)),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    initialValue: suggested,
+                    autofocus: true,
+                    decoration: InputDecoration(
+                      labelText: 'File name',
+                      suffixText: '.$extension',
+                      errorText: error,
+                    ),
+                    onChanged: (value) => update(() {
+                      name = value;
+                      error = null;
+                    }),
+                    onFieldSubmitted: (_) => download(),
+                  ),
+                  const SizedBox(height: 10),
+                  const Text(
+                    'An existing file will never be replaced. A new copy will be numbered automatically.',
+                    style: TextStyle(fontSize: 12, color: muted),
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(dialogContext), child: const Text('Cancel')),
+              FilledButton(onPressed: download, child: const Text('Download')),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
   Future<void> generate(String fmt) async {
     if (busy) return;
     final selectedYear = year, selectedProgram = program;
@@ -139,21 +202,18 @@ class _ReportsPageState extends State<ReportsPage> {
           : selectedProgram.isEmpty
               ? 'All'
               : selectedProgram;
-      final location = await getSaveLocation(
+      final folderPath = await getDirectoryPath(
         initialDirectory: lastExportFolder,
-        suggestedName: 'NCSC-R1-$selectedYear-$fileLabel.$extension',
-        acceptedTypeGroups: [
-          XTypeGroup(label: fmt == 'PDF' ? 'PDF' : 'Excel', extensions: [extension]),
-        ],
-        confirmButtonText: 'Download',
+        confirmButtonText: 'Select Folder',
       );
-      if (location == null) return;
-      final folderPath = path.dirname(location.path);
+      if (folderPath == null || !mounted) return;
       lastExportFolder = folderPath;
-      final chosenName = path.basename(location.path);
-      final fileName = chosenName.toLowerCase().endsWith('.$extension')
-          ? chosenName
-          : '$chosenName.$extension';
+      final fileName = await _downloadName(
+        'NCSC-R1-$selectedYear-$fileLabel',
+        extension,
+        folderPath,
+      );
+      if (fileName == null) return;
       // All Programs and one selected program share the exact same PDF
       // renderer, including letterhead, columns, TOTAL row and spacing.
       final bytes = fmt == 'PDF'
