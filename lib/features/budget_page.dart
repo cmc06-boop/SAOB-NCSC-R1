@@ -530,7 +530,7 @@ class _RecordEditorState extends State<RecordEditor> {
         isDense: true,
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 12,
-          vertical: 6,
+          vertical: 8,
         ),
         hintText: showHint ? (amount ? '₱  0.00' : hint) : null,
         hintStyle: const TextStyle(color: Color(0xff9aabbf), fontSize: 13),
@@ -631,7 +631,7 @@ class _RecordEditorState extends State<RecordEditor> {
         insetPadding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
         child: ConstrainedBox(
           key: const ValueKey('budget-record-dialog-size'),
-          constraints: const BoxConstraints(maxWidth: 660, minHeight: 440),
+          constraints: const BoxConstraints(maxWidth: 700, minHeight: 460),
           child: SingleChildScrollView(
             key: const ValueKey('budget-record-dialog-scroll'),
             padding: const EdgeInsets.fromLTRB(18, 8, 18, 12),
