@@ -212,7 +212,8 @@ CellStyle _saobStyle({
   final line = Border(borderColorHex: ExcelColor.fromHexString('#D5E1F2'));
   return CellStyle(
     bold: bold,
-    fontSize: size,
+    fontFamily: 'Arial',
+    fontSize: size ?? 10,
     backgroundColorHex: fill ?? ExcelColor.none,
     fontColorHex: color ?? ExcelColor.fromHexString('#132951'),
     horizontalAlign: align,
@@ -270,7 +271,7 @@ Uint8List excelReport(
     _writeSaobProgramSheet(book[group.sheet], group, year, cache);
   }
   if (program.isEmpty && sheets.isNotEmpty) {
-    _writeSaobSummarySheet(book['SUMMARY'], sheets, cache);
+    _writeSaobSummarySheet(book['SUMMARY'], sheets, cache, year);
   }
   if (renamed == false && book.tables.containsKey('Sheet1')) {
     book.delete('Sheet1');
@@ -311,19 +312,35 @@ void _writeSaobProgramSheet(
   final totalFill = ExcelColor.fromHexString('#E7EEFC');
   final oddFill = ExcelColor.fromHexString('#F7F9FC');
   final cells = cache.putIfAbsent(group.sheet, () => {});
-  sheet.setColumnWidth(0, 42);
-  sheet.setColumnWidth(1, 16);
-  for (var c = 2; c <= 7; c++) {
-    sheet.setColumnWidth(c, 16);
+  int widthFor(Iterable<String> values, int minimum, int maximum) {
+    var longest = minimum;
+    for (final value in values) {
+      for (final line in value.split('\n')) {
+        if (line.length + 3 > longest) longest = line.length + 3;
+      }
+    }
+    return longest.clamp(minimum, maximum).toInt();
   }
-  sheet.setColumnWidth(8, 28);
+  final nameWidth = widthFor(group.rows.map((r) => r.name), 34, 48);
+  final remarksWidth = widthFor(group.rows.map((r) => r.remarks), 24, 42);
+  sheet.setColumnWidth(0, nameWidth.toDouble());
+  sheet.setColumnWidth(1, widthFor([group.program, ...group.rows.map((r) => displayCode(r.code))], 16, 32).toDouble());
+  for (var c = 2; c <= 7; c++) {
+    sheet.setColumnWidth(c, 18);
+  }
+  sheet.setColumnWidth(8, remarksWidth.toDouble());
+  sheet.setRowHeight(0, 22);
+  sheet.setRowHeight(1, 20);
+  sheet.setRowHeight(2, 30);
+  int linesFor(String value, int width) => value.split('\n').fold<int>(0,
+      (count, line) => count + (line.length / (width - 4)).ceil().clamp(1, 200).toInt());
 
   _writeCell(
     sheet,
     0,
     0,
     TextCellValue('REGION I'),
-    _saobStyle(bold: true, size: 14, border: false),
+    _saobStyle(bold: true, size: 10, border: false),
   );
   _writeCell(
     sheet,
@@ -337,7 +354,7 @@ void _writeSaobProgramSheet(
     0,
     2,
     FormulaCellValue('C$totalExcel'),
-    _saobStyle(bold: true, size: 12, border: false, format: moneyFmt),
+    _saobStyle(bold: true, size: 10, border: false, format: moneyFmt, align: HorizontalAlign.Right),
   );
   cells['C1'] = (group.totals.allotment / 100).toString();
   _writeCell(
@@ -345,7 +362,7 @@ void _writeSaobProgramSheet(
     1,
     0,
     TextCellValue(
-      group.fund == 'CONTINUING'
+      summaryProgramAndFund(group.program, group.fund).$2 == 'CONTINUING'
           ? 'REGULAR FUND-CONTINUING'
           : 'REGULAR FUND-CURRENT',
     ),
@@ -359,7 +376,6 @@ void _writeSaobProgramSheet(
     _saobStyle(border: false),
   );
   for (var c = 0; c < headers.length; c++) {
-    final numeric = money.contains(c) || rates.contains(c);
     _writeCell(
       sheet,
       2,
@@ -369,7 +385,8 @@ void _writeSaobProgramSheet(
         bold: true,
         fill: navy,
         color: ExcelColor.white,
-        align: numeric ? HorizontalAlign.Right : HorizontalAlign.Left,
+        align: HorizontalAlign.Center,
+        wrap: true,
       ),
     );
   }
@@ -384,7 +401,7 @@ void _writeSaobProgramSheet(
             : ExcelColor.none,
         align: money.contains(col) || rates.contains(col)
             ? HorizontalAlign.Right
-            : HorizontalAlign.Left,
+            : col == 1 ? HorizontalAlign.Center : HorizontalAlign.Left,
         wrap: col == 0 || col == 8,
         format: rates.contains(col)
             ? percentFmt
@@ -403,6 +420,10 @@ void _writeSaobProgramSheet(
     final excel = firstExcel + i;
     final dart = excel - 1;
     final odd = i.isOdd;
+    final nameLines = linesFor(row.name, nameWidth);
+    final remarksLines = linesFor(row.remarks, remarksWidth);
+    final lines = nameLines > remarksLines ? nameLines : remarksLines;
+    sheet.setRowHeight(dart, (lines * 15.0 + 5).clamp(20.0, 409.0).toDouble());
     final c = 'C$excel', d = 'D$excel', g = 'G$excel';
     _writeCell(sheet, dart, 0, TextCellValue(row.name), body(0, odd: odd));
     _writeCell(
@@ -454,6 +475,7 @@ void _writeSaobProgramSheet(
   final totalRow = group.totals;
   final dartTotal = totalExcel - 1;
   final look = body;
+  sheet.setRowHeight(dartTotal, 22);
   _writeCell(sheet, dartTotal, 0, TextCellValue('TOTAL'), look(0, total: true));
   _writeCell(sheet, dartTotal, 1, TextCellValue(''), look(1, total: true));
   for (final col in [2, 3, 5, 6]) {
@@ -495,6 +517,7 @@ void _writeSaobSummarySheet(
   Sheet sheet,
   List<_SaobGroup> groups,
   Map<String, Map<String, String>> cache,
+  int year,
 ) {
   final moneyFmt = NumFormat.custom(formatCode: _moneyFormat);
   final percentFmt = NumFormat.custom(formatCode: _percentFormat);
@@ -503,7 +526,7 @@ void _writeSaobSummarySheet(
   final cells = cache.putIfAbsent('SUMMARY', () => {});
   sheet.setColumnWidth(0, 16);
   for (var c = 1; c <= 6; c++) {
-    sheet.setColumnWidth(c, 18);
+    sheet.setColumnWidth(c, c == 3 ? 26 : 19);
   }
   const headers = [
     'PAP',
@@ -525,11 +548,12 @@ void _writeSaobSummarySheet(
       dart,
       0,
       TextCellValue(title),
-      _saobStyle(bold: true, size: 12, fill: navy, color: ExcelColor.white),
+      _saobStyle(bold: true, size: 10, fill: navy, color: ExcelColor.white, align: HorizontalAlign.Center),
     );
   }
 
   void columnHeads(int dart) {
+    sheet.setRowHeight(dart, 30);
     for (var c = 0; c < headers.length; c++) {
       _writeCell(
         sheet,
@@ -538,8 +562,10 @@ void _writeSaobSummarySheet(
         TextCellValue(headers[c]),
         _saobStyle(
           bold: true,
-          fill: ExcelColor.fromHexString('#EEF3FB'),
-          align: c == 0 ? HorizontalAlign.Left : HorizontalAlign.Right,
+          fill: navy,
+          color: ExcelColor.white,
+          align: HorizontalAlign.Center,
+          wrap: true,
         ),
       );
     }
@@ -693,17 +719,28 @@ void _writeSaobSummarySheet(
           final rank = programRank(a).compareTo(programRank(b));
           return rank != 0 ? rank : a.program.compareTo(b.program);
         });
+  for (final (row, title) in [
+    (0, 'NATIONAL COMMISSION OF SENIOR CITIZENS'),
+    (1, 'REGION I'),
+    (2, 'SUMMARY  |  FISCAL YEAR $year'),
+  ]) {
+    sheet.merge(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: row),
+        CellIndex.indexByColumnRow(columnIndex: 6, rowIndex: row));
+    _writeCell(sheet, row, 0, TextCellValue(title),
+        _saobStyle(bold: true, align: HorizontalAlign.Center, border: false));
+    sheet.setRowHeight(row, 20);
+  }
   final current = sorted('CURRENT');
   final continuing = sorted('CONTINUING');
   if (current.isNotEmpty) {
-    writeSection('CURRENT APPRO', current, 0);
+    writeSection('CURRENT APPRO', current, 4);
   }
   if (continuing.isNotEmpty) {
     writeSection(
       'CONTINUING APPRO',
       continuing,
       // One blank row between the two tables, as in the reference workbook.
-      current.isEmpty ? 0 : current.length + 4,
+      current.isEmpty ? 4 : current.length + 8,
     );
   }
 }
