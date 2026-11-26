@@ -385,11 +385,11 @@ void main() {
       // Measure the complete labeled buttons, not their left-side icons.
       final edit = find.descendant(
         of: programsTable,
-        matching: find.byTooltip('Edit'),
+        matching: find.byKey(const ValueKey('program-action-Edit')),
       ).first;
       final delete = find.descendant(
         of: programsTable,
-        matching: find.byTooltip('Delete'),
+        matching: find.byKey(const ValueKey('program-action-Delete')),
       ).first;
       expect(find.descendant(of: programsTable, matching: find.text('Edit')), findsWidgets);
       expect(find.descendant(of: programsTable, matching: find.text('Delete')), findsWidgets);
