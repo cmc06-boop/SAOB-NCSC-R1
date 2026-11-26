@@ -103,4 +103,33 @@ void main() {
     expect(await numbered.readAsBytes(), [3]);
     expect(await File(saved).readAsBytes(), [4]);
   });
+  test('automatic filename resets after all previous copies are deleted', () async {
+    final original = File(p.join(folder.path, 'report.pdf'));
+    final copy = File(p.join(folder.path, 'report (1).pdf'));
+    await original.writeAsBytes([1]);
+    await copy.writeAsBytes([2]);
+    final suggested = await nextExportName(folder.path, 'report.pdf');
+    expect(suggested, 'report (2).pdf');
+    await original.delete();
+    await copy.delete();
+    final saved = await saveExportCopy(
+      folderPath: folder.path,
+      fileName: resolveExportRequest(
+        defaultName: 'report.pdf',
+        suggestedName: suggested,
+        chosenName: suggested,
+      ),
+      bytes: [3],
+    );
+    expect(p.basename(saved), 'report.pdf');
+    expect(await nextExportName(folder.path, 'report.pdf'), 'report (1).pdf');
+    expect(
+      resolveExportRequest(
+        defaultName: 'report.pdf',
+        suggestedName: suggested,
+        chosenName: 'custom.pdf',
+      ),
+      'custom.pdf',
+    );
+  });
 }
