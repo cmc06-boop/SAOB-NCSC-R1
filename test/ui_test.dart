@@ -382,15 +382,17 @@ void main() {
             .abs(),
         lessThan(8),
       );
-      // Hover labels are hidden, so use visible action icons instead.
+      // Measure the complete labeled buttons, not their left-side icons.
       final edit = find.descendant(
         of: programsTable,
-        matching: appIcon('pencil'),
+        matching: find.byTooltip('Edit'),
       ).first;
       final delete = find.descendant(
         of: programsTable,
-        matching: appIcon('trash-2'),
+        matching: find.byTooltip('Delete'),
       ).first;
+      expect(find.descendant(of: programsTable, matching: find.text('Edit')), findsWidgets);
+      expect(find.descendant(of: programsTable, matching: find.text('Delete')), findsWidgets);
       final actionsCenter =
           (tester.getCenter(edit).dx + tester.getCenter(delete).dx) / 2;
       expect(
@@ -402,7 +404,7 @@ void main() {
       );
       expect(
         (programHeader.columnWidths![3] as FixedColumnWidth).value,
-        160,
+        220,
       );
       // Programs must keep its original compact number column.
       expect(
