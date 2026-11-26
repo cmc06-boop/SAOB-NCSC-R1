@@ -897,7 +897,14 @@ class _DashboardAuditPreview extends StatelessWidget {
           Expanded(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(16, 3, 16, 5),
-              child: LayoutBuilder(
+              child: rows.isEmpty
+                  ? const Center(child: Text('No audit records found.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontSize: 13, color: muted),
+                    ))
+                  : ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: LayoutBuilder(
                 builder: (context, constraints) => SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
                   child: SizedBox(
@@ -923,9 +930,7 @@ class _DashboardAuditPreview extends StatelessWidget {
                           ],
                         ),
                         Expanded(
-                          child: rows.isEmpty
-                              ? const Center(child: Text('No audit records found.', textAlign: TextAlign.center, style: TextStyle(fontSize: 13, color: muted)))
-                              : ListView.builder(
+                          child: ListView.builder(
                             key: const ValueKey('dashboard-audit-records'),
                             primary: false,
                             padding: EdgeInsets.zero,
@@ -964,6 +969,7 @@ class _DashboardAuditPreview extends StatelessWidget {
                     ),
                   ),
                 ),
+              ),
               ),
             ),
           ),
