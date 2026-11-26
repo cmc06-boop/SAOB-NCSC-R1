@@ -492,7 +492,7 @@ class _BudgetTableState extends State<BudgetTable> {
     super.dispose();
   }
 
-  static const _border = BorderSide(color: Color(0xffd5e1f2));
+  static const _border = BorderSide(color: Color(0xffc3d2e6));
   static const _pad = 24.0;
 
   double _textWidth(String text, TextStyle style) {
@@ -671,7 +671,7 @@ class _BudgetTableState extends State<BudgetTable> {
                 style: header,
               ),
               _BudgetCell('Remarks', align: TextAlign.center, style: header),
-            ], const Color(0xffeef3fb)),
+            ], const Color(0xffcdddf4)),
           ],
         );
         final bodyTable = records.isEmpty ? null : Table(
@@ -732,9 +732,9 @@ class _BudgetTableState extends State<BudgetTable> {
                   _BudgetCell(r.remarks, style: body, tip: true),
                 ],
                 r.id == widget.selectedId
-                    ? const Color(0xffe4edfb)
+                    ? const Color(0xffd4e5ff)
                     : i.isOdd
-                    ? const Color(0xfff7f9fc)
+                    ? const Color(0xfff8fafc)
                     : Colors.white,
                 widget.onSelect == null ? null : () => widget.onSelect!(r),
               ),
@@ -778,7 +778,7 @@ class _BudgetTableState extends State<BudgetTable> {
                   style: totalStyle,
                 ),
                 const _BudgetCell(''),
-              ], const Color(0xffe7eefc)),
+              ], const Color(0xffdce8fa)),
           ],
         );
         if (bodyTable == null) {
