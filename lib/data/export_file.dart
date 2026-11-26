@@ -27,7 +27,9 @@ Future<String> nextExportName(String folderPath, String fileName) async {
     if (number != null && number > highest) highest = number;
   }
   if (!names.contains(fileName.toLowerCase()) &&
-      (highest < requested || highest < 0)) return fileName;
+      (highest < requested || highest < 0)) {
+    return fileName;
+  }
   final next = highest >= requested ? highest + 1 : requested + 1;
   return '$base ($next)$extension';
 }
