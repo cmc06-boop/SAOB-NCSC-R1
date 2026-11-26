@@ -718,8 +718,24 @@ class FinanceStore extends ChangeNotifier {
     return db.rows('$sql ORDER BY id DESC', args);
   }
 
-  List<DbRow> get reportHistory =>
-      db.rows('SELECT * FROM report_history ORDER BY id DESC LIMIT 20');
+  // Assign each report its actual daily sequence before limiting the
+  // newest-first view. The first export of each Manila day is always #1.
+  List<DbRow> get reportHistory {
+    final counts = <String, int>{};
+    final rows = db.rows('SELECT * FROM report_history ORDER BY id ASC');
+    final numbered = <DbRow>[
+      for (final row in rows)
+        {
+          ...row,
+          'daily_number': counts.update(
+            dateOnly(row['at']),
+            (count) => count + 1,
+            ifAbsent: () => 1,
+          ),
+        },
+    ];
+    return numbered.reversed.take(20).toList();
+  }
   void logReport(String type, int year, String program, String format) {
     require('reports');
     db.transaction(() {
