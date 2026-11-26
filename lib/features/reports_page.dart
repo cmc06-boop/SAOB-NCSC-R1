@@ -1482,7 +1482,7 @@ class _HistoryCardState extends State<_HistoryCard> {
   );
 
   static const _rowHeight = 32.0;
-  static const _border = BorderSide(color: Color(0xffd5e1f2));
+  static const _border = BorderSide(color: Color(0xffc3d2e6));
   static const _columns = <int, TableColumnWidth>{
     0: FixedColumnWidth(48),
     1: FlexColumnWidth(3),
@@ -1577,7 +1577,7 @@ class _HistoryCardState extends State<_HistoryCard> {
                       _cell('Report Name', style: _header, center: true),
                       _cell('Fiscal Year', style: _header, center: true),
                       _cell('Date Generated', style: _header, center: true),
-                    ], const Color(0xffeef3fb), center: true),
+                    ], const Color(0xffcdddf4), center: true),
                   ],
                 ),
                 SizedBox(
@@ -1606,7 +1606,7 @@ class _HistoryCardState extends State<_HistoryCard> {
                                 _cell(_reportName(widget.history[i])),
                                 _cell('${widget.history[i]['year']}', center: true),
                                 _cell(dateLabel(widget.history[i]['at']), center: true),
-                              ], i.isOdd ? const Color(0xfff7f9fc) : Colors.white,
+                              ], i.isOdd ? const Color(0xfff8fafc) : Colors.white,
                                   centeredColumns: const {2, 3}),
                         ],
                       ),
