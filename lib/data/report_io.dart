@@ -799,28 +799,27 @@ class ReportLetterhead {
         pw.Text(value, textAlign: pw.TextAlign.center,
             style: pw.TextStyle(font: heavy ? bold : regular, fontSize: size, color: color));
     return pw.Padding(
-      padding: const pw.EdgeInsets.symmetric(horizontal: 30),
+      padding: const pw.EdgeInsets.symmetric(horizontal: 52),
       child: pw.Row(
         crossAxisAlignment: pw.CrossAxisAlignment.center,
+        mainAxisAlignment: pw.MainAxisAlignment.center,
         children: [
-          pw.SizedBox(width: 76, height: 76,
+          pw.SizedBox(width: 60, height: 60,
               child: pw.Image(ncsc, fit: pw.BoxFit.contain)),
-          pw.SizedBox(width: 12),
-          pw.Expanded(
-            child: pw.Column(
+          pw.SizedBox(width: 8),
+          pw.Column(
               mainAxisAlignment: pw.MainAxisAlignment.center,
               children: [
-                line('Republic of the Philippines', 14, heavy: true),
-                line('Office of the President', 14),
-                line('NATIONAL COMMISSION OF SENIOR CITIZENS', 17,
+                line('Republic of the Philippines', 10, heavy: true),
+                line('Office of the President', 10),
+                line('NATIONAL COMMISSION OF SENIOR CITIZENS', 11,
                     heavy: true, color: PdfColor.fromInt(0xff00558c)),
-                line('2nd Floor, Kenny Plaza, Quezon Avenue,', 12),
-                line('City of San Fernando, 2500 La Union', 12),
+                line('2nd Floor, Kenny Plaza, Quezon Avenue,', 10),
+                line('City of San Fernando, 2500 La Union', 10),
               ],
-            ),
           ),
-          pw.SizedBox(width: 12),
-          pw.SizedBox(width: 76, height: 76,
+          pw.SizedBox(width: 8),
+          pw.SizedBox(width: 60, height: 60,
               child: pw.Image(bagong, fit: pw.BoxFit.contain)),
         ],
       ),
