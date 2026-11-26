@@ -105,6 +105,7 @@ class _ReportsPageState extends State<ReportsPage> {
   String reportFormat = 'PDF';
   String? lastExportFolder;
   bool busy = false, preview = false;
+  double? previewZoom = 1.0;
   void change(VoidCallback fn) => setState(fn);
 
   String get dataProgram => program == summarySelection ? '' : program;
@@ -115,7 +116,10 @@ class _ReportsPageState extends State<ReportsPage> {
       showMessage(context, 'There are no records for this report.');
       return;
     }
-    setState(() => preview = true);
+    setState(() {
+      preview = true;
+      previewZoom = 1.0;
+    });
   }
 
   // Suggest the next copy in the last destination before opening Save As.
@@ -409,7 +413,7 @@ class _ReportsPageState extends State<ReportsPage> {
               children: [
                 Expanded(child: _previewCard(records, programLabel)),
                 const SizedBox(width: 16),
-                SizedBox(width: 280, child: _parameterCard()),
+                SizedBox(width: 280, child: _parameterCard(records)),
               ],
             ),
           ),
@@ -418,9 +422,10 @@ class _ReportsPageState extends State<ReportsPage> {
     );
   }
 
-  Widget _parameterCard() {
+  Widget _parameterCard(List<BudgetRecord> records) {
     return Panel(
-      child: Column(
+      child: SingleChildScrollView(
+        child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           const Text(
@@ -472,7 +477,10 @@ class _ReportsPageState extends State<ReportsPage> {
               ],
             ),
           ),
+          const SizedBox(height: 20),
+          _exportButton(records),
         ],
+        ),
       ),
     );
   }
@@ -540,6 +548,59 @@ class _ReportsPageState extends State<ReportsPage> {
     );
   }
 
+  Widget _zoomButton(String label, IconData icon, double delta, bool enabled) {
+    return IconButton(
+      key: ValueKey(delta < 0 ? 'reports-zoom-out' : 'reports-zoom-in'),
+      tooltip: label,
+      icon: Icon(icon, size: 17),
+      onPressed: enabled
+          ? () => setState(() {
+              previewZoom = ((previewZoom ?? _lastFitZoom) + delta).clamp(0.4, 1.25).toDouble();
+            })
+          : null,
+      constraints: const BoxConstraints.tightFor(width: 32, height: 32),
+      padding: EdgeInsets.zero,
+      visualDensity: VisualDensity.compact,
+    );
+  }
+
+  double _lastFitZoom = 1.0;
+
+  Widget _scaledPreview(List<BudgetRecord> records, String programLabel) {
+    final table = _previewTable(records);
+    final totals = Totals(records);
+    final summary = program == summarySelection;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth <= 0 || constraints.maxHeight <= 0) {
+          return const SizedBox.shrink();
+        }
+        final naturalWidth = summary
+            ? 940.0
+            : _ReportSheetState.fitColumns(
+                0, DefaultTextStyle.of(context).style, table, totals, programLabel,
+              ).$2.fold<double>(0, (sum, width) => sum + width);
+        _lastFitZoom = math.min(1.0, constraints.maxWidth / naturalWidth);
+        final scale = previewZoom ?? _lastFitZoom;
+        return FittedBox(
+          fit: BoxFit.fill,
+          child: SizedBox(
+            width: constraints.maxWidth / scale,
+            height: constraints.maxHeight / scale,
+            child: summary
+                ? SummaryPreview(records: records, year: year)
+                : _ReportSheet(
+                    year: year,
+                    programLabel: programLabel,
+                    table: table,
+                    totals: totals,
+                  ),
+          ),
+        );
+      },
+    );
+  }
+
   Widget _previewCard(List<BudgetRecord> records, String programLabel) {
     return Panel(
       child: Column(
@@ -575,7 +636,13 @@ class _ReportsPageState extends State<ReportsPage> {
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
                 ),
               ),
-              _exportButton(records),
+              _zoomButton('Zoom out', Icons.remove, -0.1, records.isNotEmpty),
+              _zoomButton('Zoom in', Icons.add, 0.1, records.isNotEmpty),
+              TextButton(
+                key: const ValueKey('reports-fit'),
+                onPressed: records.isEmpty ? null : () => setState(() => previewZoom = null),
+                child: const Text('Fit'),
+              ),
             ],
           ),
           const SizedBox(height: 14),
@@ -593,14 +660,7 @@ class _ReportsPageState extends State<ReportsPage> {
                         style: TextStyle(color: muted),
                       ),
                     )
-                  : program == summarySelection
-                  ? SummaryPreview(records: records, year: year)
-                  : _ReportSheet(
-                      year: year,
-                      programLabel: programLabel,
-                      table: _previewTable(records),
-                      totals: Totals(records),
-                    ),
+                  : _scaledPreview(records, programLabel),
             ),
           ),
         ],
@@ -676,7 +736,7 @@ class _ReportSheetState extends State<_ReportSheet> {
 
   static const _border = BorderSide(color: Color(0xffd5e1f2));
 
-  double _textWidth(String text, TextStyle style) {
+  static double _textWidth(String text, TextStyle style) {
     final painter = TextPainter(
       text: TextSpan(text: text, style: style),
       textDirection: TextDirection.ltr,
@@ -687,12 +747,12 @@ class _ReportSheetState extends State<_ReportSheet> {
 
   /// Size every column from its widest header/body/total cell. Extra space goes
   /// to the expense name; if content is wider than the panel, scroll sideways.
-  (double, List<double>) _fit(double available, TextStyle base) {
+  static (double, List<double>) fitColumns(
+    double available, TextStyle base, _PreviewTable table, Totals totals, String programLabel,
+  ) {
     const pad = 16.0;
     const size = 12.0;
     const nameIndex = 2;
-    final table = widget.table;
-    final totals = widget.totals;
     final measure = base.copyWith(
       fontSize: size,
       fontWeight: FontWeight.w800,
@@ -705,7 +765,7 @@ class _ReportSheetState extends State<_ReportSheet> {
         ],
     ];
     if (samples.length > nameIndex) {
-      samples[nameIndex].add('Total (${widget.programLabel})');
+      samples[nameIndex].add('Total ($programLabel)');
     }
     if (samples.length > 3) {
       samples[3].add(money(totals.allotment));
@@ -824,7 +884,7 @@ class _ReportSheetState extends State<_ReportSheet> {
             builder: (context, constraints) {
               final base = DefaultTextStyle.of(context).style;
               final available = math.max(0.0, constraints.maxWidth);
-              final fit = _fit(available, base);
+              final fit = fitColumns(available, base, table, totals, widget.programLabel);
               final size = fit.$1;
               final colWidths = fit.$2;
               final tableWidth = math.max(
