@@ -637,7 +637,7 @@ void main() {
       final recordMinSize = tester.widget<ConstrainedBox>(
         find.byKey(const ValueKey('budget-record-dialog-size')),
       );
-      expect(recordMinSize.constraints.minHeight, 440);
+      expect(recordMinSize.constraints.minHeight, 460);
       expect(find.widgetWithText(FilledButton, 'Save'), findsOneWidget);
       expect(find.text('Save Record'), findsNothing);
       expect(tester.takeException(), isNull);
