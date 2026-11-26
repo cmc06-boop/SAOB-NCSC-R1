@@ -312,28 +312,34 @@ class _ExcelImportDialogState extends State<ExcelImportDialog> {
                 children: [
                   SizedBox(
                     height: 40,
-                    child: TextButton(
-                      style: dialogCancelStyle(),
-                      onPressed: _session.busy ? null : () => Navigator.pop(context),
-                      child: const Text('Cancel'),
+                    child: HoverScaleButton(
+                      enabled: !_session.busy,
+                      child: TextButton(
+                        style: dialogCancelStyle(),
+                        onPressed: _session.busy ? null : () => Navigator.pop(context),
+                        child: const Text('Cancel'),
+                      ),
                     ),
                   ),
                   const SizedBox(width: 8),
                   SizedBox(
                     height: 40,
-                    child: FilledButton(
-                      key: const ValueKey('budget-import-save'),
-                      style: FilledButton.styleFrom(
-                        minimumSize: const Size(88, 40),
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    child: HoverScaleButton(
+                      enabled: !_session.busy && _session.hasSelection,
+                      child: FilledButton(
+                        key: const ValueKey('budget-import-save'),
+                        style: FilledButton.styleFrom(
+                          minimumSize: const Size(88, 40),
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        ),
+                        onPressed: _session.busy || !_session.hasSelection
+                            ? null
+                            : () => _session.saveSelection(context),
+                        child: Text(_session.busy ? 'Importing…' : 'Save'),
                       ),
-                      onPressed: _session.busy || !_session.hasSelection
-                          ? null
-                          : () => _session.saveSelection(context),
-                      child: Text(_session.busy ? 'Importing…' : 'Save'),
                     ),
                   ),
                 ],
