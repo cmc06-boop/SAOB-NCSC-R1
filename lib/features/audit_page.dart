@@ -244,8 +244,9 @@ class AuditActionBadge extends StatelessWidget {
     final (fill, foreground) = switch (action.trim().toLowerCase()) {
       'deleted' => (const Color(0xffffe0e0), const Color(0xffb42332)),
       'updated' => (const Color(0xfffff1c7), const Color(0xff805b00)),
-      'added' || 'imported' || 'generated' =>
-        (const Color(0xffdceaff), blue),
+      'added' => (const Color(0xffdcfce7), const Color(0xff166534)),
+      'imported' => (const Color(0xffede9fe), const Color(0xff5b21b6)),
+      'generated' => (const Color(0xffdceaff), blue),
       _ => (const Color(0xffeaf1fb), muted),
     };
     return Padding(
