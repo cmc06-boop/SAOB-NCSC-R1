@@ -87,18 +87,18 @@ void main() {
       {0, 1, 2},
     );
   });
-  test('existing numbered filename advances to highest copy without overwriting', () async {
+  test('existing numbered filename reuses first free copy without overwriting', () async {
     final original = File(p.join(folder.path, 'report.pdf'));
     final numbered = File(p.join(folder.path, 'report (3).pdf'));
     await original.writeAsBytes([1]);
     await numbered.writeAsBytes([3]);
-    expect(await nextExportName(folder.path, 'report.pdf'), 'report (4).pdf');
+    expect(await nextExportName(folder.path, 'report.pdf'), 'report (1).pdf');
     final saved = await saveExportCopy(
       folderPath: folder.path,
       fileName: 'report (3).pdf',
       bytes: [4],
     );
-    expect(p.basename(saved), 'report (4).pdf');
+    expect(p.basename(saved), 'report (1).pdf');
     expect(await original.readAsBytes(), [1]);
     expect(await numbered.readAsBytes(), [3]);
     expect(await File(saved).readAsBytes(), [4]);
@@ -131,5 +131,26 @@ void main() {
       ),
       'custom.pdf',
     );
+  });
+  test('deleting any copy releases its filename without replacing others', () async {
+    final original = File(p.join(folder.path, 'report.pdf'));
+    final first = File(p.join(folder.path, 'report (1).pdf'));
+    final second = File(p.join(folder.path, 'report (2).pdf'));
+    await original.writeAsBytes([0]);
+    await first.writeAsBytes([1]);
+    await second.writeAsBytes([2]);
+    await original.delete();
+    final saved = await saveExportCopy(
+      folderPath: folder.path, fileName: 'report.pdf', bytes: [3],
+    );
+    expect(p.basename(saved), 'report.pdf');
+    await first.delete();
+    final reused = await saveExportCopy(
+      folderPath: folder.path, fileName: 'report.pdf', bytes: [4],
+    );
+    expect(p.basename(reused), 'report (1).pdf');
+    expect(await second.readAsBytes(), [2]);
+    expect(await File(saved).readAsBytes(), [3]);
+    expect(await File(reused).readAsBytes(), [4]);
   });
 }
