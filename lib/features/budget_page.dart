@@ -9,45 +9,6 @@ import '../ui/app_icon.dart';
 import '../ui/theme.dart';
 import 'import_page.dart';
 
-ButtonStyle _outlineAction(Color color, Color hover) {
-  const disabled = Color(0xffb0b6bf);
-  Color fg(Set<WidgetState> states) =>
-      states.contains(WidgetState.disabled) ? disabled : color;
-  return ButtonStyle(
-    foregroundColor: WidgetStateProperty.resolveWith(fg),
-    iconColor: WidgetStateProperty.resolveWith(fg),
-    backgroundColor: WidgetStateProperty.resolveWith((states) {
-      final active =
-          states.contains(WidgetState.hovered) ||
-          states.contains(WidgetState.pressed) ||
-          states.contains(WidgetState.focused);
-      if (states.contains(WidgetState.disabled) || !active) {
-        return Colors.white;
-      }
-      return hover;
-    }),
-    overlayColor: WidgetStateProperty.resolveWith((states) {
-      if (states.contains(WidgetState.disabled)) return Colors.transparent;
-      if (states.contains(WidgetState.pressed)) {
-        return color.withValues(alpha: 0.16);
-      }
-      if (states.contains(WidgetState.hovered)) {
-        return color.withValues(alpha: 0.1);
-      }
-      return Colors.transparent;
-    }),
-    side: WidgetStateProperty.resolveWith(
-      (states) => BorderSide(color: fg(states), width: 1.4),
-    ),
-    padding: const WidgetStatePropertyAll(
-      EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-    ),
-    shape: WidgetStatePropertyAll(
-      RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-    ),
-  );
-}
-
 class BudgetPage extends StatefulWidget {
   const BudgetPage({super.key, required this.store});
   final FinanceStore store;
@@ -56,25 +17,13 @@ class BudgetPage extends StatefulWidget {
 }
 
 class _BudgetPageState extends State<BudgetPage> {
-  final _actionsKey = GlobalKey();
   int year = manilaNow().year;
   String program = '', query = '';
-  int? selectedId;
-  double _searchWidth = 320;
-  void _matchSearchWidth() {
-    final box = _actionsKey.currentContext?.findRenderObject() as RenderBox?;
-    if (box == null || !box.hasSize) return;
-    final width = box.size.width;
-    if ((_searchWidth - width).abs() > 0.5) {
-      setState(() => _searchWidth = width);
-    }
-  }
 
-  void change(VoidCallback fn) => setState(() {
-    fn();
-    selectedId = null;
-  });
+  void change(VoidCallback fn) => setState(fn);
   Future<void> edit([BudgetRecord? record]) async {
+    if (year != manilaNow().year ||
+        (record != null && record.year != manilaNow().year)) return;
     await showDialog<void>(
       context: context,
       barrierDismissible: false,
@@ -88,6 +37,7 @@ class _BudgetPageState extends State<BudgetPage> {
   }
 
   Future<void> remove(BudgetRecord record) async {
+    if (year != manilaNow().year || record.year != manilaNow().year) return;
     if (!await confirm(
       context,
       'Delete budget record?',
@@ -98,7 +48,6 @@ class _BudgetPageState extends State<BudgetPage> {
     try {
       widget.store.deleteRecord(record.id!);
       if (mounted) {
-        setState(() => selectedId = null);
         showMessage(context, 'Record deleted.');
       }
     } catch (e) {
@@ -120,11 +69,6 @@ class _BudgetPageState extends State<BudgetPage> {
           query: query,
         ),
         t = Totals(rows);
-    BudgetRecord? selected;
-    for (final row in rows) {
-      if (row.id == selectedId) selected = row;
-    }
-    final chosen = selected;
     final currentYear = manilaNow().year;
     final canEncode = year == currentYear;
     final filters = Wrap(
@@ -167,59 +111,20 @@ class _BudgetPageState extends State<BudgetPage> {
         contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
       ),
     );
-    final actions = Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        FilledButton.icon(
-          style: FilledButton.styleFrom(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 14,
-            ),
-          ),
-          onPressed: canEncode ? () => edit() : null,
-          icon: const AppIcon('plus', size: 18),
-          label: const Text('Add Record'),
-        ),
-        const SizedBox(width: 8),
-        OutlinedButton.icon(
-          style: _outlineAction(blue, const Color(0xffe8f0fc)),
-          onPressed: !canEncode
-              ? null
-              : () {
-                  if (chosen == null) {
-                    showMessage(context, 'Select a record to edit.');
-                    return;
-                  }
-                  edit(chosen);
-                },
-          icon: const AppIcon('pencil', size: 18),
-          label: const Text('Edit'),
-        ),
-        const SizedBox(width: 8),
-        OutlinedButton.icon(
-          style: _outlineAction(red, const Color(0xffffe8eb)),
-          onPressed: !canEncode
-              ? null
-              : () {
-                  if (chosen == null) {
-                    showMessage(context, 'Select a record to delete.');
-                    return;
-                  }
-                  remove(chosen);
-                },
-          icon: const AppIcon('trash-2', size: 18),
-          label: const Text('Delete'),
-        ),
-      ],
+    final actions = FilledButton.icon(
+      style: FilledButton.styleFrom(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      ),
+      onPressed: canEncode ? () => edit() : null,
+      icon: const AppIcon('plus', size: 18),
+      label: const Text('Add Record'),
     );
-    WidgetsBinding.instance.addPostFrameCallback((_) => _matchSearchWidth());
     return PageFrame(
       title: 'Budget Utilization',
       subtitle:
           'Manage allotment, obligation, and disbursement records per program.',
       accent: false,
-      besideSubtitle: SizedBox(width: _searchWidth, child: searchField),
+      besideSubtitle: SizedBox(width: 320, child: searchField),
       expand: true,
       children: [
         Row(
@@ -227,7 +132,7 @@ class _BudgetPageState extends State<BudgetPage> {
           children: [
             Expanded(child: filters),
             const SizedBox(width: 16),
-            KeyedSubtree(key: _actionsKey, child: actions),
+            actions,
           ],
         ),
         const SizedBox(height: 18),
@@ -236,14 +141,14 @@ class _BudgetPageState extends State<BudgetPage> {
             padding: 0,
             child: BudgetTable(
               records: rows,
-              selectedId: selected?.id,
               total: t,
               totalLabel: program.isEmpty
                   ? 'All Programs'
                   : programLabel(program),
-              onSelect: (record) => setState(
-                () => selectedId = selectedId == record.id ? null : record.id,
-              ),
+              showActions: true,
+              actionsEnabled: canEncode,
+              onEdit: (record) => edit(record),
+              onDelete: (record) => remove(record),
             ),
           ),
         ),
