@@ -16,6 +16,7 @@ dependencies:
   excel: ^4.0.6
   file_selector: ^1.1.0
   intl: ^0.20.2
+  image: ^4.3.0
   path: ^1.9.1
   pdf: ^3.11.3
   printing: 5.14.3
@@ -33,5 +34,6 @@ flutter:
   assets:
     - assets/login-background.png
     - assets/ncsc-logo-transparent.png
+    - assets/bagong-pilipinas.jpg
     - assets/fonts/DejaVuSans.ttf
     - assets/fonts/DejaVuSans-Bold.ttf
