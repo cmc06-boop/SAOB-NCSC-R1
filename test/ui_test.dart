@@ -469,8 +469,7 @@ void main() {
       expect((uacsSubtitle.dy - searchPosition.dy).abs(), lessThan(34));
       expect(searchPosition.dx, greaterThan(uacsSubtitle.dx));
 
-      // The back arrow precedes Report Preview, and Export occupies
-      // the previous back-arrow position at the far right of the heading.
+      // The back arrow precedes Report Preview; Export sits below format choices.
       await tester.tap(find.byKey(const ValueKey('nav-reports')));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Generate Report'));
@@ -611,13 +610,20 @@ void main() {
       expect(backPosition.dx, lessThan(previewTitlePosition.dx));
       expect(exportPosition.dx, greaterThan(previewTitlePosition.dx));
       expect((backPosition.dy - previewTitlePosition.dy).abs(), lessThan(24));
-      expect((exportPosition.dy - previewTitlePosition.dy).abs(), lessThan(24));
-      // Export belongs to the left Report Preview panel. Report Parameters
-      // is the separate panel on the right.
+      expect(exportPosition.dy, greaterThan(tester.getBottomLeft(formatGroup).dy));
       expect(
-        exportPosition.dx,
-        lessThan(tester.getCenter(find.text('Report Parameters')).dx),
+        (exportPosition.dx - tester.getCenter(formatGroup).dx).abs(),
+        lessThan(3),
       );
+      expect(find.byKey(const ValueKey('reports-zoom-in')), findsOneWidget);
+      expect(find.byKey(const ValueKey('reports-zoom-out')), findsOneWidget);
+      expect(find.byKey(const ValueKey('reports-fit')), findsOneWidget);
+      await tester.tap(find.byKey(const ValueKey('reports-zoom-in')));
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+      await tester.tap(find.byKey(const ValueKey('reports-fit')));
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
       await tester.tap(find.byKey(const ValueKey('reports-back')));
       await tester.pumpAndSettle();
       expect(find.text('Generate Report'), findsOneWidget);
