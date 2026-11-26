@@ -931,13 +931,15 @@ class _DashboardAuditPreview extends StatelessWidget {
                           ],
                         ),
                         Expanded(
-                          child: ListView.builder(
+                          child: rows.isEmpty
+                              ? const Center(child: Text('No audit records found.', textAlign: TextAlign.center, style: TextStyle(fontSize: 13, color: muted)))
+                              : ListView.builder(
                             key: const ValueKey('dashboard-audit-records'),
                             primary: false,
                             padding: EdgeInsets.zero,
-                            itemCount: rows.isEmpty ? 1 : rows.length,
+                            itemCount: rows.length,
                             itemBuilder: (context, i) {
-                              final record = rows.isEmpty ? null : rows[i];
+                              final record = rows[i];
                               return Table(
                                 border: const TableBorder(
                                   verticalInside: _border,
@@ -945,19 +947,6 @@ class _DashboardAuditPreview extends StatelessWidget {
                                 ),
                                 columnWidths: _columns,
                                 children: [
-                                  if (record == null)
-                                    _row([
-                                      cell(''),
-                                      cell(''),
-                                      cell(''),
-                                      cell(''),
-                                      cell('No audit records found.',
-                                          style: const TextStyle(
-                                            fontSize: 13,
-                                            color: muted,
-                                          )),
-                                    ], Colors.white)
-                                  else
                                     _row([
                                       cell('${i + 1}', center: true, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: blue)),
                                       cell(dateOnly(record['at']), center: true),
