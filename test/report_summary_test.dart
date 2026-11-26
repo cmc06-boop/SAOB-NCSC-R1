@@ -165,22 +165,26 @@ void main() {
     expect(shared, contains('CURRENT APPRO'));
     expect(shared, contains('CONTINUING APPRO'));
 
-    // CURRENT starts at Excel row 5. Values in B/C/F are directly editable.
-    // Balance, utilization and disbursement rates are live Excel formulas.
-    expect(sheet, contains('<f>B5-C5</f>'));
-    expect(sheet, contains('<f>IF(B5=0,0,C5/B5)</f>'));
-    expect(sheet, contains('<f>IF(C5=0,0,F5/C5)</f>'));
-    // Totals must recompute after a program's amounts are changed.
-    expect(sheet, contains('<f>SUM(B5:B6)</f>'));
-    expect(sheet, contains('<f>SUM(C5:C6)</f>'));
-    expect(sheet, contains('<f>SUM(F5:F6)</f>'));
+    // Three title rows and a spacer precede the appropriation sections.
+    // CURRENT data starts at Excel row 7; B/C/F remain directly editable.
     expect(sheet, contains('<f>B7-C7</f>'));
     expect(sheet, contains('<f>IF(B7=0,0,C7/B7)</f>'));
+    expect(sheet, contains('<f>IF(C7=0,0,F7/C7)</f>'));
+    // Totals must recompute after a program's amounts are changed.
+    expect(sheet, contains('<f>SUM(B7:B8)</f>'));
+    expect(sheet, contains('<f>SUM(C7:C8)</f>'));
+    expect(sheet, contains('<f>SUM(F7:F8)</f>'));
+    expect(sheet, contains('<f>B9-C9</f>'));
+    expect(sheet, contains('<f>IF(B9=0,0,C9/B9)</f>'));
     // CONTINUING has its own table and separate totals.
-    expect(sheet, contains('<f>SUM(B11:B11)</f>'));
-    expect(sheet, contains('<f>B12-C12</f>'));
+    expect(sheet, contains('<f>SUM(B13:B13)</f>'));
+    expect(sheet, contains('<f>B14-C14</f>'));
     // Cache initial result without replacing the editable formula.
-    expect(sheet, matches(RegExp(r'<f>B5-C5</f><v>400(\.0)?</v>')));
+    expect(sheet, matches(RegExp(r'<f>B7-C7</f><v>400(\.0)?</v>')));
+    expect(sheet, matches(RegExp(r'<f>B9-C9</f><v>1700(\.0)?</v>')));
+    expect(sheet, contains('orientation="landscape"'));
+    expect(sheet, contains('fitToWidth="1"'));
+    expect(sheet, contains('state="frozen"'));
   });
 
   test('Summary Excel fiscal year is dynamic, not hard-coded to 2026', () {
