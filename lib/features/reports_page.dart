@@ -16,7 +16,7 @@ import '../data/models.dart';
 import '../data/report_io.dart';
 import '../data/report_pdf_sections.dart';
 import '../data/report_summary.dart';
-import 'summary_preview.dart';
+import 'excel_report_preview.dart';
 import '../ui/common.dart';
 import '../ui/app_icon.dart';
 import '../ui/theme.dart';
@@ -396,11 +396,6 @@ class _ReportsPageState extends State<ReportsPage> {
   }
 
   Widget _previewPage(List<BudgetRecord> records) {
-    final programLabel = program == summarySelection
-        ? 'Summary'
-        : program.isEmpty
-        ? 'All Programs'
-        : program;
     return Padding(
       padding: const EdgeInsets.fromLTRB(28, 30, 28, 28),
       child: Column(
@@ -425,7 +420,7 @@ class _ReportsPageState extends State<ReportsPage> {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Expanded(child: _previewCard(records, programLabel)),
+                Expanded(child: _previewCard(records)),
                 const SizedBox(width: 16),
                 SizedBox(width: 280, child: _parameterCard(records)),
               ],
@@ -580,15 +575,13 @@ class _ReportsPageState extends State<ReportsPage> {
 
   double _lastFitZoom = 1.0;
 
-  Widget _scaledPreview(List<BudgetRecord> records, String programLabel) {
-    final table = _previewTable(records);
-    final totals = Totals(records);
+  Widget _scaledPreview(List<BudgetRecord> records) {
     final summary = program == summarySelection;
+    final fingerprint = Object.hashAll(records.map((row) => Object.hash(
+      row.program, row.fund, row.code, row.name, row.allotment,
+      row.obligation, row.disbursement, row.remarks,
+    )));
     if (reportFormat == 'PDF') {
-      final fingerprint = Object.hashAll(records.map((row) => Object.hash(
-        row.program, row.code, row.name, row.allotment,
-        row.obligation, row.disbursement,
-      )));
       return LayoutBuilder(
         builder: (context, constraints) {
           _lastFitZoom = math.min(1.0, math.max(0.01, (constraints.maxWidth - 24) / 842));
@@ -602,38 +595,17 @@ class _ReportsPageState extends State<ReportsPage> {
         },
       );
     }
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        if (constraints.maxWidth <= 0 || constraints.maxHeight <= 0) {
-          return const SizedBox.shrink();
-        }
-        final naturalWidth = summary
-            ? 940.0
-            : _ReportSheetState.fitColumns(
-                0, DefaultTextStyle.of(context).style, table, totals, programLabel,
-              ).$2.fold<double>(0, (sum, width) => sum + width);
-        _lastFitZoom = math.min(1.0, constraints.maxWidth / naturalWidth);
-        final scale = previewZoom ?? _lastFitZoom;
-        return FittedBox(
-          fit: BoxFit.fill,
-          child: SizedBox(
-            width: constraints.maxWidth / scale,
-            height: constraints.maxHeight / scale,
-            child: summary
-                ? SummaryPreview(records: records, year: year)
-                : _ReportSheet(
-                    year: year,
-                    programLabel: programLabel,
-                    table: table,
-                    totals: totals,
-                  ),
-          ),
-        );
-      },
+    return ExcelReportPreview(
+      key: ValueKey('excel-$year-$program-$fingerprint'),
+      records: records,
+      year: year,
+      program: program,
+      zoom: previewZoom,
+      onFitScale: (scale) => _lastFitZoom = scale,
     );
   }
 
-  Widget _previewCard(List<BudgetRecord> records, String programLabel) {
+  Widget _previewCard(List<BudgetRecord> records) {
     return Panel(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -692,7 +664,7 @@ class _ReportsPageState extends State<ReportsPage> {
                         style: TextStyle(color: muted),
                       ),
                     )
-                  : _scaledPreview(records, programLabel),
+                  : _scaledPreview(records),
             ),
           ),
         ],
@@ -700,36 +672,6 @@ class _ReportsPageState extends State<ReportsPage> {
     );
   }
 
-  _PreviewTable _previewTable(List<BudgetRecord> records) {
-    return _PreviewTable(
-      const [
-        '#',
-        'UACS Code',
-        'Expense (UACS Name)',
-        'Allotment',
-        'Obligation',
-        'Obligation Rate',
-        'Balance',
-        'Disbursement',
-        'Disbursement Rate',
-      ],
-      [
-        for (var i = 0; i < records.length; i++)
-          [
-            '${i + 1}',
-            displayCode(records[i].code),
-            records[i].name,
-            money(records[i].allotment),
-            money(records[i].obligation),
-            rate(records[i].obligation, records[i].allotment),
-            money(records[i].balance),
-            money(records[i].disbursement),
-            rate(records[i].disbursement, records[i].obligation),
-          ],
-      ],
-      const {3, 4, 5, 6, 7, 8},
-    );
-  }
 }
 
 /// Render the same PDF used by Export, with vertically stacked paper pages.
@@ -838,313 +780,6 @@ class _PdfReportPagesState extends State<_PdfReportPages> {
           },
         );
       },
-    );
-  }
-}
-
-class _PreviewTable {
-  const _PreviewTable(this.headers, this.rows, this.numeric);
-  final List<String> headers;
-  final List<List<String>> rows;
-  final Set<int> numeric;
-}
-
-class _ReportSheet extends StatefulWidget {
-  const _ReportSheet({
-    required this.year,
-    required this.programLabel,
-    required this.table,
-    required this.totals,
-  });
-  final String programLabel;
-  final int year;
-  final _PreviewTable table;
-  final Totals totals;
-
-  @override
-  State<_ReportSheet> createState() => _ReportSheetState();
-}
-
-class _ReportSheetState extends State<_ReportSheet> {
-  final _vertical = ScrollController();
-  final _horizontal = ScrollController();
-
-  @override
-  void dispose() {
-    _vertical.dispose();
-    _horizontal.dispose();
-    super.dispose();
-  }
-
-  static const _border = BorderSide(color: Color(0xffd5e1f2));
-
-  static double _textWidth(String text, TextStyle style) {
-    final painter = TextPainter(
-      text: TextSpan(text: text, style: style),
-      textDirection: TextDirection.ltr,
-      maxLines: 1,
-    )..layout();
-    return painter.width;
-  }
-
-  /// Size every column from its widest header/body/total cell. Extra space goes
-  /// to the expense name; if content is wider than the panel, scroll sideways.
-  static (double, List<double>) fitColumns(
-    double available, TextStyle base, _PreviewTable table, Totals totals, String programLabel,
-  ) {
-    const pad = 16.0;
-    const size = 12.0;
-    const nameIndex = 2;
-    final measure = base.copyWith(
-      fontSize: size,
-      fontWeight: FontWeight.w800,
-    );
-    final samples = <List<String>>[
-      for (var i = 0; i < table.headers.length; i++)
-        [
-          table.headers[i],
-          for (final row in table.rows) row[i],
-        ],
-    ];
-    if (samples.length > nameIndex) {
-      samples[nameIndex].add('Total ($programLabel)');
-    }
-    if (samples.length > 3) {
-      samples[3].add(money(totals.allotment));
-      samples[4].add(money(totals.obligation));
-      samples[5].add(rate(totals.obligation, totals.allotment));
-      samples[6].add(money(totals.balance));
-      samples[7].add(money(totals.disbursement));
-      samples[8].add(rate(totals.disbursement, totals.obligation));
-    }
-    final widths = <double>[
-      for (var i = 0; i < samples.length; i++)
-        () {
-          var maxWidth = 0.0;
-          for (final text in samples[i]) {
-            maxWidth = math.max(maxWidth, _textWidth(text, measure));
-          }
-          // Expense names may wrap; keep a readable column without crushing others.
-          if (i == nameIndex) {
-            return math.max(180.0, math.min(maxWidth + pad, 420.0));
-          }
-          return maxWidth + pad;
-        }(),
-    ];
-    final needed = widths.fold<double>(0, (sum, width) => sum + width);
-    if (needed < available && nameIndex < widths.length) {
-      widths[nameIndex] += available - needed;
-    }
-    return (size, widths);
-  }
-
-  Widget _cell(
-    String text, {
-    required TextAlign align,
-    required TextStyle style,
-    required bool wrap,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
-      child: Text(
-        text,
-        textAlign: align,
-        softWrap: wrap,
-        maxLines: wrap ? null : 1,
-        style: style,
-      ),
-    );
-  }
-
-  TableRow _row(List<Widget> cells, Color color) => TableRow(
-    decoration: BoxDecoration(color: color),
-    children: [
-      for (final cell in cells)
-        TableCell(
-          verticalAlignment: TableCellVerticalAlignment.middle,
-          child: cell,
-        ),
-    ],
-  );
-
-  @override
-  Widget build(BuildContext context) {
-    final table = widget.table;
-    final totals = widget.totals;
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-          child: Column(
-            children: [
-              const Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Image(
-                    image: AssetImage('assets/ncsc-logo-transparent.png'),
-                    width: 58,
-                    height: 58,
-                  ),
-                  SizedBox(width: 12),
-                  Flexible(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'NATIONAL COMMISSION OF SENIOR CITIZENS',
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: 0.2,
-                          ),
-                        ),
-                        Text(
-                          'REGION I',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 10),
-              Text(
-                'Program: ${widget.programLabel}  |  Fiscal Year: ${widget.year}',
-                style: const TextStyle(color: muted),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 12),
-        const Divider(height: 1, color: line),
-        const SizedBox(height: 8),
-        Expanded(
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              final base = DefaultTextStyle.of(context).style;
-              final available = math.max(0.0, constraints.maxWidth);
-              final fit = fitColumns(available, base, table, totals, widget.programLabel);
-              final size = fit.$1;
-              final colWidths = fit.$2;
-              final tableWidth = math.max(
-                available,
-                colWidths.fold<double>(0, (sum, width) => sum + width),
-              );
-              final columns = <int, TableColumnWidth>{
-                for (var i = 0; i < colWidths.length; i++)
-                  i: FixedColumnWidth(colWidths[i]),
-              };
-              final headerStyle = base.copyWith(
-                fontSize: size,
-                fontWeight: FontWeight.w700,
-                color: navy,
-              );
-              final bodyStyle = base.copyWith(fontSize: size, color: ink);
-              final totalStyle = base.copyWith(
-                fontSize: size,
-                fontWeight: FontWeight.w800,
-                color: navy,
-              );
-              Widget dataCell(String text, int index, TextStyle style) =>
-                  _cell(
-                    text,
-                    align: table.numeric.contains(index)
-                        ? TextAlign.right
-                        : TextAlign.left,
-                    style: style,
-                    wrap: index == 2,
-                  );
-              final headerTable = Table(
-                border: const TableBorder(
-                  verticalInside: _border,
-                  bottom: _border,
-                ),
-                columnWidths: columns,
-                defaultVerticalAlignment: TableCellVerticalAlignment.middle,
-                children: [
-                  _row([
-                    for (var i = 0; i < table.headers.length; i++)
-                      _cell(
-                        table.headers[i],
-                        align: TextAlign.center,
-                        style: headerStyle,
-                        wrap: true,
-                      ),
-                  ], const Color(0xffeef3fb)),
-                ],
-              );
-              final bodyTable = Table(
-                border: const TableBorder(
-                  horizontalInside: _border,
-                  verticalInside: _border,
-                  bottom: _border,
-                ),
-                columnWidths: columns,
-                defaultVerticalAlignment: TableCellVerticalAlignment.middle,
-                children: [
-                  for (var r = 0; r < table.rows.length; r++)
-                    _row([
-                      for (var i = 0; i < table.rows[r].length; i++)
-                        dataCell(table.rows[r][i], i, bodyStyle),
-                    ], r.isOdd ? const Color(0xfff7f9fc) : Colors.white),
-                  _row([
-                    dataCell('', 0, totalStyle),
-                    dataCell('', 1, totalStyle),
-                    dataCell('Total (${widget.programLabel})', 2, totalStyle),
-                    dataCell(money(totals.allotment), 3, totalStyle),
-                    dataCell(money(totals.obligation), 4, totalStyle),
-                    dataCell(
-                      rate(totals.obligation, totals.allotment),
-                      5,
-                      totalStyle,
-                    ),
-                    dataCell(money(totals.balance), 6, totalStyle),
-                    dataCell(money(totals.disbursement), 7, totalStyle),
-                    dataCell(
-                      rate(totals.disbursement, totals.obligation),
-                      8,
-                      totalStyle,
-                    ),
-                  ], const Color(0xffe7eefc)),
-                ],
-              );
-              final needsHorizontal = tableWidth > available + 1;
-              return Scrollbar(
-                controller: _horizontal,
-                thumbVisibility: needsHorizontal,
-                notificationPredicate: (n) => n.metrics.axis == Axis.horizontal,
-                child: SingleChildScrollView(
-                  controller: _horizontal,
-                  scrollDirection: Axis.horizontal,
-                  child: SizedBox(
-                    width: tableWidth,
-                    child: Scrollbar(
-                      controller: _vertical,
-                      thumbVisibility: true,
-                      notificationPredicate: (n) =>
-                          n.metrics.axis == Axis.vertical,
-                      child: Column(
-                        children: [
-                          headerTable,
-                          Expanded(
-                            child: SingleChildScrollView(
-                              controller: _vertical,
-                              child: bodyTable,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              );
-            },
-          ),
-        ),
-      ],
     );
   }
 }
