@@ -2,6 +2,14 @@ import 'dart:io';
 
 import 'package:path/path.dart' as p;
 
+/// Automatic suggestions are not explicit renames. Recheck their base name
+/// in the actual destination, even if files were deleted while Save As was open.
+String resolveExportRequest({
+  required String defaultName,
+  required String suggestedName,
+  required String chosenName,
+}) => chosenName == suggestedName ? defaultName : chosenName;
+
 /// Finds the next numbered copy, including when the chosen name already
 /// has a numeric suffix. Existing copies are never opened for writing.
 Future<String> nextExportName(String folderPath, String fileName) async {
