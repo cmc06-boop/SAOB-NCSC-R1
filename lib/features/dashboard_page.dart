@@ -739,9 +739,9 @@ class _DashboardPageState extends State<DashboardPage> {
                           vertical: 22,
                         ),
                         decoration: BoxDecoration(
-                          color: const Color(0xffe7eefc),
+                          color: blue,
                           borderRadius: BorderRadius.circular(18),
-                          border: Border.all(color: const Color(0xffd5e2f6)),
+                          border: Border.all(color: blue),
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -749,7 +749,7 @@ class _DashboardPageState extends State<DashboardPage> {
                           children: [
                             Row(
                               children: [
-                                AppIcon(metrics[i].$2, size: 34, color: blue),
+                                AppIcon(metrics[i].$2, size: 34, color: const Color(0xffe7eefc)),
                                 const SizedBox(width: 10),
                                 Expanded(
                                   child: Align(
@@ -763,7 +763,7 @@ class _DashboardPageState extends State<DashboardPage> {
                                         style: const TextStyle(
                                           fontSize: 17,
                                           fontWeight: FontWeight.w700,
-                                          color: navy,
+                                          color: Colors.white,
                                         ),
                                       ),
                                     ),
@@ -786,7 +786,7 @@ class _DashboardPageState extends State<DashboardPage> {
                                     style: const TextStyle(
                                       fontSize: 23,
                                       fontWeight: FontWeight.w800,
-                                      color: navy,
+                                      color: Colors.white,
                                       letterSpacing: -0.3,
                                     ),
                                   ),
