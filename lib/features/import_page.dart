@@ -65,6 +65,30 @@ class ImportController extends ChangeNotifier {
   final FinanceStore store;
   final VoidCallback? onImported;
   String filename = '';
+  Uint8List? _selectedBytes;
+  bool get hasSelection => _selectedBytes != null;
+
+  void selectFile(BuildContext context, Uint8List bytes, String name) {
+    if (busy) return;
+    if (!name.toLowerCase().endsWith('.xlsx') || bytes.isEmpty ||
+        bytes.length > 25 * 1024 * 1024) {
+      showMessage(context, 'Choose a valid .xlsx file smaller than 25 MB.', error: true);
+      return;
+    }
+    _selectedBytes = bytes;
+    filename = name;
+    notifyListeners();
+  }
+
+  Future<void> saveSelection(BuildContext context) async {
+    final bytes = _selectedBytes;
+    if (busy || bytes == null) return;
+    if (year != manilaNow().year) {
+      showMessage(context, 'Import is only allowed for the current fiscal year.', error: true);
+      return;
+    }
+    await importFile(context, bytes, filename);
+  }
   int year;
   bool busy = false;
   static const _fund = 'CURRENT';
@@ -169,7 +193,7 @@ class ImportController extends ChangeNotifier {
       if (file == null) return;
       final bytes = await file.readAsBytes();
       if (!context.mounted) return;
-      await importFile(context, bytes, file.name);
+      selectFile(context, bytes, file.name);
     } catch (e) {
       if (context.mounted) {
         showMessage(
@@ -197,7 +221,7 @@ class ImportController extends ChangeNotifier {
     try {
       final bytes = await file.readAsBytes();
       if (!context.mounted) return;
-      await importFile(context, bytes, file.name);
+      selectFile(context, bytes, file.name);
     } catch (e) {
       if (context.mounted) {
         showMessage(
@@ -288,12 +312,22 @@ class _ExcelImportDialogState extends State<ExcelImportDialog> {
               const SizedBox(height: 16),
               ExcelDropZone(session: _session),
               const SizedBox(height: 16),
-              Align(
-                alignment: Alignment.centerRight,
-                child: TextButton(
-                  onPressed: _session.busy ? null : () => Navigator.pop(context),
-                  child: const Text('Cancel'),
-                ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(
+                    onPressed: _session.busy ? null : () => Navigator.pop(context),
+                    child: const Text('Cancel'),
+                  ),
+                  const SizedBox(width: 8),
+                  FilledButton(
+                    key: const ValueKey('budget-import-save'),
+                    onPressed: _session.busy || !_session.hasSelection
+                        ? null
+                        : () => _session.saveSelection(context),
+                    child: Text(_session.busy ? 'Importing…' : 'Save'),
+                  ),
+                ],
               ),
             ],
           ),
