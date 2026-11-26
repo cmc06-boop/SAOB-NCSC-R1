@@ -301,16 +301,7 @@ class _RecordEditorState extends State<RecordEditor> {
     );
   }
 
-  final _fiscalYearFieldKey = GlobalKey();
-  double _inputHeight = 38;
-
-  void _syncFieldHeight() {
-    if (!mounted) return;
-    final height = _fiscalYearFieldKey.currentContext?.size?.height;
-    if (height != null && (height - _inputHeight).abs() > .1) {
-      setState(() => _inputHeight = height);
-    }
-  }
+  static const double _inputHeight = 40;
 
   void _bindFocus(FocusNode node) {
     node.addListener(() {
@@ -465,7 +456,6 @@ class _RecordEditorState extends State<RecordEditor> {
     Widget? suffix,
     bool expand = false,
   }) {
-    final isFiscalYear = identical(c, yearField);
     final box = _inputHeight;
     final focused = focusNode != null && _focused.contains(focusNode);
     final empty = c.text.isEmpty;
@@ -493,7 +483,8 @@ class _RecordEditorState extends State<RecordEditor> {
         ? enteredObligation - enteredAllotment
         : null;
     final input = TextField(
-      key: isFiscalYear ? _fiscalYearFieldKey : null,
+      key: ValueKey('budget-input-$label'),
+      style: const TextStyle(fontFamily: 'Segoe UI', fontSize: 14, height: 1.2, color: ink),
       controller: c,
       focusNode: focusNode,
       readOnly: readOnly,
@@ -531,13 +522,14 @@ class _RecordEditorState extends State<RecordEditor> {
               ? TextInputType.number
               : TextInputType.text,
       decoration: InputDecoration(
+        constraints: const BoxConstraints.tightFor(height: _inputHeight),
         isDense: true,
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 12,
-          vertical: 8,
+          vertical: 0,
         ),
         hintText: showHint ? (amount ? '₱  0.00' : hint) : null,
-        hintStyle: const TextStyle(color: Color(0xff9aabbf), fontSize: 13),
+        hintStyle: const TextStyle(color: Color(0xff9aabbf), fontSize: 14, height: 1.2),
         prefix: showPesoPrefix
             ? const Padding(
                 padding: EdgeInsets.only(right: 4),
@@ -565,8 +557,6 @@ class _RecordEditorState extends State<RecordEditor> {
         const SizedBox(height: 4),
         if (expand)
           Expanded(child: input)
-        else if (isFiscalYear)
-          input
         else
           SizedBox(height: box, child: input),
         if (fieldError != null) ...[
@@ -592,7 +582,6 @@ class _RecordEditorState extends State<RecordEditor> {
 
   @override
   Widget build(BuildContext context) {
-    WidgetsBinding.instance.addPostFrameCallback((_) => _syncFieldHeight());
     final a = parseCents(allotment.text) ?? 0,
         o = parseCents(obligation.text) ?? 0,
         d = parseCents(disbursement.text) ?? 0;
@@ -677,6 +666,7 @@ class _RecordEditorState extends State<RecordEditor> {
                     SelectField(
                       label: 'Program *',
                       fieldHeight: _inputHeight,
+                      boxKey: const ValueKey('budget-input-Program *'),
                       labelStyle: _recordEditorLabelStyle,
                       arrowRightPadding: 0,
                       arrowShiftRight: 9,
