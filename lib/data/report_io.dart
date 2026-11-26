@@ -765,13 +765,6 @@ Future<Uint8List> pdfReport(
           pw.SizedBox(height: 10),
         ],
       ),
-      footer: (ctx) => pw.Align(
-        alignment: pw.Alignment.centerRight,
-        child: pw.Text(
-          'Page ${ctx.pageNumber} of ${ctx.pagesCount}',
-          style: const pw.TextStyle(fontSize: 8),
-        ),
-      ),
       build: (_) => [
         pw.TableHelper.fromTextArray(
           headers: data.headers,
