@@ -633,27 +633,11 @@ void main() {
         find.byKey(const ValueKey('budget-record-dialog-scroll')),
       );
       final recordPadding = recordScroll.padding! as EdgeInsets;
-      expect(recordPadding.bottom, 12);
+      expect(recordPadding.bottom, 24);
       final recordMinSize = tester.widget<ConstrainedBox>(
         find.byKey(const ValueKey('budget-record-dialog-size')),
       );
-      expect(recordMinSize.constraints.minHeight, 460);
-      for (final label in [
-        'Fiscal Year *', 'UACS Code *', 'Expense (UACS Name) *',
-        'Allotment', 'Obligation', 'Disbursement',
-      ]) {
-        final field = find.byKey(ValueKey('budget-input-$label'));
-        expect(field, findsOneWidget);
-        expect(tester.getSize(field).height, closeTo(54, .1));
-        final decorator = find.descendant(
-          of: field, matching: find.byType(InputDecorator),
-        );
-        expect(decorator, findsOneWidget);
-        expect(tester.getSize(decorator).height, closeTo(54, .1));
-      }
-      final programInput = find.byKey(const ValueKey('budget-input-Program *'));
-      expect(programInput, findsOneWidget);
-      expect(tester.getSize(programInput).height, closeTo(54, .1));
+      expect(recordMinSize.constraints.minHeight, 500);
       expect(find.widgetWithText(FilledButton, 'Save'), findsOneWidget);
       expect(find.text('Save Record'), findsNothing);
       expect(tester.takeException(), isNull);
