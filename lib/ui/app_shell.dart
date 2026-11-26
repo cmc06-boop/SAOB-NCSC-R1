@@ -322,44 +322,42 @@ class _AppShellState extends State<AppShell> {
                           ),
                         Padding(
                           padding: const EdgeInsets.fromLTRB(12, 0, 12, 16),
-                          child: HoverScaleButton(
-                            child: Material(
-                              key: const ValueKey('sidebar-logout'),
-                              color: Colors.transparent,
+                          child: Material(
+                            key: const ValueKey('sidebar-logout'),
+                            color: Colors.transparent,
+                            borderRadius: BorderRadius.circular(12),
+                            child: InkWell(
                               borderRadius: BorderRadius.circular(12),
-                              child: InkWell(
-                                borderRadius: BorderRadius.circular(12),
-                                hoverColor: Colors.white.withValues(alpha: 0.22),
-                                onTap: logout,
-                                child: Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 12,
-                                    vertical: 12,
-                                  ),
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      const AppIcon(
-                                        'log-out',
-                                        size: 18,
-                                        color: Colors.white,
-                                      ),
-                                      if (expanded) ...[
-                                        const SizedBox(width: 10),
-                                        const Text(
-                                          'Logout',
-                                          style: TextStyle(
-                                            color: Colors.white,
-                                            fontWeight: FontWeight.w600,
-                                          ),
+                              hoverColor: Colors.white.withValues(alpha: 0.22),
+                              onTap: logout,
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 12,
+                                ),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    const AppIcon(
+                                      'log-out',
+                                      size: 18,
+                                      color: Colors.white,
+                                    ),
+                                    if (expanded) ...[
+                                      const SizedBox(width: 10),
+                                      const Text(
+                                        'Logout',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.w600,
                                         ),
-                                      ],
+                                      ),
                                     ],
-                                  ),
+                                  ],
                                 ),
                               ),
                             ),
-                          ),
+                          )
                         ),
                       ],
                     ),
