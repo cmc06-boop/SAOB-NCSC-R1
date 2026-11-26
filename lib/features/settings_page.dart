@@ -554,6 +554,7 @@ class _ReferenceEditorState extends State<ReferenceEditor> {
       actionsAlignment: MainAxisAlignment.end,
       actions: [
         TextButton(
+          style: dialogCancelStyle(),
           key: const ValueKey('reference-editor-cancel'),
           onPressed: () => Navigator.pop(context),
           child: const Text('Cancel'),
