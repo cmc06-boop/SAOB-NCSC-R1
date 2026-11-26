@@ -452,14 +452,14 @@ class _DashboardPageState extends State<DashboardPage> {
         ? selectedItemLabel
         : program.isNotEmpty ? program : null;
     final filters = Wrap(
-      spacing: 16,
+      spacing: 18,
       runSpacing: 12,
       crossAxisAlignment: WrapCrossAlignment.center,
       children: [
         _InlineFilter(
           label: 'Fiscal Year',
           value: year,
-          fieldWidth: 112,
+          fieldWidth: 108,
           items: [for (final y in widget.store.years) (y, '$y')],
           onChanged: (v) => setState(() {
             year = v;
@@ -469,7 +469,7 @@ class _DashboardPageState extends State<DashboardPage> {
         _InlineFilter(
           label: 'Program',
           value: program,
-          fieldWidth: 146,
+          fieldWidth: 160,
           items: [
             ('', 'All Programs'),
             for (final p in widget.store.programs)
@@ -1067,9 +1067,9 @@ class _InlineFilter<T> extends StatelessWidget {
       Text(
         '$label:',
         style: const TextStyle(
-          fontSize: 15,
-          fontWeight: FontWeight.w600,
-          color: muted,
+          fontSize: 14,
+          fontWeight: FontWeight.w700,
+          color: ink,
         ),
       ),
       const SizedBox(width: 8),
@@ -1082,14 +1082,14 @@ class _InlineFilter<T> extends StatelessWidget {
           fieldTextStyle: const TextStyle(
             fontFamily: 'Segoe UI',
             fontSize: 13,
-            fontWeight: FontWeight.w600,
+            fontWeight: FontWeight.w700,
             color: ink,
           ),
           decoration: const InputDecoration(
             filled: true,
             fillColor: Colors.white,
             isDense: true,
-            contentPadding: EdgeInsets.fromLTRB(12, 11, 0, 11),
+            contentPadding: EdgeInsets.fromLTRB(12, 10, 0, 10),
           ),
         ),
       ),
