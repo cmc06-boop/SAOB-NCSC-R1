@@ -1421,6 +1421,7 @@ class _HistoryCardState extends State<_HistoryCard> {
     ];
   }
 
+  static const _rowHeight = 32.0;
   static const _border = BorderSide(color: Color(0xffd5e1f2));
   static const _columns = <int, TableColumnWidth>{
     0: FixedColumnWidth(48),
@@ -1437,7 +1438,7 @@ class _HistoryCardState extends State<_HistoryCard> {
 
   Widget _cell(String text, {TextStyle style = _body, bool number = false, bool center = false}) {
     return Padding(
-      padding: EdgeInsets.fromLTRB(center ? 10 : 12, 10, 10, 10),
+      padding: EdgeInsets.fromLTRB(center ? 8 : 12, 3, 8, 3),
       child: Text(
         text,
         textAlign: center ? TextAlign.center : TextAlign.left,
@@ -1466,7 +1467,7 @@ class _HistoryCardState extends State<_HistoryCard> {
         TableCell(
           verticalAlignment: TableCellVerticalAlignment.middle,
           child: ConstrainedBox(
-            constraints: const BoxConstraints(minHeight: 48),
+            constraints: const BoxConstraints(minHeight: _rowHeight),
             child: Align(
               alignment: center || centeredColumns.contains(index)
                   ? Alignment.center
@@ -1522,7 +1523,7 @@ class _HistoryCardState extends State<_HistoryCard> {
                 ),
                 ConstrainedBox(
                   // Keep four rows visible; scroll the history from five on.
-                  constraints: const BoxConstraints(maxHeight: 4 * 48.0),
+                  constraints: const BoxConstraints(maxHeight: 4 * _rowHeight),
                   child: Scrollbar(
                     controller: _historyScroll,
                     thumbVisibility: widget.history.length >= 5,
