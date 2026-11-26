@@ -1,4 +1,8 @@
+import 'dart:io';
+
 import 'package:excel/excel.dart';
+import 'package:image/image.dart' as img;
+import 'package:path/path.dart' as path;
 import 'package:flutter/services.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
@@ -704,6 +708,126 @@ void _writeSaobSummarySheet(
   }
 }
 
+/// Shared letterhead for every PDF page, including the on-screen PDF preview.
+/// Read Arial from the Windows installation rather than distributing font files.
+class ReportLetterhead {
+  const ReportLetterhead(this.ncsc, this.bagong, this.regular, this.bold);
+
+  final pw.MemoryImage ncsc, bagong;
+  final pw.Font regular, bold;
+
+  static Future<ReportLetterhead> load() async {
+    final ncsc = await rootBundle.load('assets/ncsc-logo-transparent.png');
+    final bagong = await rootBundle.load('assets/bagong-pilipinas.jpg');
+    final decoded = img.decodeImage(bagong.buffer.asUint8List(
+      bagong.offsetInBytes, bagong.lengthInBytes,
+    ));
+    if (decoded == null) {
+      throw const FinanceError('The Bagong Pilipinas logo could not be read.');
+    }
+    final rgba = decoded.convert(numChannels: 4);
+    // Remove only near-white background connected to the outer edge.
+    // White details enclosed within the emblem are preserved.
+    final width = rgba.width, height = rgba.height;
+    final visited = Uint8List(width * height);
+    final queue = <int>[];
+    void visit(int x, int y) {
+      if (x < 0 || x >= width || y < 0 || y >= height) return;
+      final index = y * width + x;
+      if (visited[index] != 0) return;
+      visited[index] = 1;
+      final pixel = rgba.getPixel(x, y);
+      if (pixel.r < 225 || pixel.g < 225 || pixel.b < 225) return;
+      rgba.setPixelRgba(x, y, 255, 255, 255, 0);
+      queue.add(index);
+    }
+    for (var x = 0; x < width; x++) {
+      visit(x, 0);
+      visit(x, height - 1);
+    }
+    for (var y = 0; y < height; y++) {
+      visit(0, y);
+      visit(width - 1, y);
+    }
+    for (var i = 0; i < queue.length; i++) {
+      final x = queue[i] % width, y = queue[i] ~/ width;
+      visit(x - 1, y);
+      visit(x + 1, y);
+      visit(x, y - 1);
+      visit(x, y + 1);
+    }
+
+    // Trim transparent outer margins to give the two logos balanced sizes.
+    var left = width, top = height, right = -1, bottom = -1;
+    for (var y = 0; y < height; y++) {
+      for (var x = 0; x < width; x++) {
+        if (rgba.getPixel(x, y).a == 0) continue;
+        if (x < left) left = x;
+        if (x > right) right = x;
+        if (y < top) top = y;
+        if (y > bottom) bottom = y;
+      }
+    }
+    final logo = right >= left && bottom >= top
+        ? img.copyCrop(rgba, x: left, y: top,
+            width: right - left + 1, height: bottom - top + 1)
+        : rgba;
+    pw.Font regular = pw.Font.helvetica();
+    pw.Font bold = pw.Font.helveticaBold();
+    if (Platform.isWindows) {
+      final windows = Platform.environment['WINDIR'] ??
+          Platform.environment['SystemRoot'] ?? r'C:\Windows';
+      try {
+        final normal = await File(path.join(windows, 'Fonts', 'arial.ttf')).readAsBytes();
+        final heavy = await File(path.join(windows, 'Fonts', 'arialbd.ttf')).readAsBytes();
+        regular = pw.Font.ttf(ByteData.sublistView(normal));
+        bold = pw.Font.ttf(ByteData.sublistView(heavy));
+      } on FileSystemException {
+        // Helvetica is an offline fallback when Arial is unavailable.
+      }
+    }
+    return ReportLetterhead(
+      pw.MemoryImage(ncsc.buffer.asUint8List(ncsc.offsetInBytes, ncsc.lengthInBytes)),
+      pw.MemoryImage(img.encodePng(logo)),
+      regular,
+      bold,
+    );
+  }
+
+  pw.Widget build() {
+    pw.Widget line(String value, double size, {bool heavy = false, PdfColor color = PdfColors.black}) =>
+        pw.Text(value, textAlign: pw.TextAlign.center,
+            style: pw.TextStyle(font: heavy ? bold : regular, fontSize: size, color: color));
+    return pw.Padding(
+      padding: const pw.EdgeInsets.symmetric(horizontal: 30),
+      child: pw.Row(
+        crossAxisAlignment: pw.CrossAxisAlignment.center,
+        children: [
+          pw.SizedBox(width: 76, height: 76,
+              child: pw.Image(ncsc, fit: pw.BoxFit.contain)),
+          pw.SizedBox(width: 12),
+          pw.Expanded(
+            child: pw.Column(
+              mainAxisAlignment: pw.MainAxisAlignment.center,
+              children: [
+                line('Republic of the Philippines', 14, heavy: true),
+                line('Office of the President', 14),
+                line('NATIONAL COMMISSION OF SENIOR CITIZENS', 17,
+                    heavy: true, color: PdfColor.fromInt(0xff00558c)),
+                line('2nd Floor, Kenny Plaza, Quezon Avenue,', 12),
+                line('City of San Fernando, 2500 La Union', 12),
+              ],
+            ),
+          ),
+          pw.SizedBox(width: 12),
+          pw.SizedBox(width: 76, height: 76,
+              child: pw.Image(bagong, fit: pw.BoxFit.contain)),
+        ],
+      ),
+    );
+  }
+}
+
 Future<Uint8List> pdfReport(
   ReportData data, {
   required String title,
@@ -717,10 +841,7 @@ Future<Uint8List> pdfReport(
   final bold = pw.Font.ttf(
     await rootBundle.load('assets/fonts/DejaVuSans-Bold.ttf'),
   );
-  final logo = pw.MemoryImage(
-    (await rootBundle.load('assets/ncsc-logo-transparent.png')).buffer
-        .asUint8List(),
-  );
+  final letterhead = await ReportLetterhead.load();
   final document = pw.Document();
   document.addPage(
     pw.MultiPage(
@@ -730,32 +851,7 @@ Future<Uint8List> pdfReport(
       theme: pw.ThemeData.withFont(base: regular, bold: bold),
       header: (_) => pw.Column(
         children: [
-          pw.Row(
-            mainAxisAlignment: pw.MainAxisAlignment.center,
-            children: [
-              pw.Image(logo, width: 42, height: 42),
-              pw.SizedBox(width: 10),
-              pw.Column(
-                crossAxisAlignment: pw.CrossAxisAlignment.start,
-                children: [
-                  pw.Text(
-                    'NATIONAL COMMISSION OF SENIOR CITIZENS',
-                    style: pw.TextStyle(
-                      fontSize: 12,
-                      fontWeight: pw.FontWeight.bold,
-                    ),
-                  ),
-                  pw.Text(
-                    'REGION I',
-                    style: pw.TextStyle(
-                      fontSize: 10,
-                      fontWeight: pw.FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
+          letterhead.build(),
           pw.SizedBox(height: 8),
           // The obsolete Report Type title is deliberately not shown.
           pw.Text(
