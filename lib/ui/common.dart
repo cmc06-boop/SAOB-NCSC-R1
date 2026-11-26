@@ -674,7 +674,7 @@ class _BudgetTableState extends State<BudgetTable> {
             ], const Color(0xffeef3fb)),
           ],
         );
-        final bodyTable = Table(
+        final bodyTable = records.isEmpty ? null : Table(
           border: const TableBorder(
             horizontalInside: _border,
             verticalInside: _border,
@@ -682,16 +682,6 @@ class _BudgetTableState extends State<BudgetTable> {
           columnWidths: columns,
           defaultVerticalAlignment: TableCellVerticalAlignment.middle,
           children: [
-            if (records.isEmpty)
-              _row([
-                for (var i = 0; i < 10; i++)
-                  i == 2
-                      ? const _BudgetCell(
-                          'No records found.',
-                          style: TextStyle(fontSize: 13, color: muted),
-                        )
-                      : const _BudgetCell(''),
-              ], Colors.white),
             for (final (i, r) in records.indexed)
               _row(
                 [
@@ -791,6 +781,17 @@ class _BudgetTableState extends State<BudgetTable> {
               ], const Color(0xffe7eefc)),
           ],
         );
+        if (bodyTable == null) {
+          return Column(
+            children: [
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: SizedBox(width: width, child: headerTable),
+              ),
+              const Expanded(child: Center(child: Text('No records found.', textAlign: TextAlign.center, style: TextStyle(fontSize: 13, color: muted)))),
+            ],
+          );
+        }
         return Scrollbar(
           controller: _scroll,
           thumbVisibility: true,
