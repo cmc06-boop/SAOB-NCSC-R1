@@ -327,7 +327,10 @@ class _ReportsPageState extends State<ReportsPage> {
     }
     final records = widget.store.records(year, program: dataProgram);
     final totals = Totals(records);
-    final history = widget.store.reportHistory;
+    final history = widget.store.filteredReportHistory(
+      year: year,
+      program: program == summarySelection ? 'Summary' : program,
+    );
     if (preview) return _previewPage(records);
     const title = Text(
       'Reports',
@@ -460,7 +463,10 @@ class _ReportsPageState extends State<ReportsPage> {
             },
           ),
           const SizedBox(height: 10),
-          _HistoryCard(history: history),
+          _HistoryCard(
+            key: ValueKey('report-history-$year-$program'),
+            history: history,
+          ),
         ],
         ),
       ),
@@ -1454,7 +1460,7 @@ class _SummaryCard extends StatelessWidget {
 }
 
 class _HistoryCard extends StatefulWidget {
-  const _HistoryCard({required this.history});
+  const _HistoryCard({super.key, required this.history});
   final List<DbRow> history;
 
   @override
@@ -1595,7 +1601,7 @@ class _HistoryCardState extends State<_HistoryCard> {
                             _row([
                               _cell(''),
                               _cell(
-                                'No reports generated yet.',
+                                'No reports found for the selected filters.',
                                 style: const TextStyle(fontSize: 13, color: muted),
                               ),
                               _cell(''),
