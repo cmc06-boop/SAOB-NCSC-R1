@@ -680,7 +680,7 @@ class _BudgetTableState extends State<BudgetTable> {
       return Tooltip(
         message: active ? label : 'Past years are view-only.',
         child: Material(
-          color: Colors.white,
+          color: fg,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(6),
             side: BorderSide(color: fg),
@@ -688,13 +688,13 @@ class _BudgetTableState extends State<BudgetTable> {
           child: InkWell(
             key: ValueKey('budget-${label.toLowerCase()}-${record.id}'),
             onTap: active ? () => callback(record) : null,
-            hoverColor: fg.withValues(alpha: 0.20),
+            hoverColor: Colors.white.withValues(alpha: 0.20),
             borderRadius: BorderRadius.circular(6),
             child: SizedBox(
               width: 36,
               height: 32,
               child: Center(
-                child: AppIcon(icon, size: 18, color: fg, semanticLabel: label),
+                child: AppIcon(icon, size: 18, color: Colors.white, semanticLabel: label),
               ),
             ),
           ),
