@@ -135,10 +135,11 @@ class _AuditTableState extends State<_AuditTable> {
   final _scroll = ScrollController();
   static const _border = BorderSide(color: Color(0xffd5e1f2));
   static const _columns = <int, TableColumnWidth>{
-    0: FixedColumnWidth(188),
-    1: FixedColumnWidth(112),
-    2: FixedColumnWidth(210),
-    3: FlexColumnWidth(),
+    0: FixedColumnWidth(48),
+    1: FixedColumnWidth(188),
+    2: FixedColumnWidth(112),
+    3: FixedColumnWidth(210),
+    4: FlexColumnWidth(),
   };
 
   @override
@@ -173,6 +174,7 @@ class _AuditTableState extends State<_AuditTable> {
       defaultVerticalAlignment: TableCellVerticalAlignment.middle,
       children: [
         _row([
+          const _AuditCell('#', style: header, align: TextAlign.center),
           const _AuditCell('Date', style: header, align: TextAlign.center),
           const _AuditCell('Time', style: header, align: TextAlign.center),
           const _AuditCell('Action', style: header, align: TextAlign.center),
@@ -193,6 +195,7 @@ class _AuditTableState extends State<_AuditTable> {
             const _AuditCell(''),
             const _AuditCell(''),
             const _AuditCell(''),
+            const _AuditCell(''),
             const _AuditCell(
               'No records found.',
               style: TextStyle(fontSize: 13, color: muted),
@@ -201,6 +204,7 @@ class _AuditTableState extends State<_AuditTable> {
         else
           for (final (i, r) in rows.indexed)
             _row([
+              _AuditCell('${i + 1}', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: blue), align: TextAlign.center),
               _AuditCell(dateOnly(r['at']), style: body, align: TextAlign.center),
               _AuditCell(timeOnly(r['at']), style: body, align: TextAlign.center),
               AuditActionBadge('${r['action']}'),
