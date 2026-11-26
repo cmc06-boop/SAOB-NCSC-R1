@@ -371,7 +371,7 @@ class _ReportsPageState extends State<ReportsPage> {
         ),
         FilledButton.icon(
           style: FilledButton.styleFrom(
-            backgroundColor: const Color(0xff19458c),
+            backgroundColor: const Color(0xff1e3a8a),
             foregroundColor: Colors.white,
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
