@@ -733,68 +733,11 @@ class _DashboardPageState extends State<DashboardPage> {
                   for (var i = 0; i < metrics.length; i++)
                     SizedBox(
                       width: (c.maxWidth - (cols - 1) * 10) / cols,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 22,
-                        ),
-                        decoration: BoxDecoration(
-                          color: blue,
-                          borderRadius: BorderRadius.circular(18),
-                          border: Border.all(color: blue),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Row(
-                              children: [
-                                AppIcon(metrics[i].$2, size: 34, color: const Color(0xffe7eefc)),
-                                const SizedBox(width: 10),
-                                Expanded(
-                                  child: Align(
-                                    alignment: Alignment.centerLeft,
-                                    child: FittedBox(
-                                      fit: BoxFit.scaleDown,
-                                      alignment: Alignment.centerLeft,
-                                      child: Text(
-                                        metrics[i].$1,
-                                        maxLines: 1,
-                                        style: const TextStyle(
-                                          fontSize: 17,
-                                          fontWeight: FontWeight.w700,
-                                          color: Colors.white,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 1),
-                            Padding(
-                              padding: const EdgeInsets.only(left: 8),
-                              child: SizedBox(
-                                width: double.infinity,
-                                child: FittedBox(
-                                  fit: BoxFit.scaleDown,
-                                  alignment: Alignment.centerLeft,
-                                  child: Text(
-                                    money(amounts[i]),
-                                    maxLines: 1,
-                                    softWrap: false,
-                                    style: const TextStyle(
-                                      fontSize: 23,
-                                      fontWeight: FontWeight.w800,
-                                      color: Colors.white,
-                                      letterSpacing: -0.3,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
+                      child: _DashboardMetricCard(
+                        label: metrics[i].$1,
+                        icon: metrics[i].$2,
+                        amount: money(amounts[i]),
+                        accent: i == 3 ? red : blue,
                       ),
                     ),
                 ],
@@ -1099,6 +1042,123 @@ class _InlineFilter<T> extends StatelessWidget {
       ),
     ],
   );
+}
+
+/// Compact financial cards with a softly tinted wave and bottom accent.
+class _DashboardMetricCard extends StatelessWidget {
+  const _DashboardMetricCard({
+    required this.label,
+    required this.icon,
+    required this.amount,
+    required this.accent,
+  });
+
+  final String label, icon, amount;
+  final Color accent;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    height: 126,
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(14),
+      border: Border.all(color: accent.withValues(alpha: .16)),
+      boxShadow: const [
+        BoxShadow(color: Color(0x12061c52), blurRadius: 8, offset: Offset(0, 3)),
+      ],
+    ),
+    child: ClipRRect(
+      borderRadius: BorderRadius.circular(13),
+      child: Stack(
+        children: [
+          Positioned.fill(
+            child: CustomPaint(painter: _MetricWavePainter(accent)),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 39,
+                  height: 39,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: accent.withValues(alpha: .15),
+                  ),
+                  alignment: Alignment.center,
+                  child: AppIcon(icon, size: 23, color: accent),
+                ),
+                const SizedBox(height: 5),
+                SizedBox(
+                  width: double.infinity,
+                  child: FittedBox(
+                    alignment: Alignment.centerLeft,
+                    fit: BoxFit.scaleDown,
+                    child: Text(label, maxLines: 1, style: const TextStyle(
+                      fontSize: 14, fontWeight: FontWeight.w700, color: navy,
+                    )),
+                  ),
+                ),
+                const SizedBox(height: 3),
+                SizedBox(
+                  width: double.infinity,
+                  child: FittedBox(
+                    alignment: Alignment.centerLeft,
+                    fit: BoxFit.scaleDown,
+                    child: Text(amount, maxLines: 1, style: const TextStyle(
+                      fontSize: 23, fontWeight: FontWeight.w800, color: navy,
+                      letterSpacing: -.4,
+                    )),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Positioned(
+            bottom: 0, left: 0, right: 0,
+            child: Container(
+              height: 5,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [accent, accent.withValues(alpha: .35)],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+class _MetricWavePainter extends CustomPainter {
+  const _MetricWavePainter(this.accent);
+  final Color accent;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final w = size.width;
+    final h = size.height;
+    final wave = Path()
+      ..moveTo(0, h * .46)
+      ..cubicTo(w * .46, h * .78, w * .55, h * .05, w, h * .16)
+      ..lineTo(w, h)
+      ..lineTo(0, h)
+      ..close();
+    canvas.drawPath(wave, Paint()..color = accent.withValues(alpha: .055));
+    final lower = Path()
+      ..moveTo(0, h * .86)
+      ..cubicTo(w * .54, h * .98, w * .68, h * .35, w, h * .43)
+      ..lineTo(w, h)
+      ..lineTo(0, h)
+      ..close();
+    canvas.drawPath(lower, Paint()..color = accent.withValues(alpha: .045));
+  }
+
+  @override
+  bool shouldRepaint(covariant _MetricWavePainter oldDelegate) =>
+      oldDelegate.accent != accent;
 }
 
 class _Rate extends StatelessWidget {
