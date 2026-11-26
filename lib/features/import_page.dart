@@ -213,6 +213,96 @@ class ImportController extends ChangeNotifier {
 
 }
 
+class ExcelImportDialog extends StatefulWidget {
+  const ExcelImportDialog({super.key, required this.store, required this.year});
+  final FinanceStore store;
+  final int year;
+
+  @override
+  State<ExcelImportDialog> createState() => _ExcelImportDialogState();
+}
+
+class _ExcelImportDialogState extends State<ExcelImportDialog> {
+  late final ImportController _session;
+
+  @override
+  void initState() {
+    super.initState();
+    _session = ImportController(
+      widget.store,
+      year: widget.year,
+      onImported: () {
+        if (mounted) Navigator.pop(context);
+      },
+    )..addListener(_refresh);
+  }
+
+  void _refresh() {
+    if (mounted) setState(() {});
+  }
+
+  @override
+  void dispose() {
+    _session.removeListener(_refresh);
+    _session.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => PopScope(
+    canPop: !_session.busy,
+    child: Dialog(
+      key: const ValueKey('budget-import-dialog'),
+      alignment: const Alignment(0.45, 0),
+      insetPadding: const EdgeInsets.symmetric(horizontal: 40, vertical: 32),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 480),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(20, 14, 20, 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Stack(
+                alignment: Alignment.center,
+                children: [
+                  Text('Import Excel',
+                    style: Theme.of(context).textTheme.titleLarge,
+                    textAlign: TextAlign.center,
+                  ),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: IconButton(
+                      tooltip: 'Close',
+                      onPressed: _session.busy ? null : () => Navigator.pop(context),
+                      icon: const AppIcon('x'),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text('Fiscal Year: ${widget.year}',
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontSize: 13, color: muted),
+              ),
+              const SizedBox(height: 16),
+              ExcelDropZone(session: _session),
+              const SizedBox(height: 16),
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton(
+                  onPressed: _session.busy ? null : () => Navigator.pop(context),
+                  child: const Text('Cancel'),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
 class ExcelDropZone extends StatefulWidget {
   const ExcelDropZone({super.key, required this.session});
   final ImportController session;
