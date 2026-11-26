@@ -1,10 +1,12 @@
 import 'dart:io';
+import 'dart:typed_data';
 import 'dart:math' as math;
 
 import 'package:file_selector/file_selector.dart';
 import 'package:path/path.dart' as path;
 import 'package:intl/intl.dart' hide TextDirection;
 import 'package:material_ui/material_ui.dart';
+import 'package:printing/printing.dart';
 
 import '../core/format.dart';
 import '../data/export_file.dart';
@@ -105,7 +107,7 @@ class _ReportsPageState extends State<ReportsPage> {
   String reportFormat = 'PDF';
   String? lastExportFolder;
   bool busy = false, preview = false;
-  double? previewZoom = 1.0;
+  double? previewZoom;
   void change(VoidCallback fn) => setState(fn);
 
   String get dataProgram => program == summarySelection ? '' : program;
@@ -118,7 +120,7 @@ class _ReportsPageState extends State<ReportsPage> {
     }
     setState(() {
       preview = true;
-      previewZoom = 1.0;
+      previewZoom = null;
     });
   }
 
@@ -570,6 +572,24 @@ class _ReportsPageState extends State<ReportsPage> {
     final table = _previewTable(records);
     final totals = Totals(records);
     final summary = program == summarySelection;
+    if (reportFormat == 'PDF') {
+      final fingerprint = Object.hashAll(records.map((row) => Object.hash(
+        row.program, row.code, row.name, row.allotment,
+        row.obligation, row.disbursement,
+      )));
+      return LayoutBuilder(
+        builder: (context, constraints) {
+          _lastFitZoom = math.min(1.0, math.max(0.01, (constraints.maxWidth - 24) / 842));
+          return _PdfReportPages(
+            key: ValueKey('pdf-$year-$program-$fingerprint'),
+            records: records,
+            year: year,
+            summary: summary,
+            scale: previewZoom ?? _lastFitZoom,
+          );
+        },
+      );
+    }
     return LayoutBuilder(
       builder: (context, constraints) {
         if (constraints.maxWidth <= 0 || constraints.maxHeight <= 0) {
@@ -696,6 +716,116 @@ class _ReportsPageState extends State<ReportsPage> {
           ],
       ],
       const {3, 4, 5, 6, 7, 8},
+    );
+  }
+}
+
+/// Render the same PDF used by Export, with vertically stacked paper pages.
+/// No additional page numbers or footer labels are drawn by the viewer.
+class _PdfReportPages extends StatefulWidget {
+  const _PdfReportPages({
+    super.key,
+    required this.records,
+    required this.year,
+    required this.summary,
+    required this.scale,
+  });
+
+  final List<BudgetRecord> records;
+  final int year;
+  final bool summary;
+  final double scale;
+
+  @override
+  State<_PdfReportPages> createState() => _PdfReportPagesState();
+}
+
+class _PdfReportPagesState extends State<_PdfReportPages> {
+  final _vertical = ScrollController();
+  final _horizontal = ScrollController();
+  late final Future<List<Uint8List>> _pages = _render();
+
+  Future<List<Uint8List>> _render() async {
+    final bytes = widget.summary
+        ? await pdfSaobSummaryReport(widget.records, year: widget.year)
+        : await pdfAllProgramsReport(widget.records, year: widget.year);
+    final pages = <Uint8List>[];
+    await for (final page in Printing.raster(bytes, dpi: 120)) {
+      if (!mounted) break;
+      pages.add(await page.toPng());
+    }
+    return pages;
+  }
+
+  @override
+  void dispose() {
+    _vertical.dispose();
+    _horizontal.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<List<Uint8List>>(
+      future: _pages,
+      builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return const Center(child: Text('PDF preview unavailable. You can still export the report.'));
+        }
+        if (!snapshot.hasData) {
+          return const Center(child: Text('Preparing PDF preview…'));
+        }
+        final pages = snapshot.data!;
+        if (pages.isEmpty) {
+          return const Center(child: Text('No report pages.'));
+        }
+        return LayoutBuilder(
+          builder: (context, constraints) {
+            final paperWidth = 842.0 * widget.scale;
+            final contentWidth = math.max(constraints.maxWidth, paperWidth + 24);
+            return ColoredBox(
+              color: const Color(0xffe8edf5),
+              child: Scrollbar(
+                controller: _horizontal,
+                notificationPredicate: (n) => n.metrics.axis == Axis.horizontal,
+                thumbVisibility: contentWidth > constraints.maxWidth,
+                child: SingleChildScrollView(
+                  controller: _horizontal,
+                  scrollDirection: Axis.horizontal,
+                  child: SizedBox(
+                    width: contentWidth,
+                    height: constraints.maxHeight,
+                    child: Scrollbar(
+                      controller: _vertical,
+                      thumbVisibility: true,
+                      notificationPredicate: (n) => n.metrics.axis == Axis.vertical,
+                      child: ListView.builder(
+                        controller: _vertical,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        itemCount: pages.length,
+                        itemBuilder: (context, index) => Center(
+                          child: Container(
+                            width: paperWidth,
+                            margin: const EdgeInsets.only(bottom: 14),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              border: Border.all(color: const Color(0xffccd6e3)),
+                              boxShadow: const [
+                                BoxShadow(color: Color(0x18000000), blurRadius: 5, offset: Offset(0, 2)),
+                              ],
+                            ),
+                            child: Image.memory(pages[index], fit: BoxFit.fitWidth),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 }
