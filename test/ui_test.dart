@@ -382,7 +382,7 @@ void main() {
             .abs(),
         lessThan(8),
       );
-      // Measure the complete labeled buttons, not their left-side icons.
+      // Measure the centered icon-only action buttons.
       final edit = find.descendant(
         of: programsTable,
         matching: find.byKey(const ValueKey('program-action-Edit')),
@@ -391,8 +391,10 @@ void main() {
         of: programsTable,
         matching: find.byKey(const ValueKey('program-action-Delete')),
       ).first;
-      expect(find.descendant(of: programsTable, matching: find.text('Edit')), findsWidgets);
-      expect(find.descendant(of: programsTable, matching: find.text('Delete')), findsWidgets);
+      expect(find.descendant(of: programsTable, matching: find.text('Edit')), findsNothing);
+      expect(find.descendant(of: programsTable, matching: find.text('Delete')), findsNothing);
+      expect(find.descendant(of: edit, matching: appIcon('pencil')), findsOneWidget);
+      expect(find.descendant(of: delete, matching: appIcon('trash-2')), findsOneWidget);
       final actionsCenter =
           (tester.getCenter(edit).dx + tester.getCenter(delete).dx) / 2;
       expect(
@@ -404,7 +406,7 @@ void main() {
       );
       expect(
         (programHeader.columnWidths![3] as FixedColumnWidth).value,
-        220,
+        112,
       );
       // Programs must keep its original compact number column.
       expect(
