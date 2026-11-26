@@ -631,7 +631,7 @@ class _RecordEditorState extends State<RecordEditor> {
         insetPadding: const EdgeInsets.symmetric(horizontal: 40, vertical: 32),
         child: ConstrainedBox(
           key: const ValueKey('budget-record-dialog-size'),
-          constraints: const BoxConstraints(maxWidth: 920, minHeight: 500),
+          constraints: const BoxConstraints(maxWidth: 660, minHeight: 500),
           child: SingleChildScrollView(
             key: const ValueKey('budget-record-dialog-scroll'),
             padding: const EdgeInsets.fromLTRB(18, 14, 18, 24),
@@ -772,7 +772,8 @@ class _RecordEditorState extends State<RecordEditor> {
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Column(
-                      mainAxisSize: MainAxisSize.min,
+                      mainAxisSize: MainAxisSize.max,
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const Text(
@@ -848,13 +849,37 @@ class _AlignedRecordColumns extends StatefulWidget {
 }
 
 class _AlignedRecordColumnsState extends State<_AlignedRecordColumns> {
+  final _leftKey = GlobalKey();
+  final _remarksLabelKey = GlobalKey();
+  double _leftHeight = 450;
+  double _labelHeight = 16;
+
+  void _syncHeight() {
+    if (!mounted) return;
+    final left = _leftKey.currentContext?.size?.height;
+    final label = _remarksLabelKey.currentContext?.size?.height;
+    if (left == null || label == null) return;
+    if ((left - _leftHeight).abs() > .5 ||
+        (label - _labelHeight).abs() > .5) {
+      setState(() {
+        _leftHeight = left;
+        _labelHeight = label;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    WidgetsBinding.instance.addPostFrameCallback((_) => _syncHeight());
+    final available = (_leftHeight - _labelHeight - 18).clamp(410.0, double.infinity).toDouble();
+    final summaryHeight = (available * .57).clamp(255.0, available - 150).toDouble();
+    final remarksHeight = available - summaryHeight;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Expanded(
           child: Column(
+            key: _leftKey,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               widget.identity,
@@ -868,10 +893,13 @@ class _AlignedRecordColumnsState extends State<_AlignedRecordColumns> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const FieldLabel('Remarks', style: _recordEditorLabelStyle),
+              KeyedSubtree(
+                key: _remarksLabelKey,
+                child: const FieldLabel('Remarks', style: _recordEditorLabelStyle),
+              ),
               const SizedBox(height: 4),
               SizedBox(
-                height: 120,
+                height: remarksHeight,
                 child: TextField(
                   controller: widget.remarks,
                   focusNode: widget.remarksFocus,
@@ -896,7 +924,7 @@ class _AlignedRecordColumnsState extends State<_AlignedRecordColumns> {
                 ),
               ),
               const SizedBox(height: 14),
-              widget.summary,
+              SizedBox(height: summaryHeight, child: widget.summary),
             ],
           ),
         ),
