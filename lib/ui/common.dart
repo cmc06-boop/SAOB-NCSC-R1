@@ -471,6 +471,10 @@ class BudgetTable extends StatefulWidget {
     this.onSelect,
     this.total,
     this.totalLabel = '',
+    this.showActions = false,
+    this.actionsEnabled = false,
+    this.onEdit,
+    this.onDelete,
   });
   final List<BudgetRecord> records;
   final int startIndex;
@@ -478,6 +482,8 @@ class BudgetTable extends StatefulWidget {
   final ValueChanged<BudgetRecord>? onSelect;
   final Totals? total;
   final String totalLabel;
+  final bool showActions, actionsEnabled;
+  final ValueChanged<BudgetRecord>? onEdit, onDelete;
   @override
   State<BudgetTable> createState() => _BudgetTableState();
 }
@@ -590,6 +596,7 @@ class _BudgetTableState extends State<BudgetTable> {
           }
           return math.max(mins[i], math.min(maxWidth + _pad, caps[i]));
         }(),
+      if (widget.showActions) 208.0,
     ];
   }
 
@@ -608,6 +615,62 @@ class _BudgetTableState extends State<BudgetTable> {
             ),
         ],
       );
+
+  Widget _recordActions(BudgetRecord record) {
+    final enabled = widget.actionsEnabled &&
+        record.id != null && record.year == manilaNow().year;
+    Widget action(String label, String icon, Color color,
+        ValueChanged<BudgetRecord>? callback) {
+      final active = enabled && callback != null;
+      final fg = active ? color : const Color(0xffa0a8b5);
+      return Tooltip(
+        message: active ? label : 'Past years are view-only.',
+        child: Material(
+          color: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(6),
+            side: BorderSide(color: fg),
+          ),
+          child: InkWell(
+            key: ValueKey('budget-${label.toLowerCase()}-${record.id}'),
+            onTap: active ? () => callback!(record) : null,
+            borderRadius: BorderRadius.circular(6),
+            child: SizedBox(
+              width: 88,
+              height: 32,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 6),
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      AppIcon(icon, size: 15, color: fg),
+                      const SizedBox(width: 6),
+                      Text(label, style: TextStyle(
+                        fontSize: 13, fontWeight: FontWeight.w600, color: fg,
+                      )),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          action('Edit', 'pencil', blue, widget.onEdit),
+          const SizedBox(width: 8),
+          action('Delete', 'trash-2', red, widget.onDelete),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -671,6 +734,8 @@ class _BudgetTableState extends State<BudgetTable> {
                 style: header,
               ),
               _BudgetCell('Remarks', align: TextAlign.center, style: header),
+              if (widget.showActions)
+                _BudgetCell('Actions', align: TextAlign.center, style: header),
             ], const Color(0xffcdddf4)),
           ],
         );
@@ -730,6 +795,8 @@ class _BudgetTableState extends State<BudgetTable> {
                     style: body,
                   ),
                   _BudgetCell(r.remarks, style: body, tip: true),
+                  if (widget.showActions)
+                    _recordActions(r),
                 ],
                 r.id == widget.selectedId
                     ? const Color(0xffd4e5ff)
@@ -778,6 +845,7 @@ class _BudgetTableState extends State<BudgetTable> {
                   style: totalStyle,
                 ),
                 const _BudgetCell(''),
+                if (widget.showActions) const _BudgetCell(''),
               ], const Color(0xffdce8fa)),
           ],
         );
