@@ -809,6 +809,7 @@ class _RecordEditorState extends State<RecordEditor> {
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
                     TextButton(
+                      style: dialogCancelStyle(),
                       onPressed: () => Navigator.pop(context),
                       child: const Text('Cancel'),
                     ),
