@@ -26,7 +26,7 @@ void main() {
     'Select a record to edit.',
     'This is a longer instruction explaining that a valid record must be selected before an action can be completed in the finance system.',
   ]) {
-    testWidgets('notifications are white, wider, and raised at lower right: $message', (
+    testWidgets('notifications use navy, wider, and raised at lower right: $message', (
       tester,
     ) async {
       tester.view.devicePixelRatio = 1.0;
@@ -55,8 +55,8 @@ void main() {
       expect(viewportWidth, 1366);
       final toastWidth = viewportWidth - margin.left - margin.right;
       expect(toast.behavior, SnackBarBehavior.floating);
-      expect(toast.backgroundColor, Colors.white);
-      expect(toast.elevation, 5);
+      expect(toast.backgroundColor, const Color(0xff061c52));
+      expect(toast.elevation, 8);
       expect(margin.right, 48);
       expect(margin.bottom, 48);
       expect(toastWidth, inInclusiveRange(320, 540));
@@ -65,7 +65,8 @@ void main() {
         const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
       );
       final content = toast.content as Text;
-      expect(content.style?.color, const Color(0xff132951));
+      expect(content.style?.color, Colors.white);
+      expect(content.style?.fontWeight, FontWeight.w600);
       // Flutter widget tests use the Ahem font, so even a short message
       // can measure wider than the 320 px minimum.
       if (message == 'Select a record to edit.') {
@@ -108,8 +109,8 @@ void main() {
     expect(margin.left, greaterThanOrEqualTo(16));
     expect(margin.right, 20);
     expect(margin.bottom, 48);
-    expect(toast.backgroundColor, Colors.white);
-    expect((toast.content as Text).style?.color, const Color(0xffd42035));
+    expect(toast.backgroundColor, const Color(0xffd42035));
+    expect((toast.content as Text).style?.color, Colors.white);
     expect(tester.takeException(), isNull);
     await tester.pumpWidget(const SizedBox());
   });
