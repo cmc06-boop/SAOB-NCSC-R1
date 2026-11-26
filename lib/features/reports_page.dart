@@ -491,7 +491,7 @@ class _ReportsPageState extends State<ReportsPage> {
               ],
             ),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 32),
           _exportButton(records),
         ],
         ),
