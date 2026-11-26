@@ -853,14 +853,21 @@ class _AlignedRecordColumnsState extends State<_AlignedRecordColumns> {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Expanded(child: widget.identity),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              widget.identity,
+              const SizedBox(height: 14),
+              widget.amounts,
+            ],
+          ),
+        ),
         const SizedBox(width: 16),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              widget.amounts,
-              const SizedBox(height: 14),
               const FieldLabel('Remarks', style: _recordEditorLabelStyle),
               const SizedBox(height: 4),
               SizedBox(
