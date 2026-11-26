@@ -96,7 +96,7 @@ class _ReferenceManagementPageState extends State<_ReferenceManagementPage> {
                 widths: const {
                   0: FixedColumnWidth(200),
                   1: FlexColumnWidth(),
-                  2: FixedColumnWidth(220),
+                  2: FixedColumnWidth(112),
                 },
                 rows: [
                   for (final p in programs)
@@ -212,29 +212,10 @@ Widget _programAction({
       onTap: onPressed,
       borderRadius: BorderRadius.circular(6),
       child: SizedBox(
-        width: 88,
+        width: 36,
         height: 32,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 6),
-          child: FittedBox(
-            fit: BoxFit.scaleDown,
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                AppIcon(icon, size: 15, color: color),
-                const SizedBox(width: 6),
-                Text(
-                  tooltip,
-                  maxLines: 1,
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: color,
-                  ),
-                ),
-              ],
-            ),
-          ),
+        child: Center(
+          child: AppIcon(icon, size: 18, color: color, semanticLabel: tooltip),
         ),
       ),
     ),
