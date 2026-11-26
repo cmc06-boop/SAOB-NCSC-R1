@@ -185,7 +185,7 @@ void main() {
     );
   });
 
-  test('Report history numbers reflect daily export order beyond the visible limit', () {
+  test('Report history keeps newest twenty exports across dates', () {
     void add(String stamp) {
       db.connection.execute(
         'INSERT INTO report_history(at,type,year,program,format) VALUES (?,?,?,?,?)',
@@ -199,10 +199,9 @@ void main() {
     add('2026-11-26T09:00:00+08:00');
     final history = store.reportHistory;
     expect(history, hasLength(20));
-    expect(history[0]['daily_number'], 2);
-    expect(history[1]['daily_number'], 1);
-    expect(history[2]['daily_number'], 22);
-    expect(history.last['daily_number'], 5);
+    final ids = history.map((row) => row['id'] as int).toList();
+    expect(ids, orderedEquals(List.generate(20, (i) => ids.first - i)));
+    expect(history.first['at'], '2026-11-26T09:00:00+08:00');
   });
 
   test('Generated audit entries match the report history names', () {
