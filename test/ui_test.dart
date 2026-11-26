@@ -520,7 +520,7 @@ void main() {
       // 44 px minimum height must not shrink to 36 px on Windows.
       expect(tester.getSize(pdfFormat).height, greaterThanOrEqualTo(44));
       expect(tester.getSize(excelFormat).height, greaterThanOrEqualTo(44));
-      // PDF and Excel use compact built-in Material icons.
+      // PDF and Excel use distinct compact document-format symbols.
       final pdfFileIcon = find.byKey(const ValueKey('reports-file-icon-pdf'));
       final excelFileIcon = find.byKey(const ValueKey('reports-file-icon-excel'));
       expect(
@@ -534,11 +534,11 @@ void main() {
       expect(tester.getSize(pdfFileIcon), const Size(20, 22));
       expect(tester.getSize(excelFileIcon), const Size(20, 22));
       expect(
-        find.descendant(of: pdfFileIcon, matching: find.byType(Icon)),
+        find.descendant(of: pdfFileIcon, matching: find.byType(CustomPaint)),
         findsOneWidget,
       );
       expect(
-        find.descendant(of: excelFileIcon, matching: find.byType(Icon)),
+        find.descendant(of: excelFileIcon, matching: find.byType(CustomPaint)),
         findsOneWidget,
       );
       expect(
