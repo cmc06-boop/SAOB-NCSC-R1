@@ -10,36 +10,27 @@ String resolveExportRequest({
   required String chosenName,
 }) => chosenName == suggestedName ? defaultName : chosenName;
 
-/// Finds the next numbered copy, including when the chosen name already
-/// has a numeric suffix. Existing copies are never opened for writing.
+/// Use the first available filename, starting with the unnumbered original.
+/// Deleted copies release their names immediately; no historical counter.
 Future<String> nextExportName(String folderPath, String fileName) async {
   final extension = p.extension(fileName);
   final stem = p.basenameWithoutExtension(fileName);
   final match = RegExp(r'^(.*) \((\d+)\)$').firstMatch(stem);
   final base = match?.group(1) ?? stem;
-  final requested = int.tryParse(match?.group(2) ?? '') ?? 0;
-  var highest = -1;
   final names = <String>{};
   await for (final entry in Directory(folderPath).list(followLinks: false)) {
-    final name = p.basename(entry.path).toLowerCase();
-    names.add(name);
-    if (p.extension(name) != extension.toLowerCase()) continue;
-    final existing = p.basenameWithoutExtension(name);
-    if (existing == base.toLowerCase()) {
-      if (highest < 0) highest = 0;
-      continue;
-    }
-    final suffix = RegExp(r'^(.*) \((\d+)\)$').firstMatch(existing);
-    if (suffix?.group(1) != base.toLowerCase()) continue;
-    final number = int.tryParse(suffix?.group(2) ?? '');
-    if (number != null && number > highest) highest = number;
+    names.add(p.basename(entry.path).toLowerCase());
   }
-  if (!names.contains(fileName.toLowerCase()) &&
-      (highest < requested || highest < 0)) {
+  // Honor an explicit, unused numbered name typed in Save As.
+  if (match != null && !names.contains(fileName.toLowerCase())) {
     return fileName;
   }
-  final next = highest >= requested ? highest + 1 : requested + 1;
-  return '$base ($next)$extension';
+  for (var suffix = 0; ; suffix++) {
+    final candidate = suffix == 0 ? '$base$extension' : '$base ($suffix)$extension';
+    if (!names.contains(candidate.toLowerCase())) {
+      return candidate;
+    }
+  }
 }
 
 /// Create a new export file without replacing any existing file.
