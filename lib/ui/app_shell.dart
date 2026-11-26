@@ -337,31 +337,47 @@ class _AppShellState extends State<AppShell> {
                                   horizontal: 12,
                                   vertical: 12,
                                 ),
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    const AppIcon(
-                                      'log-out',
-                                      size: 18,
-                                      color: Colors.white,
-                                    ),
-                                    if (expanded) ...[
-                                      const SizedBox(width: 10),
-                                      Text(
-                                        'Logout',
-                                        style: TextStyle(
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.w600,
-                                          decoration: _logoutHovered ? TextDecoration.underline : TextDecoration.none,
-                                          decorationColor: Colors.white,
+                                child: AnimatedScale(
+                                  scale: _logoutHovered ? 1.04 : 1.0,
+                                  duration: const Duration(milliseconds: 140),
+                                  curve: Curves.easeOutCubic,
+                                  child: Center(
+                                    child: AnimatedContainer(
+                                      duration: const Duration(milliseconds: 140),
+                                      padding: const EdgeInsets.only(bottom: 3),
+                                      decoration: BoxDecoration(
+                                        border: Border(
+                                          bottom: BorderSide(
+                                            color: _logoutHovered ? Colors.white : Colors.transparent,
+                                          ),
                                         ),
                                       ),
-                                    ],
-                                  ],
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          const AppIcon(
+                                            'log-out',
+                                            size: 18,
+                                            color: Colors.white,
+                                          ),
+                                          if (expanded) ...[
+                                            const SizedBox(width: 10),
+                                            const Text(
+                                              'Logout',
+                                              style: TextStyle(
+                                                color: Colors.white,
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            ),
+                                          ],
+                                        ],
+                                      ),
+                                    ),
+                                  ),
                                 ),
                               ),
                             ),
-                          )
+                          ),
                         ),
                       ],
                     ),
