@@ -142,7 +142,7 @@ pw.Widget _letterhead(ReportLetterhead letterhead, int year, String heading) =>
           child: pw.Text(
             heading,
             textAlign: pw.TextAlign.center,
-            style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold),
+            style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold),
           ),
         ),
         pw.SizedBox(height: 2),
