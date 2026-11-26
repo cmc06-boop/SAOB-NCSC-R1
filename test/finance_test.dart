@@ -185,6 +185,26 @@ void main() {
     );
   });
 
+  test('Report history numbers reflect daily export order beyond the visible limit', () {
+    void add(String stamp) {
+      db.connection.execute(
+        'INSERT INTO report_history(at,type,year,program,format) VALUES (?,?,?,?,?)',
+        [stamp, 'Budget Utilization Report', 2026, 'GAS', 'PDF'],
+      );
+    }
+    for (var i = 0; i < 22; i++) {
+      add('2026-11-25T09:00:00+08:00');
+    }
+    add('2026-11-25T16:00:00Z'); // Midnight, November 26 in Manila.
+    add('2026-11-26T09:00:00+08:00');
+    final history = store.reportHistory;
+    expect(history, hasLength(20));
+    expect(history[0]['daily_number'], 2);
+    expect(history[1]['daily_number'], 1);
+    expect(history[2]['daily_number'], 22);
+    expect(history.last['daily_number'], 5);
+  });
+
   test('Generated audit entries match the report history names', () {
     expect(generatedReportName('GAS', 'PDF'), 'GAS_Current (PDF)');
     expect(generatedReportName('ECA', 'Excel'), 'ECA_Current (Excel)');
