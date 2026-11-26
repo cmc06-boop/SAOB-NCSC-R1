@@ -603,7 +603,7 @@ class _BudgetTableState extends State<BudgetTable> {
           }
           return math.max(mins[i], math.min(maxWidth + _pad, caps[i]));
         }(),
-      if (widget.showActions) 208.0,
+      if (widget.showActions) 112.0,
     ];
   }
 
@@ -643,23 +643,10 @@ class _BudgetTableState extends State<BudgetTable> {
             onTap: active ? () => callback(record) : null,
             borderRadius: BorderRadius.circular(6),
             child: SizedBox(
-              width: 88,
+              width: 36,
               height: 32,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 6),
-                child: FittedBox(
-                  fit: BoxFit.scaleDown,
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      AppIcon(icon, size: 15, color: fg),
-                      const SizedBox(width: 6),
-                      Text(label, style: TextStyle(
-                        fontSize: 13, fontWeight: FontWeight.w600, color: fg,
-                      )),
-                    ],
-                  ),
-                ),
+              child: Center(
+                child: AppIcon(icon, size: 18, color: fg, semanticLabel: label),
               ),
             ),
           ),
