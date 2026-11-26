@@ -209,22 +209,30 @@ class _AuditTableState extends State<_AuditTable> {
             ], i.isOdd ? const Color(0xfff8fafc) : Colors.white),
       ],
     );
-    return Column(
-      children: [
-        headerTable,
-        Expanded(
-          child: bodyTable == null
-              ? const Center(child: Text('No records found.', textAlign: TextAlign.center, style: TextStyle(fontSize: 13, color: muted)))
-              : Scrollbar(
-            controller: _scroll,
-            thumbVisibility: true,
-            child: SingleChildScrollView(
+    if (bodyTable == null) {
+      return const Center(child: Text('No records found.',
+        textAlign: TextAlign.center,
+        style: TextStyle(fontSize: 13, color: muted),
+      ));
+    }
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          headerTable,
+          Expanded(
+            child: Scrollbar(
               controller: _scroll,
-              child: bodyTable,
+              thumbVisibility: true,
+              child: SingleChildScrollView(
+                controller: _scroll,
+                child: bodyTable,
+              ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
