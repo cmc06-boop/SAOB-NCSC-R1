@@ -142,17 +142,19 @@ class SelectField<T> extends StatelessWidget {
           arrowShiftRight: arrowShiftRight,
           fieldTextStyle: TextStyle(
             fontFamily: 'Segoe UI',
-            fontSize: 13,
+            fontSize: fieldHeight != null ? 14 : 13,
+            height: fieldHeight != null ? 1.2 : null,
             fontWeight: matchFilterStyle ? FontWeight.w700 : null,
             color: ink,
           ),
           decoration: InputDecoration(
+            constraints: fieldHeight == null ? null : BoxConstraints.tightFor(height: fieldHeight),
             isDense: dense,
             filled: matchFilterStyle ? true : null,
             fillColor: matchFilterStyle ? Colors.white : null,
             contentPadding: matchFilterStyle ? const EdgeInsets.fromLTRB(12, 10, 0, 10) : EdgeInsets.symmetric(
               horizontal: 12,
-              vertical: fieldHeight != null ? 6 : (dense ? 12 : 3),
+              vertical: fieldHeight != null ? 0 : (dense ? 12 : 3),
             ),
           ),
           ),
