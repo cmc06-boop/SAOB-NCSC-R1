@@ -1060,28 +1060,32 @@ class _DashboardMetricCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  width: 39,
-                  height: 39,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: accent.withValues(alpha: .15),
-                  ),
-                  alignment: Alignment.center,
-                  child: AppIcon(icon, size: 23, color: accent),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Container(
+                      width: 39,
+                      height: 39,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: accent.withValues(alpha: .15),
+                      ),
+                      alignment: Alignment.center,
+                      child: AppIcon(icon, size: 23, color: accent),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: FittedBox(
+                        alignment: Alignment.centerLeft,
+                        fit: BoxFit.scaleDown,
+                        child: Text(label, maxLines: 1, style: const TextStyle(
+                          fontSize: 17, fontWeight: FontWeight.w700, color: navy,
+                        )),
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 5),
-                SizedBox(
-                  width: double.infinity,
-                  child: FittedBox(
-                    alignment: Alignment.centerLeft,
-                    fit: BoxFit.scaleDown,
-                    child: Text(label, maxLines: 1, style: const TextStyle(
-                      fontSize: 14, fontWeight: FontWeight.w700, color: navy,
-                    )),
-                  ),
-                ),
-                const SizedBox(height: 3),
+                const SizedBox(height: 12),
                 SizedBox(
                   width: double.infinity,
                   child: FittedBox(
