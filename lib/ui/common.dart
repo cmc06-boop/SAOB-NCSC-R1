@@ -80,7 +80,7 @@ ButtonStyle dialogCancelStyle() => TextButton.styleFrom(
   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
   textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-);
+).copyWith(overlayColor: buttonInteraction(navy));
 
 class Panel extends StatelessWidget {
   const Panel({super.key, required this.child, this.padding = 20});
@@ -652,6 +652,7 @@ class _BudgetTableState extends State<BudgetTable> {
           child: InkWell(
             key: ValueKey('budget-${label.toLowerCase()}-${record.id}'),
             onTap: active ? () => callback(record) : null,
+            hoverColor: fg.withValues(alpha: 0.20),
             borderRadius: BorderRadius.circular(6),
             child: SizedBox(
               width: 36,
@@ -1190,6 +1191,7 @@ class CompactConfirmationDialog extends StatelessWidget {
                               style: TextButton.styleFrom(
                                 backgroundColor: const Color(0xffe9e9eb),
                                 foregroundColor: ink,
+                                overlayColor: navy.withValues(alpha: 0.20),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(8),
                                 ),
