@@ -120,7 +120,7 @@ Uint8List excelSaobSummaryReport(
     sheet.setColumnWidth(i, i == 3 ? 28 : 20);
   }
 
-  final pale = ExcelColor.fromHexString('#EEF3FB');
+  final navy = ExcelColor.fromHexString('#173C80');
   final totalFill = ExcelColor.fromHexString('#E7EEFC');
   final ink = ExcelColor.fromHexString('#132951');
   final currencyFormat = NumFormat.custom(formatCode: '#,##0.00');
@@ -142,19 +142,22 @@ Uint8List excelSaobSummaryReport(
     target.value = value;
     target.cellStyle = CellStyle(
       bold: heading || section || title || total,
-      fontColorHex: ink,
+      fontFamily: 'Arial',
+      fontSize: 10,
+      fontColorHex: heading ? ExcelColor.white : ink,
       // Section titles stay centered on white, without a colored background.
       backgroundColorHex: total
           ? totalFill
           : heading
-          ? pale
+          ? navy
           : ExcelColor.none,
-      horizontalAlign: section || title
+      horizontalAlign: section || title || heading
           ? HorizontalAlign.Center
           : col == 0
           ? HorizontalAlign.Left
           : HorizontalAlign.Right,
       verticalAlign: VerticalAlign.Center,
+      textWrapping: heading ? TextWrapping.WrapText : null,
       numberFormat: col == 4 || col == 6
           ? rateFormat
           : col == 0
@@ -177,25 +180,27 @@ Uint8List excelSaobSummaryReport(
         initialValue.toString();
   }
 
-  sheet.merge(
-    CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: 0),
-    CellIndex.indexByColumnRow(columnIndex: 6, rowIndex: 0),
-  );
-  put(
-    0,
-    0,
-    TextCellValue('SUMMARY  |  FISCAL YEAR $year'),
-    title: true,
-  );
+  for (final (row, label) in [
+    (0, 'NATIONAL COMMISSION OF SENIOR CITIZENS'),
+    (1, 'REGION I'),
+    (2, 'SUMMARY  |  FISCAL YEAR $year'),
+  ]) {
+    sheet.merge(
+      CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: row),
+      CellIndex.indexByColumnRow(columnIndex: 6, rowIndex: row),
+    );
+    put(row, 0, TextCellValue(label), title: true);
+    sheet.setRowHeight(row, 20);
+  }
 
-  // Leave one blank row after the year heading.
-  var at = 2;
+  var at = 4;
   for (final section in saobSummarySections(records)) {
     sheet.merge(
       CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: at),
       CellIndex.indexByColumnRow(columnIndex: 6, rowIndex: at),
     );
     put(at++, 0, TextCellValue(section.title), section: true);
+    sheet.setRowHeight(at, 30);
     for (var col = 0; col < summaryHeaders.length; col++) {
       put(at, col, TextCellValue(summaryHeaders[col]), heading: true);
     }
