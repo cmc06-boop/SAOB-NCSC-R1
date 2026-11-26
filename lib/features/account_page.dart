@@ -244,6 +244,7 @@ class _AccountDialogState extends State<AccountDialog> {
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 TextButton(
+                  style: dialogCancelStyle(),
                   key: const ValueKey('account-cancel'),
                   onPressed: _saving ? null : () => Navigator.of(context).pop(),
                   child: const Text('Cancel'),
