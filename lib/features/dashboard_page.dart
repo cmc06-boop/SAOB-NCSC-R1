@@ -1094,7 +1094,7 @@ class _DashboardMetricCard extends StatelessWidget {
                       alignment: Alignment.centerLeft,
                       fit: BoxFit.scaleDown,
                       child: Text(amount, maxLines: 1, style: const TextStyle(
-                        fontSize: 23, fontWeight: FontWeight.w400, color: navy,
+                        fontSize: 23, fontWeight: FontWeight.w800, color: navy,
                         letterSpacing: -.4,
                       )),
                     ),
