@@ -152,7 +152,7 @@ class _ReferenceManagementPageState extends State<_ReferenceManagementPage> {
               horizontal: 12,
               vertical: 12,
             ),
-            prefixIcon: AppIcon('search', size: 18),
+            prefixIcon: AppIcon('search', size: 22),
           ),
         ),
       ),
