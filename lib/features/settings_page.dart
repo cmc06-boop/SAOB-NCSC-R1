@@ -256,7 +256,7 @@ class _SettingsTable extends StatelessWidget {
   final Map<int, TableColumnWidth> widths;
   final List<List<Widget>> rows;
 
-  static const _border = BorderSide(color: Color(0xffd5e1f2));
+  static const _border = BorderSide(color: Color(0xffc3d2e6));
   static const _header = TextStyle(
     fontSize: 13,
     fontWeight: FontWeight.w700,
@@ -309,7 +309,7 @@ class _SettingsTable extends StatelessWidget {
           _text('#', style: _header, align: TextAlign.center),
           for (final name in columns)
             _text(name, style: _header, align: TextAlign.center),
-        ], const Color(0xffeef3fb)),
+        ], const Color(0xffcdddf4)),
       ],
     );
     final bodyTable = rows.isEmpty ? null : Table(
@@ -334,7 +334,7 @@ class _SettingsTable extends StatelessWidget {
                   rows[i][column],
                   center: centeredColumns.contains(column + 1),
                 ),
-            ], i.isOdd ? const Color(0xfff7f9fc) : Colors.white),
+            ], i.isOdd ? const Color(0xfff8fafc) : Colors.white),
       ],
     );
     return Column(
