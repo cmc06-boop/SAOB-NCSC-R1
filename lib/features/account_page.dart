@@ -243,17 +243,23 @@ class _AccountDialogState extends State<AccountDialog> {
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                TextButton(
-                  style: dialogCancelStyle(),
-                  key: const ValueKey('account-cancel'),
-                  onPressed: _saving ? null : () => Navigator.of(context).pop(),
-                  child: const Text('Cancel'),
+                HoverScaleButton(
+                  enabled: !_saving,
+                  child: TextButton(
+                    style: dialogCancelStyle(),
+                    key: const ValueKey('account-cancel'),
+                    onPressed: _saving ? null : () => Navigator.of(context).pop(),
+                    child: const Text('Cancel'),
+                  ),
                 ),
                 const SizedBox(width: 8),
-                FilledButton(
-                  key: const ValueKey('account-save'),
-                  onPressed: _saving ? null : _saveChanges,
-                  child: const Text('Save'),
+                HoverScaleButton(
+                  enabled: !_saving,
+                  child: FilledButton(
+                    key: const ValueKey('account-save'),
+                    onPressed: _saving ? null : _saveChanges,
+                    child: const Text('Save'),
+                  ),
                 ),
               ],
             ),
