@@ -195,7 +195,7 @@ class _AppShellState extends State<AppShell> {
                                                 height: 18,
                                                 decoration: BoxDecoration(
                                                   color: selected == m.$1
-                                                      ? red
+                                                      ? const Color(0xff60a5fa)
                                                       : Colors.transparent,
                                                   borderRadius:
                                                       BorderRadius.circular(3),
