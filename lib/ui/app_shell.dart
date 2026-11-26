@@ -28,6 +28,7 @@ class AppShell extends StatefulWidget {
 }
 
 class _AppShellState extends State<AppShell> {
+  bool _logoutHovered = false;
   String selected = 'dashboard';
 
   Future<void> openAccount() async {
@@ -328,7 +329,8 @@ class _AppShellState extends State<AppShell> {
                             borderRadius: BorderRadius.circular(12),
                             child: InkWell(
                               borderRadius: BorderRadius.circular(12),
-                              hoverColor: Colors.white.withValues(alpha: 0.22),
+                              hoverColor: Colors.transparent,
+                              onHover: (value) => setState(() => _logoutHovered = value),
                               onTap: logout,
                               child: Padding(
                                 padding: const EdgeInsets.symmetric(
@@ -345,11 +347,13 @@ class _AppShellState extends State<AppShell> {
                                     ),
                                     if (expanded) ...[
                                       const SizedBox(width: 10),
-                                      const Text(
+                                      Text(
                                         'Logout',
                                         style: TextStyle(
                                           color: Colors.white,
                                           fontWeight: FontWeight.w600,
+                                          decoration: _logoutHovered ? TextDecoration.underline : TextDecoration.none,
+                                          decorationColor: Colors.white,
                                         ),
                                       ),
                                     ],
