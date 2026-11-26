@@ -209,7 +209,7 @@ Widget _programAction({
 }) => Tooltip(
   message: tooltip,
   child: Material(
-    color: Colors.white,
+    color: color,
     shape: RoundedRectangleBorder(
       borderRadius: BorderRadius.circular(6),
       side: BorderSide(color: color),
@@ -217,13 +217,13 @@ Widget _programAction({
     child: InkWell(
       key: ValueKey('program-action-$tooltip'),
       onTap: onPressed,
-      hoverColor: color.withValues(alpha: 0.20),
+      hoverColor: Colors.white.withValues(alpha: 0.20),
       borderRadius: BorderRadius.circular(6),
       child: SizedBox(
         width: 36,
         height: 32,
         child: Center(
-          child: AppIcon(icon, size: 18, color: color, semanticLabel: tooltip),
+          child: AppIcon(icon, size: 18, color: Colors.white, semanticLabel: tooltip),
         ),
       ),
     ),
