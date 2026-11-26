@@ -351,6 +351,7 @@ class FinanceStore extends ChangeNotifier {
     bool fromImport = false,
   }) {
     _requireCurrentYear(record.year);
+    if (previous != null) _requireCurrentYear(previous.year);
     if (fromImport) {
       // Excel import keeps amounts as-is; only accept real UACS budget lines.
       final code = codeKey(record.code);
