@@ -795,6 +795,13 @@ class _BarHover {
   final String program, label;
   final int amount;
   final double? percent;
+  Color get color => switch (label) {
+    'Disbursed' => _disbursed,
+    'Obligated' => _obligated,
+    'Balance' => _balanceBar,
+    _ => navy,
+  };
+  Color get textColor => color == _disbursed ? Colors.white : navy;
 }
 
 class _UtilizationChart extends StatefulWidget {
@@ -872,7 +879,7 @@ class _UtilizationChartState extends State<_UtilizationChart> {
                             constraints: const BoxConstraints(maxWidth: 215),
                             padding: const EdgeInsets.all(10),
                             decoration: BoxDecoration(
-                              color: navy,
+                              color: hovered!.color,
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Column(
@@ -881,15 +888,15 @@ class _UtilizationChartState extends State<_UtilizationChart> {
                               children: [
                                 Text(
                                   money(hovered!.amount),
-                                  style: const TextStyle(
-                                    color: Colors.white, fontSize: 12,
+                                  style: TextStyle(
+                                    color: hovered!.textColor, fontSize: 12,
                                   ),
                                 ),
                                 if (hovered!.percent != null)
                                   Text(
                                     '${hovered!.percent!.toStringAsFixed(2)}%',
-                                    style: const TextStyle(
-                                      color: Colors.white, fontSize: 12,
+                                    style: TextStyle(
+                                      color: hovered!.textColor, fontSize: 12,
                                     ),
                                   ),
                               ],
