@@ -626,7 +626,7 @@ class _DashboardPageState extends State<DashboardPage> {
                 rateInset(_Rate(
                   'Disbursement Rate',
                   t.disbursement,
-                  t.allotment,
+                  t.obligation,
                   navy,
                   compact: compactRates,
                 )),
