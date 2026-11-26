@@ -253,7 +253,7 @@ class _ExcelImportDialogState extends State<ExcelImportDialog> {
     canPop: !_session.busy,
     child: Dialog(
       key: const ValueKey('budget-import-dialog'),
-      alignment: const Alignment(0.45, 0),
+      alignment: Alignment.center,
       insetPadding: const EdgeInsets.symmetric(horizontal: 40, vertical: 32),
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 480),
