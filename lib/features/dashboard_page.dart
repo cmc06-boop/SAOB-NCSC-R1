@@ -864,10 +864,11 @@ class _DashboardAuditPreview extends StatelessWidget {
 
   static const _border = BorderSide(color: Color(0xffd5e1f2));
   static const _columns = <int, TableColumnWidth>{
-    0: FixedColumnWidth(188),
-    1: FixedColumnWidth(112),
-    2: FixedColumnWidth(210),
-    3: FlexColumnWidth(),
+    0: FixedColumnWidth(48),
+    1: FixedColumnWidth(188),
+    2: FixedColumnWidth(112),
+    3: FixedColumnWidth(210),
+    4: FlexColumnWidth(),
   };
   static const _header = TextStyle(
     fontSize: 13,
@@ -965,7 +966,7 @@ class _DashboardAuditPreview extends StatelessWidget {
                 builder: (context, constraints) => SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
                   child: SizedBox(
-                    width: math.max(650.0, constraints.maxWidth),
+                    width: math.max(698.0, constraints.maxWidth),
                     height: constraints.maxHeight,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -978,6 +979,7 @@ class _DashboardAuditPreview extends StatelessWidget {
                           columnWidths: _columns,
                           children: [
                             _row([
+                              cell('#', style: _header, center: true),
                               cell('Date', style: _header, center: true),
                               cell('Time', style: _header, center: true),
                               cell('Action', style: _header, center: true),
@@ -1005,6 +1007,7 @@ class _DashboardAuditPreview extends StatelessWidget {
                                       cell(''),
                                       cell(''),
                                       cell(''),
+                                      cell(''),
                                       cell('No audit records found.',
                                           style: const TextStyle(
                                             fontSize: 13,
@@ -1013,6 +1016,7 @@ class _DashboardAuditPreview extends StatelessWidget {
                                     ], Colors.white)
                                   else
                                     _row([
+                                      cell('${i + 1}', center: true, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: blue)),
                                       cell(dateOnly(record['at']), center: true),
                                       cell(timeOnly(record['at']), center: true),
                                       AuditActionBadge('${record['action'] ?? ''}'),
