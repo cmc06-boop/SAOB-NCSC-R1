@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:typed_data';
+import 'package:flutter/services.dart' show MethodChannel;
 import 'dart:math' as math;
 
 import 'package:file_selector/file_selector.dart';
@@ -159,18 +160,29 @@ class _ReportsPageState extends State<ReportsPage> {
               : selectedProgram;
       final defaultName = 'NCSC-R1-$selectedYear-$fileLabel.$extension';
       final suggestedName = await _nextDownloadName(defaultName);
-      final location = await getSaveLocation(
-        initialDirectory: lastExportFolder,
-        suggestedName: suggestedName,
-        acceptedTypeGroups: [
-          XTypeGroup(label: fmt == 'PDF' ? 'PDF' : 'Excel', extensions: [extension]),
-        ],
-        confirmButtonText: 'Download',
-      );
-      if (location == null) return;
-      final folderPath = path.dirname(location.path);
+      final String? selectedPath;
+      if (Platform.isWindows) {
+        selectedPath = await const MethodChannel('ncsc/export_save_as')
+            .invokeMethod<String>('select', {
+              'initialDirectory': lastExportFolder ?? '',
+              'suggestedName': suggestedName,
+              'extension': extension,
+            });
+      } else {
+        final location = await getSaveLocation(
+          initialDirectory: lastExportFolder,
+          suggestedName: suggestedName,
+          acceptedTypeGroups: [
+            XTypeGroup(label: fmt == 'PDF' ? 'PDF' : 'Excel', extensions: [extension]),
+          ],
+          confirmButtonText: 'Download',
+        );
+        selectedPath = location?.path;
+      }
+      if (selectedPath == null) return;
+      final folderPath = path.dirname(selectedPath);
       lastExportFolder = folderPath;
-      final chosenName = path.basename(location.path);
+      final chosenName = path.basename(selectedPath);
       final normalizedName = chosenName.toLowerCase().endsWith('.$extension')
           ? chosenName
           : '$chosenName.$extension';
