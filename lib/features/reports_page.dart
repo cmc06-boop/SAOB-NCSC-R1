@@ -633,7 +633,8 @@ class _ReportsPageState extends State<ReportsPage> {
         key: const ValueKey('reports-export'),
         onPressed: busy || records.isEmpty ? null : () => generate(reportFormat),
         style: FilledButton.styleFrom(
-          backgroundColor: blue,
+          backgroundColor: const Color(0xff1e3a8a),
+          foregroundColor: Colors.white,
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
           tapTargetSize: MaterialTapTargetSize.shrinkWrap,
