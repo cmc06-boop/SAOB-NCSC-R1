@@ -318,7 +318,7 @@ class _ReportsPageState extends State<ReportsPage> {
       builder: (context, viewport) => SingleChildScrollView(
         key: const ValueKey('reports-page-scroll'),
         primary: false,
-        padding: const EdgeInsets.fromLTRB(28, 30, 28, 28),
+        padding: const EdgeInsets.fromLTRB(28, 18, 28, 14),
         child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -355,14 +355,14 @@ class _ReportsPageState extends State<ReportsPage> {
                     ],
                   ),
           ),
-          const SizedBox(height: 22),
+          const SizedBox(height: 12),
           LayoutBuilder(
             builder: (context, c) {
               // Keep the wide layout compact enough for desktop windows;
               // narrower or shorter viewports scroll the complete page.
               final panelHeight = c.maxWidth >= 900
-                  ? (viewport.maxHeight - 280).clamp(300.0, 378.0).toDouble()
-                  : 378.0;
+                  ? (viewport.maxHeight - 400).clamp(252.0, 300.0).toDouble()
+                  : 280.0;
               final summary = _SummaryCard(
                 totals: totals,
                 expand: true,
@@ -395,7 +395,7 @@ class _ReportsPageState extends State<ReportsPage> {
               );
             },
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 10),
           _HistoryCard(history: history),
         ],
         ),
@@ -1279,8 +1279,8 @@ class _SummaryCard extends StatelessWidget {
       final valueStyle = TextStyle(
         color: entry.$4 ?? ink,
         fontWeight: badge == null ? FontWeight.w600 : FontWeight.w700,
-        fontSize: 14,
-        height: 1.25,
+        fontSize: 13,
+        height: 1.15,
       );
       final value = badge == null
           ? Text(
@@ -1290,7 +1290,7 @@ class _SummaryCard extends StatelessWidget {
               style: valueStyle,
             )
           : Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
               decoration: BoxDecoration(
                 color: badge,
                 borderRadius: BorderRadius.circular(8),
@@ -1314,11 +1314,11 @@ class _SummaryCard extends StatelessWidget {
           ),
         ),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 14),
+          padding: const EdgeInsets.symmetric(horizontal: 10),
           child: Align(
             alignment: Alignment.centerLeft,
             child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8),
+              padding: const EdgeInsets.symmetric(vertical: 2),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
@@ -1329,12 +1329,12 @@ class _SummaryCard extends StatelessWidget {
                       softWrap: true,
                       style: const TextStyle(
                         fontWeight: FontWeight.w600,
-                        fontSize: 13.5,
-                        height: 1.25,
+                        fontSize: 13,
+                        height: 1.15,
                       ),
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: 8),
                   Expanded(
                     flex: 6,
                     child: Align(
@@ -1381,7 +1381,7 @@ class _SummaryCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 8),
           if (expand) Expanded(child: table) else table,
         ],
       ),
