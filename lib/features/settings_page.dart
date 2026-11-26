@@ -312,7 +312,7 @@ class _SettingsTable extends StatelessWidget {
         ], const Color(0xffeef3fb)),
       ],
     );
-    final bodyTable = Table(
+    final bodyTable = rows.isEmpty ? null : Table(
       border: const TableBorder(
         horizontalInside: _border,
         verticalInside: _border,
@@ -320,16 +320,6 @@ class _SettingsTable extends StatelessWidget {
       columnWidths: _widths,
       defaultVerticalAlignment: TableCellVerticalAlignment.middle,
       children: [
-        if (rows.isEmpty)
-          _row([
-            _text(''),
-            _text(
-              'No records found.',
-              style: const TextStyle(fontSize: 13, color: muted),
-            ),
-            for (var i = 1; i < columns.length; i++) _text(''),
-          ], Colors.white)
-        else
           for (var i = 0; i < rows.length; i++)
             _row([
               _text(
@@ -351,7 +341,9 @@ class _SettingsTable extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         headerTable,
-        Expanded(child: _SettingsScroller(child: bodyTable)),
+        Expanded(child: bodyTable == null
+            ? const Center(child: Text('No records found.', textAlign: TextAlign.center, style: TextStyle(fontSize: 13, color: muted)))
+            : _SettingsScroller(child: bodyTable)),
       ],
     );
   }
