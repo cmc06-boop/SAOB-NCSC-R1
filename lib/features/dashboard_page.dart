@@ -765,14 +765,6 @@ class _DashboardPageState extends State<DashboardPage> {
               onSeeAll: widget.onViewAuditTrail,
             ),
           ),
-          if (rows.isEmpty)
-            const Padding(
-              padding: EdgeInsets.only(top: 5),
-              child: Text(
-                'No budget records for these filters. Add a record, or import an Excel file from Add Record.',
-                style: TextStyle(color: muted),
-              ),
-            ),
         ],
       );
     return LayoutBuilder(
