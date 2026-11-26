@@ -203,7 +203,7 @@ class _AuditTableState extends State<_AuditTable> {
             _row([
               _AuditCell(dateOnly(r['at']), style: body, align: TextAlign.center),
               _AuditCell(timeOnly(r['at']), style: body, align: TextAlign.center),
-              _AuditActionBadge('${r['action']}'),
+              AuditActionBadge('${r['action']}'),
               _AuditCell(
                 auditDetailSentence(
                   '${r['detail'] ?? ''}',
@@ -235,8 +235,8 @@ class _AuditTableState extends State<_AuditTable> {
   }
 }
 
-class _AuditActionBadge extends StatelessWidget {
-  const _AuditActionBadge(this.action);
+class AuditActionBadge extends StatelessWidget {
+  const AuditActionBadge(this.action);
   final String action;
 
   @override
