@@ -214,6 +214,7 @@ Widget _programAction({
     child: InkWell(
       key: ValueKey('program-action-$tooltip'),
       onTap: onPressed,
+      hoverColor: color.withValues(alpha: 0.20),
       borderRadius: BorderRadius.circular(6),
       child: SizedBox(
         width: 36,
