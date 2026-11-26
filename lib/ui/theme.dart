@@ -87,6 +87,7 @@ ThemeData appTheme() => ThemeData(
   ),
   dividerTheme: const DividerThemeData(color: line, space: 1),
   dialogTheme: DialogThemeData(
+    alignment: Alignment.center,
     backgroundColor: Colors.white,
     surfaceTintColor: Colors.transparent,
     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
