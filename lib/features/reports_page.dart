@@ -223,6 +223,16 @@ class _ReportsPageState extends State<ReportsPage> {
       }
       final label = isSummary ? 'Summary'
           : selectedProgram.isEmpty ? 'All' : selectedProgram;
+      if (!mounted) return;
+      final confirmed = await showDialog<bool>(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => _ModernPrintPreview(
+          bytes: bytes,
+          reportName: 'NCSC-R1-$selectedYear-$label',
+        ),
+      );
+      if (confirmed != true || !mounted) return;
       final submitted = await Printing.layoutPdf(
         name: 'NCSC-R1-$selectedYear-$label',
         onLayout: (_) async => bytes,
@@ -1777,6 +1787,110 @@ class _HistoryCardState extends State<_HistoryCard> {
             ),
           ),
         ],
+        ),
+      ),
+    );
+  }
+}
+
+
+/// In-app print preview with the same report bytes sent to the printer.
+class _ModernPrintPreview extends StatelessWidget {
+  const _ModernPrintPreview({required this.bytes, required this.reportName});
+  final Uint8List bytes;
+  final String reportName;
+
+  @override
+  Widget build(BuildContext context) {
+    final viewport = MediaQuery.sizeOf(context);
+    return Dialog(
+      backgroundColor: Colors.white,
+      surfaceTintColor: Colors.transparent,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      clipBehavior: Clip.antiAlias,
+      insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+      child: SizedBox(
+        width: math.min(1040.0, viewport.width - 48),
+        height: math.min(820.0, viewport.height - 40),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 16, 16, 14),
+              child: Row(
+                children: [
+                  const Icon(Icons.print_outlined, color: navy, size: 25),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('Print Preview', style: TextStyle(
+                          color: navy, fontSize: 20, fontWeight: FontWeight.w700)),
+                        const SizedBox(height: 4),
+                        Text(reportName, style: const TextStyle(color: muted, fontSize: 13),
+                          maxLines: 1, overflow: TextOverflow.ellipsis),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    tooltip: 'Close',
+                    onPressed: () => Navigator.of(context).pop(false),
+                    icon: const Icon(Icons.close, color: muted),
+                  ),
+                ],
+              ),
+            ),
+            const Divider(height: 1),
+            Expanded(
+              child: ColoredBox(
+                color: const Color(0xffedf2fa),
+                child: PdfPreview(
+                  build: (_) async => bytes,
+                  useActions: false,
+                  allowPrinting: false,
+                  allowSharing: false,
+                  canChangePageFormat: false,
+                  canChangeOrientation: false,
+                  canDebug: false,
+                  scrollViewDecoration: const BoxDecoration(color: Color(0xffedf2fa)),
+                ),
+              ),
+            ),
+            const Divider(height: 1),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  const Expanded(
+                    child: Text('Review the report before choosing a printer.',
+                      style: TextStyle(color: muted, fontSize: 12)),
+                  ),
+                  const SizedBox(width: 12),
+                  HoverScaleButton(
+                    enabled: true,
+                    child: TextButton(
+                      style: dialogCancelStyle(),
+                      onPressed: () => Navigator.of(context).pop(false),
+                      child: const Text('Cancel'),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  HoverScaleButton(
+                    enabled: true,
+                    child: FilledButton.icon(
+                      style: FilledButton.styleFrom(
+                        backgroundColor: navy, foregroundColor: Colors.white),
+                      onPressed: () => Navigator.of(context).pop(true),
+                      icon: const Icon(Icons.print_outlined, size: 18),
+                      label: const Text('Print'),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );
