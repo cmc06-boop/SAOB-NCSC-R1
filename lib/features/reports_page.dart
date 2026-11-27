@@ -8,6 +8,7 @@ import 'package:path/path.dart' as path;
 import 'package:intl/intl.dart' hide TextDirection;
 import 'package:material_ui/material_ui.dart';
 import 'package:printing/printing.dart';
+import 'package:pdf/pdf.dart';
 
 import '../core/format.dart';
 import '../data/export_file.dart';
@@ -215,30 +216,29 @@ class _ReportsPageState extends State<ReportsPage> {
     }
     setState(() => busy = true);
     try {
-      final bytes = isSummary
-          ? await pdfSaobSummaryReport(rows, year: selectedYear)
-          : await pdfAllProgramsReport(rows, year: selectedYear);
-      if (bytes.isEmpty) {
-        throw const FinanceError('The report could not be prepared for printing.');
-      }
       final label = isSummary ? 'Summary'
           : selectedProgram.isEmpty ? 'All' : selectedProgram;
+      final reportName = 'NCSC-R1-$selectedYear-$label';
+      final info = await Printing.info();
+      if (!info.directPrint || !info.canListPrinters) {
+        throw const FinanceError('Direct printing is not supported on this device.');
+      }
+      final printers = await Printing.listPrinters();
       if (!mounted) return;
-      final confirmed = await showDialog<bool>(
+      final submitted = await showDialog<bool>(
         context: context,
         barrierDismissible: false,
         builder: (_) => _ModernPrintPreview(
-          bytes: bytes,
-          reportName: 'NCSC-R1-$selectedYear-$label',
+          reportName: reportName,
+          printers: printers,
+          render: (format, landscape) => isSummary
+              ? pdfSaobSummaryReport(rows, year: selectedYear,
+                  pageFormat: format, landscape: landscape)
+              : pdfAllProgramsReport(rows, year: selectedYear,
+                  pageFormat: format, landscape: landscape),
         ),
       );
-      if (confirmed != true || !mounted) return;
-      final submitted = await Printing.layoutPdf(
-        name: 'NCSC-R1-$selectedYear-$label',
-        onLayout: (_) async => bytes,
-        dynamicLayout: false,
-      );
-      if (submitted && mounted) {
+      if (submitted == true && mounted) {
         showMessage(context, 'Report sent for printing.');
       }
     } catch (e) {
@@ -1794,103 +1794,264 @@ class _HistoryCardState extends State<_HistoryCard> {
 }
 
 
-/// In-app print preview with the same report bytes sent to the printer.
-class _ModernPrintPreview extends StatelessWidget {
-  const _ModernPrintPreview({required this.bytes, required this.reportName});
-  final Uint8List bytes;
+/// Integrated preview and direct printer selection.
+class _ModernPrintPreview extends StatefulWidget {
+  const _ModernPrintPreview({
+    required this.reportName, required this.printers, required this.render,
+  });
   final String reportName;
+  final List<Printer> printers;
+  final Future<Uint8List> Function(PdfPageFormat, bool) render;
+
+  @override
+  State<_ModernPrintPreview> createState() => _ModernPrintPreviewState();
+}
+
+class _ModernPrintPreviewState extends State<_ModernPrintPreview> {
+  Printer? printer;
+  String paper = 'A4';
+  bool landscape = true, busy = false;
+  String? error;
+  late Future<Uint8List> document;
+
+  PdfPageFormat get format => switch (paper) {
+    'Letter' => PdfPageFormat.letter,
+    'Legal' => PdfPageFormat.legal,
+    _ => PdfPageFormat.a4,
+  };
+
+  @override
+  void initState() {
+    super.initState();
+    for (final p in widget.printers) {
+      if (p.isAvailable && (printer == null || p.isDefault)) printer = p;
+    }
+    document = widget.render(format, landscape);
+  }
+
+  void changePaper(String? value) {
+    if (value == null) return;
+    setState(() {
+      paper = value;
+      error = null;
+      document = widget.render(format, landscape);
+    });
+  }
+
+  Future<void> submit() async {
+    final selected = printer;
+    if (selected == null || busy) return;
+    setState(() { busy = true; error = null; });
+    try {
+      final bytes = await document;
+      if (bytes.isEmpty) throw const FinanceError('The report is empty.');
+      final result = await Printing.directPrintPdf(
+        printer: selected,
+        name: widget.reportName,
+        format: landscape ? format.landscape : format.portrait,
+        onLayout: (_) async => bytes,
+        dynamicLayout: false,
+        usePrinterSettings: false,
+      );
+      if (!mounted) return;
+      if (result) {
+        setState(() => busy = false);
+        Navigator.of(context).pop(true);
+      } else {
+        setState(() { busy = false; error = 'Printing was cancelled or could not be started.'; });
+      }
+    } catch (_) {
+      if (mounted) setState(() {
+        busy = false; error = 'Unable to print. Check the selected printer and paper settings.';
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final viewport = MediaQuery.sizeOf(context);
-    return Dialog(
-      backgroundColor: Colors.white,
-      surfaceTintColor: Colors.transparent,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      clipBehavior: Clip.antiAlias,
-      insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-      child: SizedBox(
-        width: math.min(1040.0, viewport.width - 48),
-        height: math.min(820.0, viewport.height - 40),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(24, 16, 16, 14),
-              child: Row(
-                children: [
+    final selected = printer;
+    return PopScope(
+      canPop: !busy,
+      child: Dialog(
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        clipBehavior: Clip.antiAlias,
+        insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+        child: SizedBox(
+          width: math.min(1120.0, viewport.width - 48),
+          height: math.min(820.0, viewport.height - 40),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(24, 16, 16, 14),
+                child: Row(children: [
                   const Icon(Icons.print_outlined, color: navy, size: 25),
                   const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text('Print Preview', style: TextStyle(
-                          color: navy, fontSize: 20, fontWeight: FontWeight.w700)),
-                        const SizedBox(height: 4),
-                        Text(reportName, style: const TextStyle(color: muted, fontSize: 13),
-                          maxLines: 1, overflow: TextOverflow.ellipsis),
-                      ],
-                    ),
-                  ),
+                  Expanded(child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('Print Preview', style: TextStyle(
+                        color: navy, fontSize: 20, fontWeight: FontWeight.w700)),
+                      Text(widget.reportName, style: const TextStyle(color: muted, fontSize: 13),
+                        maxLines: 1, overflow: TextOverflow.ellipsis),
+                    ],
+                  )),
                   IconButton(
                     tooltip: 'Close',
-                    onPressed: () => Navigator.of(context).pop(false),
+                    onPressed: busy ? null : () => Navigator.of(context).pop(false),
                     icon: const Icon(Icons.close, color: muted),
                   ),
-                ],
+                ]),
               ),
-            ),
-            const Divider(height: 1),
-            Expanded(
-              child: ColoredBox(
-                color: const Color(0xffedf2fa),
-                child: PdfPreview(
-                  build: (_) async => bytes,
-                  useActions: false,
-                  allowPrinting: false,
-                  allowSharing: false,
-                  canChangePageFormat: false,
-                  canChangeOrientation: false,
-                  canDebug: false,
-                  scrollViewDecoration: const BoxDecoration(color: Color(0xffedf2fa)),
+              const Divider(height: 1),
+              Expanded(child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Expanded(child: ColoredBox(
+                    color: const Color(0xffedf2fa),
+                    child: FutureBuilder<Uint8List>(
+                      future: document,
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState != ConnectionState.done) {
+                          return const Center(child: CircularProgressIndicator());
+                        }
+                        if (snapshot.hasError || !snapshot.hasData) {
+                          return const Center(child: Text('Unable to prepare this report layout.'));
+                        }
+                        final bytes = snapshot.data!;
+                        return PdfPreview(
+                          key: ValueKey(document),
+                          build: (_) async => bytes,
+                          useActions: false,
+                          allowPrinting: false,
+                          allowSharing: false,
+                          canChangePageFormat: false,
+                          canChangeOrientation: false,
+                          canDebug: false,
+                          scrollViewDecoration: const BoxDecoration(color: Color(0xffedf2fa)),
+                        );
+                      },
+                    ),
+                  )),
+                  const VerticalDivider(width: 1),
+                  SizedBox(
+                    width: math.min(290.0, math.max(200.0, (viewport.width - 48) * .36)),
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.all(20),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          const Text('Print Setup', style: TextStyle(
+                            fontSize: 16, color: navy, fontWeight: FontWeight.w700)),
+                          const SizedBox(height: 20),
+                          const Text('Printer', style: TextStyle(fontWeight: FontWeight.w700)),
+                          const SizedBox(height: 8),
+                          DropdownButtonFormField<Printer>(
+                            initialValue: selected,
+                            isExpanded: true,
+                            decoration: const InputDecoration(),
+                            items: [
+                              for (final p in widget.printers)
+                                DropdownMenuItem(value: p, enabled: p.isAvailable,
+                                  child: Text(p.name, overflow: TextOverflow.ellipsis)),
+                            ],
+                            onChanged: busy ? null : (value) => setState(() {
+                              printer = value; error = null;
+                            }),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(selected == null ? 'No available printer selected'
+                            : 'Status: Available', style: TextStyle(
+                              color: selected == null ? red : muted, fontSize: 12)),
+                          const SizedBox(height: 20),
+                          const Text('Paper size', style: TextStyle(fontWeight: FontWeight.w700)),
+                          const SizedBox(height: 8),
+                          DropdownButtonFormField<String>(
+                            initialValue: paper,
+                            isExpanded: true,
+                            decoration: const InputDecoration(),
+                            items: [
+                              for (final size in ['A4', 'Letter', 'Legal'])
+                                DropdownMenuItem(value: size, child: Text(size)),
+                            ],
+                            onChanged: busy ? null : changePaper,
+                          ),
+                          const SizedBox(height: 20),
+                          const Text('Orientation', style: TextStyle(fontWeight: FontWeight.w700)),
+                          const SizedBox(height: 8),
+                          DropdownButtonFormField<bool>(
+                            initialValue: landscape,
+                            isExpanded: true,
+                            decoration: const InputDecoration(),
+                            items: const [
+                              DropdownMenuItem(value: false, child: Text('Portrait')),
+                              DropdownMenuItem(value: true, child: Text('Landscape')),
+                            ],
+                            onChanged: busy ? null : (value) {
+                              if (value == null) return;
+                              setState(() {
+                                landscape = value;
+                                error = null;
+                                document = widget.render(format, landscape);
+                              });
+                            },
+                          ),
+                          const SizedBox(height: 20),
+                          const Text('Paper source and advanced driver options use printer defaults.',
+                            style: TextStyle(color: muted, fontSize: 12)),
+                          if (error != null) ...[
+                            const SizedBox(height: 12),
+                            Text(error!, style: const TextStyle(color: red, fontSize: 12)),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              )),
+              const Divider(height: 1),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    if (busy) const Expanded(child: LinearProgressIndicator()),
+                    if (busy) const SizedBox(width: 16),
+                    HoverScaleButton(
+                      enabled: !busy,
+                      child: TextButton(
+                        style: dialogCancelStyle(),
+                        onPressed: busy ? null : () => Navigator.of(context).pop(false),
+                        child: const Text('Cancel'),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    FutureBuilder<Uint8List>(
+                      future: document,
+                      builder: (context, snapshot) {
+                        final ready = !busy && selected != null &&
+                          snapshot.connectionState == ConnectionState.done &&
+                          snapshot.hasData && !snapshot.hasError;
+                        return HoverScaleButton(
+                          enabled: ready,
+                          child: FilledButton.icon(
+                            style: FilledButton.styleFrom(
+                              backgroundColor: navy, foregroundColor: Colors.white),
+                            onPressed: ready ? submit : null,
+                            icon: const Icon(Icons.print_outlined, size: 18),
+                            label: Text(busy ? 'Printing…' : 'Print'),
+                          ),
+                        );
+                      },
+                    ),
+                  ],
                 ),
               ),
-            ),
-            const Divider(height: 1),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  const Expanded(
-                    child: Text('Review the report before choosing a printer.',
-                      style: TextStyle(color: muted, fontSize: 12)),
-                  ),
-                  const SizedBox(width: 12),
-                  HoverScaleButton(
-                    enabled: true,
-                    child: TextButton(
-                      style: dialogCancelStyle(),
-                      onPressed: () => Navigator.of(context).pop(false),
-                      child: const Text('Cancel'),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  HoverScaleButton(
-                    enabled: true,
-                    child: FilledButton.icon(
-                      style: FilledButton.styleFrom(
-                        backgroundColor: navy, foregroundColor: Colors.white),
-                      onPressed: () => Navigator.of(context).pop(true),
-                      icon: const Icon(Icons.print_outlined, size: 18),
-                      label: const Text('Print'),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
