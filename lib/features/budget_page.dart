@@ -178,6 +178,7 @@ class _BudgetPageState extends State<BudgetPage> {
         ),
         const SizedBox(height: 18),
         Flexible(
+          fit: rows.isEmpty ? FlexFit.tight : FlexFit.loose,
           child: Panel(
             padding: 0,
             child: BudgetTable(
