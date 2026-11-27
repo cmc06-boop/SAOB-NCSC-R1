@@ -1212,7 +1212,12 @@ class _Rate extends StatelessWidget {
   final Color color;
 
   @override
-  Widget build(BuildContext context) => Padding(
+  Widget build(BuildContext context) {
+    final isObligation = color == blue;
+    final start = isObligation ? const Color(0xff1e3a8a) : const Color(0xffb91c35);
+    final end = isObligation ? const Color(0xff60a5fa) : const Color(0xffef6475);
+    final progress = total == 0 ? 0.0 : (value / total).clamp(0.0, 1.0).toDouble();
+    return Padding(
     padding: const EdgeInsets.only(left: 10),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1236,8 +1241,8 @@ class _Rate extends StatelessWidget {
               textAlign: TextAlign.right,
               style: TextStyle(
                 fontSize: compact ? 13 : 16,
-                fontWeight: FontWeight.w600,
-                color: const Color(0xff4d5e7a),
+                fontWeight: FontWeight.w800,
+                color: start,
               ),
             ),
           ],
@@ -1245,16 +1250,42 @@ class _Rate extends StatelessWidget {
         SizedBox(height: compact ? 4 : 8),
         ClipRRect(
           borderRadius: BorderRadius.circular(99),
-          child: LinearProgressIndicator(
-            value: total == 0 ? 0 : (value / total).clamp(0, 1),
-            minHeight: compact ? 10 : 14,
-            color: color,
-            backgroundColor: const Color(0xffe6ebf3),
+          child: Semantics(
+            label: label,
+            value: rate(value, total),
+            child: SizedBox(
+              height: compact ? 12 : 16,
+              child: LayoutBuilder(
+                builder: (context, constraints) => TweenAnimationBuilder<double>(
+                  tween: Tween<double>(begin: 0, end: progress),
+                  duration: const Duration(milliseconds: 350),
+                  curve: Curves.easeOutCubic,
+                  builder: (context, fraction, child) => Stack(
+                    children: [
+                      const Positioned.fill(
+                        child: ColoredBox(color: Color(0xffe6ebf3)),
+                      ),
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: Container(
+                          width: constraints.maxWidth * fraction,
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(colors: [start, end]),
+                            borderRadius: BorderRadius.circular(99),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
           ),
         ),
       ],
     ),
   );
+  }
 }
 
 class _DonutPainter extends CustomPainter {
