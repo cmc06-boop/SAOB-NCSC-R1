@@ -7,6 +7,7 @@ import 'package:file_selector/file_selector.dart';
 import 'package:path/path.dart' as path;
 import 'package:intl/intl.dart' hide TextDirection;
 import 'package:material_ui/material_ui.dart';
+import 'package:pdf/pdf.dart';
 import 'package:printing/printing.dart';
 
 import '../core/format.dart';
@@ -316,6 +317,70 @@ class _ReportsPageState extends State<ReportsPage> {
     }
   }
 
+  Future<Uint8List> _pdfBytes(
+    List<BudgetRecord> rows, {
+    required int year,
+    required bool summary,
+    PdfPageFormat format = PdfPageFormat.a4,
+  }) {
+    return summary
+        ? pdfSaobSummaryReport(rows, year: year, pageFormat: format)
+        : pdfAllProgramsReport(rows, year: year, pageFormat: format);
+  }
+
+  /// Open the system print dialog for the same PDF used by Export.
+  Future<void> printReport() async {
+    if (busy) return;
+    final selectedYear = year;
+    final selectedProgram = program;
+    final isSummary = selectedProgram == summarySelection;
+    final rows = widget.store.records(
+      selectedYear,
+      program: isSummary ? '' : selectedProgram,
+    );
+    if (rows.isEmpty) {
+      showMessage(context, 'There are no records for this report.');
+      return;
+    }
+    setState(() => busy = true);
+    try {
+      final fileLabel = isSummary
+          ? 'Summary'
+          : selectedProgram.isEmpty
+              ? 'All'
+              : selectedProgram;
+      final printed = await Printing.layoutPdf(
+        name: 'NCSC-R1-$selectedYear-$fileLabel',
+        format: PdfPageFormat.a4.landscape,
+        onLayout: (format) => _pdfBytes(
+          rows,
+          year: selectedYear,
+          summary: isSummary,
+          format: format,
+        ),
+      );
+      if (!printed || !mounted) return;
+      widget.store.logReport(
+        _reportType,
+        selectedYear,
+        isSummary ? 'Summary' : selectedProgram,
+        'Print',
+      );
+    } catch (e) {
+      if (mounted) {
+        showMessage(
+          context,
+          e is FinanceError
+              ? e.message
+              : 'The report could not be printed. Please try again.',
+          error: true,
+        );
+      }
+    } finally {
+      if (mounted) setState(() => busy = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     if (program.isNotEmpty &&
@@ -572,6 +637,8 @@ class _ReportsPageState extends State<ReportsPage> {
             ),
           ),
           const SizedBox(height: 32),
+          _printButton(records),
+          const SizedBox(height: 10),
           _exportButton(records),
         ],
         ),
@@ -622,6 +689,27 @@ class _ReportsPageState extends State<ReportsPage> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _printButton(List<BudgetRecord> records) {
+    return HoverScaleButton(
+      enabled: !busy && records.isNotEmpty,
+      child: OutlinedButton.icon(
+        key: const ValueKey('reports-print'),
+        onPressed: busy || records.isEmpty ? null : printReport,
+        style: OutlinedButton.styleFrom(
+          foregroundColor: const Color(0xff1e3a8a),
+          backgroundColor: Colors.white,
+          side: const BorderSide(color: Color(0xff1e3a8a)),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          visualDensity: VisualDensity.compact,
+        ),
+        icon: const AppIcon('printer', size: 18),
+        label: const Text('Print'),
       ),
     );
   }
