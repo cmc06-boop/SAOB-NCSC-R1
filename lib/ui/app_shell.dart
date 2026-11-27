@@ -250,7 +250,7 @@ class _AppShellState extends State<AppShell> {
                         ),
                         if (user.can('settings'))
                           Padding(
-                            padding: const EdgeInsets.fromLTRB(12, 4, 12, 0),
+                            padding: const EdgeInsets.fromLTRB(10, 4, 10, 0),
                             child: Tooltip(
                               message: 'Backup & Restore',
                               child: Material(
@@ -264,14 +264,16 @@ class _AppShellState extends State<AppShell> {
                                   hoverColor: Colors.transparent,
                                   onTap: openBackup,
                                   child: Padding(
-                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                                    padding: EdgeInsets.symmetric(horizontal: expanded ? 12 : 0, vertical: 13),
                                     child: Row(
                                       mainAxisAlignment: expanded ? MainAxisAlignment.start : MainAxisAlignment.center,
                                       children: [
-                                        const AppIcon('database', color: Colors.white, size: 18),
+                                        const SizedBox(width: 3),
+                                        SizedBox(width: expanded ? 10 : 0),
+                                        const Icon(Icons.settings_backup_restore, color: Colors.white, size: 18),
                                         if (expanded) ...[
                                           const SizedBox(width: 12),
-                                          const Expanded(child: Text('Backup & Restore', style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600))),
+                                          Expanded(child: Text('Backup & Restore', style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: _backupOpen ? FontWeight.w700 : FontWeight.w500))),
                                         ],
                                       ],
                                     ),
@@ -292,7 +294,7 @@ class _AppShellState extends State<AppShell> {
                             child: Tooltip(
                               message: 'My Account',
                               child: Material(
-                                color: Colors.white.withValues(alpha: 0.08),
+                                color: Colors.transparent,
                                 borderRadius: BorderRadius.circular(12),
                                 child: InkWell(
                                   key: const ValueKey('nav-account'),
