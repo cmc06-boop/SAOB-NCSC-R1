@@ -12,16 +12,26 @@ import '../ui/theme.dart';
 
 const chartColors = [
   Color(0xff245cb6),
-  Color(0xffd42035),
-  Color(0xffeab308),
-  Color(0xff60a5fa),
+  Color(0xffc94c4c),
+  Color(0xffd9ad42),
+  Color(0xff6394d1),
+  Color(0xff41958c),
   Color(0xff1e3a8a),
-  Color(0xffe66b79),
-  Color(0xfff5cf65),
-  Color(0xff2875c7),
-  Color(0xffa82947),
-  Color(0xff80a6e1),
+  Color(0xffbd7890),
+  Color(0xffd88b4e),
+  Color(0xff8d9fc5),
+  Color(0xffa65454),
 ];
+
+Color _chartColor(int slot) {
+  if (slot < chartColors.length) return chartColors[slot];
+  // Golden-angle hue spacing with restrained saturation for extra entries.
+  final extra = slot - chartColors.length;
+  return HSLColor.fromAHSL(
+    1, (210 + extra * 137.508) % 360,
+    .42 + (extra % 3) * .07, .43 + (extra % 4) * .07,
+  ).toColor();
+}
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({
@@ -38,6 +48,7 @@ class DashboardPage extends StatefulWidget {
 class _DashboardPageState extends State<DashboardPage> {
   int year = manilaNow().year;
   String program = '', item = '';
+  Map<String, Color> _legendColors = const {};
   // Keep the donut center readable even for large regional totals.
   // The KPI card and accessibility label continue to show exact pesos.
   String _compactAllotment(int cents) {
@@ -103,6 +114,7 @@ class _DashboardPageState extends State<DashboardPage> {
                 painter: _DonutPainter(
                   shares.values.toList(),
                   annualAllotment,
+                  shares.keys.map((key) => _legendColors[key] ?? blue).toList(),
                   selectedKey == null ? -1 : shares.keys.toList().indexOf(selectedKey),
                 ),
               ),
@@ -176,7 +188,7 @@ class _DashboardPageState extends State<DashboardPage> {
                     width: 10,
                     height: 10,
                     decoration: BoxDecoration(
-                      color: chartColors[entries.indexOf(entry) % chartColors.length],
+                      color: _legendColors[entry.key] ?? blue,
                       borderRadius: BorderRadius.circular(3),
                     ),
                   ),
@@ -188,7 +200,7 @@ class _DashboardPageState extends State<DashboardPage> {
                         entry.key,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                        style: TextStyle(fontSize: 13, fontWeight: entry.key == selectedKey ? FontWeight.w800 : FontWeight.w600),
                       ),
                     ),
                   ),
@@ -325,7 +337,7 @@ class _DashboardPageState extends State<DashboardPage> {
                                                           width: 10,
                                                           height: 10,
                                                           decoration: BoxDecoration(
-                                                            color: chartColors[entries.indexOf(entry) % chartColors.length],
+                                                            color: _legendColors[entry.key] ?? blue,
                                                             borderRadius: BorderRadius.circular(3),
                                                           ),
                                                         ),
@@ -341,7 +353,7 @@ class _DashboardPageState extends State<DashboardPage> {
                                                                 entry.key,
                                                                 maxLines: 1,
                                                                 overflow: TextOverflow.ellipsis,
-                                                                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                                                                style: TextStyle(fontSize: 13, fontWeight: entry.key == selectedKey ? FontWeight.w800 : FontWeight.w600),
                                                               ),
                                                             ),
                                                             const SizedBox(height: 3),
@@ -423,17 +435,22 @@ class _DashboardPageState extends State<DashboardPage> {
     // or the entire fiscal year's allotment when All Programs is selected.
     final itemMode = item.isNotEmpty;
     final itemShares = <String, int>{};
+    final itemColorKeys = <String, String>{};
     String? selectedItemLabel;
     if (itemMode) {
       for (final r in all) {
         final key = '${r.program}\u0001${r.code}';
         final label = items[key] ?? '${r.name} (${displayCode(r.code)})';
         itemShares[label] = (itemShares[label] ?? 0) + r.allotment;
+        itemColorKeys[label] = key;
         if (key == item) selectedItemLabel = label;
       }
     }
     final chartBase = itemMode ? Totals(all).allotment : annualAllotment;
     final chartLegend = itemMode ? itemShares : annualShares;
+    final colorKeys = {for (final key in chartLegend.keys) key: itemMode ? itemColorKeys[key]! : key};
+    final slots = widget.store.chartColorSlots(itemMode ? 'item' : 'program', colorKeys.values);
+    _legendColors = {for (final entry in colorKeys.entries) entry.key: _chartColor(slots[entry.value]!)};
     // Keep every segment and its original proportion when filtering.
     final chartShares = chartLegend;
     final chartTitle = itemMode ? 'Allotment by Item' : 'Utilization by Program';
@@ -1215,7 +1232,8 @@ class _Rate extends StatelessWidget {
 }
 
 class _DonutPainter extends CustomPainter {
-  _DonutPainter(this.amounts, this.annualAllotment, this.selectedIndex);
+  _DonutPainter(this.amounts, this.annualAllotment, this.colors, this.selectedIndex);
+  final List<Color> colors;
   final List<int> amounts;
   final int annualAllotment;
   final int selectedIndex;
@@ -1239,19 +1257,22 @@ class _DonutPainter extends CustomPainter {
       return;
     }
     var start = -math.pi / 2;
+    final positiveCount = amounts.where((a) => a > 0).length;
     for (var i = 0; i < amounts.length; i++) {
       final sweep = amounts[i] / annualAllotment * math.pi * 2;
       if (sweep <= 0) continue;
       final active = i == selectedIndex;
       final extra = active ? 4.0 : 0.0;
-      final color = chartColors[i % chartColors.length];
+      final color = colors[i];
+      final gap = positiveCount > 1
+          ? math.min(2 / radius, sweep * .20) : 0.0;
       paint
-        ..color = color
+        ..color = selectedIndex < 0 || active ? color : Color.lerp(Colors.white, color, .45)!
         ..strokeWidth = stroke + extra;
       canvas.drawArc(
         Rect.fromCircle(center: center, radius: radius + extra / 2),
-        start,
-        sweep,
+        start + gap / 2,
+        sweep - gap,
         false,
         paint,
       );
