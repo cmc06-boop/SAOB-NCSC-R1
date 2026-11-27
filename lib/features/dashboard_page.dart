@@ -217,7 +217,8 @@ class _DashboardPageState extends State<DashboardPage> {
       builder: (dialogContext) {
         final screen = MediaQuery.sizeOf(dialogContext);
         final width = math.min(480.0, screen.width - 48);
-        final legendHeight = math.max(48.0, annualShares.length * 26.0);
+        final columns = width >= 340 ? 2 : 1;
+        final legendHeight = math.max(48.0, (annualShares.length / columns).ceil() * 48.0);
         final desiredHeight = math.min(490.0, 260.0 + legendHeight);
         final height = math.min(desiredHeight, screen.height - 64);
         return Dialog(
@@ -281,10 +282,80 @@ class _DashboardPageState extends State<DashboardPage> {
                                     )
                                   : SingleChildScrollView(
                                       primary: false,
-                                      child: _programLegend(
-                                        annualShares,
-                                        annualAllotment,
-                                        selectedKey: selectedKey,
+                                      child: LayoutBuilder(
+                                        builder: (context, legendConstraints) {
+                                          final entries = annualShares.entries.toList();
+                                          final ordered = selectedKey == null
+                                              ? entries
+                                              : [
+                                                  ...entries.where((e) => e.key == selectedKey),
+                                                  ...entries.where((e) => e.key != selectedKey),
+                                                ];
+                                          final count = legendConstraints.maxWidth >= 308 ? 2 : 1;
+                                          const gap = 42.0;
+                                          final groupWidth = math.min(404.0, legendConstraints.maxWidth);
+                                          final cellWidth = (groupWidth - (count - 1) * gap) / count;
+                                          return Align(
+                                            alignment: Alignment.topCenter,
+                                            child: SizedBox(
+                                              width: groupWidth,
+                                              child: Wrap(
+                                            alignment: WrapAlignment.center,
+                                            spacing: gap,
+                                            runSpacing: 10,
+                                            children: [
+                                              for (final entry in ordered)
+                                                SizedBox(
+                                                  width: cellWidth,
+                                                  child: Row(
+                                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                                    children: [
+                                                      Padding(
+                                                        padding: const EdgeInsets.only(top: 4),
+                                                        child: Container(
+                                                          width: 10,
+                                                          height: 10,
+                                                          decoration: BoxDecoration(
+                                                            color: chartColors[entries.indexOf(entry) % chartColors.length],
+                                                            borderRadius: BorderRadius.circular(3),
+                                                          ),
+                                                        ),
+                                                      ),
+                                                      const SizedBox(width: 8),
+                                                      Expanded(
+                                                        child: Column(
+                                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                                          children: [
+                                                            Tooltip(
+                                                              message: entry.key,
+                                                              child: Text(
+                                                                entry.key,
+                                                                maxLines: 1,
+                                                                overflow: TextOverflow.ellipsis,
+                                                                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                                                              ),
+                                                            ),
+                                                            const SizedBox(height: 3),
+                                                            Tooltip(
+                                                              message: '${money(entry.value)} (${rate(entry.value, annualAllotment)})',
+                                                              child: Text(
+                                                                '${money(entry.value)} (${rate(entry.value, annualAllotment)})',
+                                                                maxLines: 1,
+                                                                overflow: TextOverflow.ellipsis,
+                                                                style: const TextStyle(fontSize: 12, color: muted),
+                                                              ),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                            ],
+                                              ),
+                                            ),
+                                          );
+                                        },
                                       ),
                                     ),
                             ),
@@ -489,7 +560,9 @@ class _DashboardPageState extends State<DashboardPage> {
                 if (chartLegend.length > 5)
                   Align(
                   alignment: Alignment.centerRight,
-                  child: HoverScaleButton(
+                  child: Transform.translate(
+                    offset: const Offset(-8, -4),
+                    child: HoverScaleButton(
                     enabled: true,
                     child: TextButton(
                       style: TextButton.styleFrom(
@@ -509,6 +582,7 @@ class _DashboardPageState extends State<DashboardPage> {
                       ),
                       onPressed: () => _showAllPrograms(chartShares, t.allotment, chartBase, chartLegend, chartTitle: chartTitle, selectedKey: selectedLegendKey),
                       child: const Text('See All'),
+                    ),
                     ),
                   ),
                 ),
