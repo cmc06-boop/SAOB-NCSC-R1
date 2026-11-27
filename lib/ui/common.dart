@@ -909,8 +909,14 @@ class _BudgetTableState extends State<BudgetTable> {
                     : Colors.white,
                 widget.onSelect == null ? null : () => widget.onSelect!(r),
               ),
-            if (total != null)
-              _row([
+          ],
+        );
+        final totalTable = total == null ? null : Table(
+          border: const TableBorder(verticalInside: _border, top: _border),
+          columnWidths: columns,
+          defaultVerticalAlignment: TableCellVerticalAlignment.middle,
+          children: [
+            _row([
                 const _BudgetCell(''),
                 const _BudgetCell(''),
                 _BudgetCell(
@@ -954,16 +960,16 @@ class _BudgetTableState extends State<BudgetTable> {
           ],
         );
         if (bodyTable == null) {
-          return const Center(child: Text('No records found.',
+          return const SizedBox(height: 120, child: Center(child: Text('No records found.',
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 13, color: muted),
-          ));
+          )));
         }
         return ClipRRect(
           borderRadius: BorderRadius.circular(12),
           child: Scrollbar(
           controller: _scroll,
-          thumbVisibility: true,
+          thumbVisibility: false,
           notificationPredicate: (n) => n.metrics.axis == Axis.vertical,
           child: Scrollbar(
             controller: _horizontal,
@@ -975,14 +981,16 @@ class _BudgetTableState extends State<BudgetTable> {
               child: SizedBox(
                 width: width,
                 child: Column(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     headerTable,
-                    Expanded(
+                    Flexible(
                       child: SingleChildScrollView(
                         controller: _scroll,
                         child: bodyTable,
                       ),
                     ),
+                    if (totalTable != null) totalTable,
                   ],
                 ),
               ),
