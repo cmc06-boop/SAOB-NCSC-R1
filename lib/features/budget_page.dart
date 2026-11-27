@@ -177,7 +177,7 @@ class _BudgetPageState extends State<BudgetPage> {
           ],
         ),
         const SizedBox(height: 18),
-        Expanded(
+        Flexible(
           child: Panel(
             padding: 0,
             child: BudgetTable(
