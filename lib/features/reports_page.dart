@@ -1572,7 +1572,7 @@ class _HistoryCardState extends State<_HistoryCard> {
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
             child: widget.history.isEmpty
                 ? const SizedBox(
-                    height: 5 * _rowHeight,
+                    height: 100,
                     child: Center(child: Text('No reports found for the selected filters.',
                       textAlign: TextAlign.center,
                       style: TextStyle(fontSize: 13, color: muted),
@@ -1599,10 +1599,8 @@ class _HistoryCardState extends State<_HistoryCard> {
                     ], const Color(0xffcdddf4), center: true),
                   ],
                 ),
-                SizedBox(
-                  // Reserve four rows of space even when the filters return
-                  // fewer records or an empty result.
-                  height: 4 * _rowHeight,
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxHeight: 4 * _rowHeight),
                   child: Scrollbar(
                     controller: _historyScroll,
                     thumbVisibility: widget.history.length >= 5,
