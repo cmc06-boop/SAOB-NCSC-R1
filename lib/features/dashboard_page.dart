@@ -155,7 +155,7 @@ class _DashboardPageState extends State<DashboardPage> {
             : entries;
     final shown = limit == null ? ordered : ordered.take(limit).toList();
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 6),
+      padding: const EdgeInsets.only(left: 14, right: 6),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -476,7 +476,7 @@ class _DashboardPageState extends State<DashboardPage> {
                             child: _programLegend(
                               chartLegend,
                               chartBase,
-                              limit: 6,
+                              limit: 5,
                               selectedShares: chartShares,
                               selectedKey: selectedLegendKey,
                             ),
@@ -486,7 +486,7 @@ class _DashboardPageState extends State<DashboardPage> {
                     ],
                   ),
                 ),
-                if (chartLegend.length > 6)
+                if (chartLegend.length > 5)
                   Align(
                   alignment: Alignment.centerRight,
                   child: HoverScaleButton(
