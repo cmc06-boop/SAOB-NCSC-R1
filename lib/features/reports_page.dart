@@ -1794,7 +1794,7 @@ class _HistoryCardState extends State<_HistoryCard> {
 }
 
 
-/// Integrated preview and direct printer selection.
+/// Chrome-inspired integrated print preview.
 class _ModernPrintPreview extends StatefulWidget {
   const _ModernPrintPreview({
     required this.reportName, required this.printers, required this.render,
@@ -1810,8 +1810,11 @@ class _ModernPrintPreview extends StatefulWidget {
 class _ModernPrintPreviewState extends State<_ModernPrintPreview> {
   Printer? printer;
   String paper = 'A4';
-  bool landscape = true, busy = false;
+  bool landscape = true, busy = false, more = false;
   String? error;
+  int copies = 1;
+  int pageCount = 0;
+  int revision = 0;
   late Future<Uint8List> document;
 
   PdfPageFormat get format => switch (paper) {
@@ -1826,234 +1829,331 @@ class _ModernPrintPreviewState extends State<_ModernPrintPreview> {
     for (final p in widget.printers) {
       if (p.isAvailable && (printer == null || p.isDefault)) printer = p;
     }
-    document = widget.render(format, landscape);
+    document = prepareDocument();
   }
 
-  void changePaper(String? value) {
-    if (value == null) return;
-    setState(() {
-      paper = value;
-      error = null;
-      document = widget.render(format, landscape);
-    });
+  Future<Uint8List> prepareDocument() async {
+    final current = ++revision;
+    final bytes = await widget.render(format, landscape);
+    var count = 0;
+    // Count the actual generated PDF pages, not the number of records.
+    await for (final _ in Printing.raster(bytes, dpi: 12)) {
+      count++;
+    }
+    if (mounted && current == revision) {
+      setState(() => pageCount = count);
+    }
+    return bytes;
+  }
+
+  void refreshDocument() {
+    pageCount = 0;
+    error = null;
+    document = prepareDocument();
+  }
+
+  Future<void> chooseDestination() async {
+    final result = await showDialog<Printer>(
+      context: context,
+      builder: (_) => _PrintDestinationDialog(printers: widget.printers),
+    );
+    if (result != null && mounted) {
+      setState(() { printer = result; error = null; });
+    }
   }
 
   Future<void> submit() async {
     final selected = printer;
-    if (selected == null || busy) return;
+    if (selected == null || busy || copies < 1 || copies > 99) return;
     setState(() { busy = true; error = null; });
+    var completed = 0;
     try {
       final bytes = await document;
       if (bytes.isEmpty) throw const FinanceError('The report is empty.');
-      final result = await Printing.directPrintPdf(
-        printer: selected,
-        name: widget.reportName,
-        format: landscape ? format.landscape : format.portrait,
-        onLayout: (_) async => bytes,
-        dynamicLayout: false,
-        usePrinterSettings: false,
-      );
-      if (!mounted) return;
-      if (result) {
-        setState(() => busy = false);
-        Navigator.of(context).pop(true);
-      } else {
-        setState(() { busy = false; error = 'Printing was cancelled or could not be started.'; });
+      for (var i = 0; i < copies; i++) {
+        final result = await Printing.directPrintPdf(
+          printer: selected,
+          name: widget.reportName,
+          format: landscape ? format.landscape : format.portrait,
+          onLayout: (_) async => bytes,
+          dynamicLayout: false,
+          usePrinterSettings: false,
+        );
+        if (!result) throw const FinanceError('Printing could not be completed.');
+        completed++;
       }
+      if (!mounted) return;
+      setState(() => busy = false);
+      Navigator.of(context).pop(true);
     } catch (_) {
       if (mounted) setState(() {
-        busy = false; error = 'Unable to print. Check the selected printer and paper settings.';
+        busy = false;
+        error = 'Submitted $completed of $copies copies. Check the printer before retrying.';
       });
     }
   }
+
+  Widget setting(String label, Widget control) => Padding(
+    padding: const EdgeInsets.only(bottom: 20),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        SizedBox(width: 104, child: Text(label, style: const TextStyle(fontSize: 13))),
+        Expanded(child: control),
+      ],
+    ),
+  );
+
+  Widget choice<T>(T value, List<DropdownMenuItem<T>> items,
+      ValueChanged<T?>? onChanged) => DropdownButtonFormField<T>(
+    key: ValueKey(value),
+    initialValue: value,
+    isExpanded: true,
+    style: const TextStyle(color: ink, fontSize: 13),
+    decoration: const InputDecoration(
+      isDense: true,
+      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(8))),
+    ),
+    items: items,
+    onChanged: onChanged,
+  );
 
   @override
   Widget build(BuildContext context) {
     final viewport = MediaQuery.sizeOf(context);
     final selected = printer;
+    final sideWidth = math.min(385.0, math.max(310.0, (viewport.width - 32) * .40));
     return PopScope(
       canPop: !busy,
       child: Dialog(
         backgroundColor: Colors.white,
         surfaceTintColor: Colors.transparent,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         clipBehavior: Clip.antiAlias,
-        insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+        insetPadding: const EdgeInsets.all(16),
         child: SizedBox(
-          width: math.min(1120.0, viewport.width - 48),
-          height: math.min(820.0, viewport.height - 40),
-          child: Column(
+          width: math.min(1350.0, viewport.width - 32),
+          height: math.min(920.0, viewport.height - 32),
+          child: Row(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(24, 16, 16, 14),
-                child: Row(children: [
-                  const Icon(Icons.print_outlined, color: navy, size: 25),
-                  const SizedBox(width: 12),
-                  Expanded(child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text('Print Preview', style: TextStyle(
-                        color: navy, fontSize: 20, fontWeight: FontWeight.w700)),
-                      Text(widget.reportName, style: const TextStyle(color: muted, fontSize: 13),
-                        maxLines: 1, overflow: TextOverflow.ellipsis),
-                    ],
-                  )),
-                  IconButton(
-                    tooltip: 'Close',
-                    onPressed: busy ? null : () => Navigator.of(context).pop(false),
-                    icon: const Icon(Icons.close, color: muted),
-                  ),
-                ]),
-              ),
-              const Divider(height: 1),
-              Expanded(child: Row(
+              Expanded(child: ColoredBox(
+                color: const Color(0xffd9dadd),
+                child: FutureBuilder<Uint8List>(
+                  future: document,
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState != ConnectionState.done) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+                    if (snapshot.hasError || !snapshot.hasData) {
+                      return const Center(child: Text('Unable to prepare this report layout.'));
+                    }
+                    final bytes = snapshot.data!;
+                    return PdfPreview(
+                      key: ValueKey(document),
+                      build: (_) async => bytes,
+                      useActions: false,
+                      allowPrinting: false,
+                      allowSharing: false,
+                      canChangePageFormat: false,
+                      canChangeOrientation: false,
+                      canDebug: false,
+                      scrollViewDecoration: const BoxDecoration(color: Color(0xffd9dadd)),
+                    );
+                  },
+                ),
+              )),
+              const VerticalDivider(width: 1),
+              SizedBox(width: sideWidth, child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Expanded(child: ColoredBox(
-                    color: const Color(0xffedf2fa),
-                    child: FutureBuilder<Uint8List>(
-                      future: document,
-                      builder: (context, snapshot) {
-                        if (snapshot.connectionState != ConnectionState.done) {
-                          return const Center(child: CircularProgressIndicator());
-                        }
-                        if (snapshot.hasError || !snapshot.hasData) {
-                          return const Center(child: Text('Unable to prepare this report layout.'));
-                        }
-                        final bytes = snapshot.data!;
-                        return PdfPreview(
-                          key: ValueKey(document),
-                          build: (_) async => bytes,
-                          useActions: false,
-                          allowPrinting: false,
-                          allowSharing: false,
-                          canChangePageFormat: false,
-                          canChangeOrientation: false,
-                          canDebug: false,
-                          scrollViewDecoration: const BoxDecoration(color: Color(0xffedf2fa)),
-                        );
-                      },
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(24, 22, 24, 22),
+                    child: Row(children: [
+                      const Text('Print', style: TextStyle(fontSize: 21, fontWeight: FontWeight.w600, color: ink)),
+                      const Spacer(),
+                      Text(pageCount == 0 ? 'Preparing…' :
+                        '${pageCount * copies} sheets of paper',
+                        style: const TextStyle(fontSize: 13, color: ink)),
+                    ]),
+                  ),
+                  Expanded(child: SingleChildScrollView(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        setting('Destination', OutlinedButton(
+                          onPressed: busy ? null : chooseDestination,
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
+                          child: Row(children: [
+                            const Icon(Icons.print_outlined, size: 16, color: muted),
+                            const SizedBox(width: 6),
+                            Expanded(child: Text(selected?.name ?? 'Select printer',
+                              maxLines: 1, overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(fontSize: 12, color: ink))),
+                            const Icon(Icons.arrow_drop_down, size: 18, color: muted),
+                          ]),
+                        )),
+                        Align(alignment: Alignment.centerRight, child: TextButton(
+                          onPressed: busy ? null : chooseDestination,
+                          child: const Text('See more', style: TextStyle(color: blue)),
+                        )),
+                        setting('Pages', choice<String>('All', const [
+                          DropdownMenuItem(value: 'All', child: Text('All')),
+                        ], null)),
+                        setting('Copies', TextFormField(
+                          initialValue: '1',
+                          enabled: !busy,
+                          keyboardType: TextInputType.number,
+                          decoration: const InputDecoration(isDense: true,
+                            border: OutlineInputBorder(), helperText: '1–99 copies'),
+                          onChanged: (value) => setState(() {
+                            copies = int.tryParse(value) ?? 0;
+                            error = null;
+                          }),
+                        )),
+                        setting('Colour', choice<String>('Printer default', const [
+                          DropdownMenuItem(value: 'Printer default', child: Text('Printer default')),
+                        ], null)),
+                        const Divider(),
+                        InkWell(
+                          onTap: busy ? null : () => setState(() => more = !more),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 18),
+                            child: Row(children: [
+                              const Text('More settings', style: TextStyle(fontSize: 13)),
+                              const Spacer(),
+                              Icon(more ? Icons.expand_less : Icons.expand_more),
+                            ]),
+                          ),
+                        ),
+                        if (more) ...[
+                          setting('Paper size', choice<String>(paper, [
+                            for (final size in ['A4', 'Letter', 'Legal'])
+                              DropdownMenuItem(value: size, child: Text(size == 'A4' ? 'A4 (210 × 297 mm)' : size)),
+                          ], busy ? null : (value) {
+                            if (value != null) setState(() { paper = value; refreshDocument(); });
+                          })),
+                          setting('Layout', choice<bool>(landscape, const [
+                            DropdownMenuItem(value: true, child: Text('Landscape')),
+                            DropdownMenuItem(value: false, child: Text('Portrait')),
+                          ], busy ? null : (value) {
+                            if (value != null) setState(() { landscape = value; refreshDocument(); });
+                          })),
+                          setting('Pages per sheet', choice<int>(1, const [
+                            DropdownMenuItem(value: 1, child: Text('1')),
+                          ], null)),
+                          setting('Scale', choice<String>('Fit to paper', const [
+                            DropdownMenuItem(value: 'Fit to paper', child: Text('Fit to paper')),
+                          ], null)),
+                          setting('Two-sided', const Text('Not configurable', style: TextStyle(color: muted, fontSize: 12))),
+                          const Text('Page ranges, colour mode, multiple pages per sheet, custom scale and duplex are not configurable in this version.',
+                            style: TextStyle(color: muted, fontSize: 12)),
+                        ],
+                        if (error != null) Padding(
+                          padding: const EdgeInsets.only(top: 12),
+                          child: Text(error!, style: const TextStyle(color: red, fontSize: 12))),
+                      ],
                     ),
                   )),
-                  const VerticalDivider(width: 1),
-                  SizedBox(
-                    width: math.min(290.0, math.max(200.0, (viewport.width - 48) * .36)),
-                    child: SingleChildScrollView(
-                      padding: const EdgeInsets.all(20),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          const Text('Print Setup', style: TextStyle(
-                            fontSize: 16, color: navy, fontWeight: FontWeight.w700)),
-                          const SizedBox(height: 20),
-                          const Text('Printer', style: TextStyle(fontWeight: FontWeight.w700)),
-                          const SizedBox(height: 8),
-                          DropdownButtonFormField<Printer>(
-                            initialValue: selected,
-                            isExpanded: true,
-                            decoration: const InputDecoration(),
-                            items: [
-                              for (final p in widget.printers)
-                                DropdownMenuItem(value: p, enabled: p.isAvailable,
-                                  child: Text(p.name, overflow: TextOverflow.ellipsis)),
-                            ],
-                            onChanged: busy ? null : (value) => setState(() {
-                              printer = value; error = null;
-                            }),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(selected == null ? 'No available printer selected'
-                            : 'Status: Available', style: TextStyle(
-                              color: selected == null ? red : muted, fontSize: 12)),
-                          const SizedBox(height: 20),
-                          const Text('Paper size', style: TextStyle(fontWeight: FontWeight.w700)),
-                          const SizedBox(height: 8),
-                          DropdownButtonFormField<String>(
-                            initialValue: paper,
-                            isExpanded: true,
-                            decoration: const InputDecoration(),
-                            items: [
-                              for (final size in ['A4', 'Letter', 'Legal'])
-                                DropdownMenuItem(value: size, child: Text(size)),
-                            ],
-                            onChanged: busy ? null : changePaper,
-                          ),
-                          const SizedBox(height: 20),
-                          const Text('Orientation', style: TextStyle(fontWeight: FontWeight.w700)),
-                          const SizedBox(height: 8),
-                          DropdownButtonFormField<bool>(
-                            initialValue: landscape,
-                            isExpanded: true,
-                            decoration: const InputDecoration(),
-                            items: const [
-                              DropdownMenuItem(value: false, child: Text('Portrait')),
-                              DropdownMenuItem(value: true, child: Text('Landscape')),
-                            ],
-                            onChanged: busy ? null : (value) {
-                              if (value == null) return;
-                              setState(() {
-                                landscape = value;
-                                error = null;
-                                document = widget.render(format, landscape);
-                              });
-                            },
-                          ),
-                          const SizedBox(height: 20),
-                          const Text('Paper source and advanced driver options use printer defaults.',
-                            style: TextStyle(color: muted, fontSize: 12)),
-                          if (error != null) ...[
-                            const SizedBox(height: 12),
-                            Text(error!, style: const TextStyle(color: red, fontSize: 12)),
-                          ],
-                        ],
+                  if (busy) const LinearProgressIndicator(),
+                  Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Row(mainAxisAlignment: MainAxisAlignment.end, children: [
+                      FutureBuilder<Uint8List>(
+                        future: document,
+                        builder: (context, snapshot) {
+                          final ready = !busy && selected != null && copies >= 1 && copies <= 99 &&
+                            snapshot.connectionState == ConnectionState.done && snapshot.hasData && !snapshot.hasError;
+                          return FilledButton(
+                            style: FilledButton.styleFrom(backgroundColor: const Color(0xff0b57d0),
+                              foregroundColor: Colors.white,
+                              shape: const StadiumBorder()),
+                            onPressed: ready ? submit : null,
+                            child: Text(busy ? 'Printing…' : 'Print'),
+                          );
+                        },
                       ),
-                    ),
-                  ),
-                ],
-              )),
-              const Divider(height: 1),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    if (busy) const Expanded(child: LinearProgressIndicator()),
-                    if (busy) const SizedBox(width: 16),
-                    HoverScaleButton(
-                      enabled: !busy,
-                      child: TextButton(
-                        style: dialogCancelStyle(),
+                      const SizedBox(width: 8),
+                      OutlinedButton(
+                        style: OutlinedButton.styleFrom(foregroundColor: const Color(0xff0b57d0),
+                          shape: const StadiumBorder()),
                         onPressed: busy ? null : () => Navigator.of(context).pop(false),
                         child: const Text('Cancel'),
                       ),
-                    ),
-                    const SizedBox(width: 10),
-                    FutureBuilder<Uint8List>(
-                      future: document,
-                      builder: (context, snapshot) {
-                        final ready = !busy && selected != null &&
-                          snapshot.connectionState == ConnectionState.done &&
-                          snapshot.hasData && !snapshot.hasError;
-                        return HoverScaleButton(
-                          enabled: ready,
-                          child: FilledButton.icon(
-                            style: FilledButton.styleFrom(
-                              backgroundColor: navy, foregroundColor: Colors.white),
-                            onPressed: ready ? submit : null,
-                            icon: const Icon(Icons.print_outlined, size: 18),
-                            label: Text(busy ? 'Printing…' : 'Print'),
-                          ),
-                        );
-                      },
-                    ),
-                  ],
-                ),
-              ),
+                    ]),
+                  ),
+                ],
+              )),
             ],
           ),
         ),
       ),
+    );
+  }
+}
+
+class _PrintDestinationDialog extends StatefulWidget {
+  const _PrintDestinationDialog({required this.printers});
+  final List<Printer> printers;
+  @override
+  State<_PrintDestinationDialog> createState() => _PrintDestinationDialogState();
+}
+
+class _PrintDestinationDialogState extends State<_PrintDestinationDialog> {
+  String query = '';
+  @override
+  Widget build(BuildContext context) {
+    final matches = widget.printers.where((p) =>
+      p.name.toLowerCase().contains(query.toLowerCase())).toList();
+    return Dialog(
+      backgroundColor: Colors.white,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: SizedBox(width: 600, height: 470, child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Padding(padding: EdgeInsets.fromLTRB(20, 20, 20, 12),
+            child: Text('Select a destination', style: TextStyle(fontSize: 18, color: ink))),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: TextField(
+              autofocus: true,
+              decoration: const InputDecoration(hintText: 'Search destinations',
+                prefixIcon: Icon(Icons.search), filled: true, fillColor: Color(0xfff1f3f4)),
+              onChanged: (value) => setState(() => query = value),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Expanded(child: matches.isEmpty
+            ? const Center(child: Text('No matching printers'))
+            : ListView(
+              children: [
+                for (final p in matches)
+                  ListTile(
+                    dense: true,
+                    enabled: p.isAvailable,
+                    leading: const Icon(Icons.print_outlined, color: muted),
+                    title: Text(p.name, style: const TextStyle(fontSize: 13)),
+                    subtitle: !p.isAvailable ? const Text('Unavailable') : null,
+                    onTap: p.isAvailable ? () => Navigator.of(context).pop(p) : null,
+                  ),
+              ],
+            )),
+          const Divider(height: 1),
+          Padding(padding: const EdgeInsets.all(16), child: Align(
+            alignment: Alignment.centerRight,
+            child: OutlinedButton(
+              style: OutlinedButton.styleFrom(foregroundColor: const Color(0xff0b57d0),
+                shape: const StadiumBorder()),
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancel'),
+            ),
+          )),
+        ],
+      )),
     );
   }
 }
