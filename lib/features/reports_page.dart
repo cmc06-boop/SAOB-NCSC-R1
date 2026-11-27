@@ -1194,8 +1194,8 @@ class _UtilizationPainter extends CustomPainter {
     if (plot.width <= 0 || plot.height <= 0 || groups.isEmpty) return;
 
     final grid = Paint()
-      ..color = const Color(0xffe6edf6)
-      ..strokeWidth = 1;
+      ..color = const Color(0xffdce4ef)
+      ..strokeWidth = .7;
     const axisStyle = TextStyle(
       fontSize: 11,
       color: Color(0xff8b97ab),
@@ -1206,7 +1206,17 @@ class _UtilizationPainter extends CustomPainter {
     for (var i = 0; i < tickCount; i++) {
       final tick = byRecord ? percentTicks[i].toDouble() : pesoTicks[i].toDouble();
       final y = plot.bottom - plot.height * (tick / top).clamp(0.0, 1.0);
-      if (!axisOnly) canvas.drawLine(Offset(plot.left, y), Offset(plot.right, y), grid);
+      if (!axisOnly) {
+        const dash = 4.0;
+        const gap = 4.0;
+        for (var x = plot.left; x < plot.right; x += dash + gap) {
+          canvas.drawLine(
+            Offset(x, y),
+            Offset(math.min(x + dash, plot.right), y),
+            grid,
+          );
+        }
+      }
       if (!paintAxis) continue;
       final label = TextPainter(
         text: TextSpan(
