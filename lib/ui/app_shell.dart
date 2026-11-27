@@ -2,6 +2,7 @@ import 'package:material_ui/material_ui.dart';
 
 import '../data/finance_store.dart';
 import '../features/account_page.dart';
+import '../features/backup_dialog.dart';
 import '../features/audit_page.dart';
 import '../features/budget_page.dart';
 import '../features/dashboard_page.dart';
@@ -37,6 +38,19 @@ class _AppShellState extends State<AppShell> {
       context: context,
       builder: (ctx) => AccountDialog(store: widget.store),
     );
+  }
+
+  Future<void> openBackup() async {
+    if (!widget.store.user!.can('settings')) return;
+    final safety = await showDialog<String>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => BackupDialog(store: widget.store),
+    );
+    if (safety != null && mounted) {
+      showMessage(context, 'Backup restored. Sign in using the restored account.');
+      widget.store.signOut();
+    }
   }
 
   Future<void> logout() async {
@@ -226,6 +240,36 @@ class _AppShellState extends State<AppShell> {
                             ],
                           ),
                         ),
+                        if (user.can('settings'))
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(12, 4, 12, 0),
+                            child: Tooltip(
+                              message: 'Backup & Restore',
+                              child: Material(
+                                color: Colors.white.withValues(alpha: .08),
+                                borderRadius: BorderRadius.circular(12),
+                                child: InkWell(
+                                  key: const ValueKey('nav-backup'),
+                                  borderRadius: BorderRadius.circular(12),
+                                  hoverColor: Colors.white.withValues(alpha: .22),
+                                  onTap: openBackup,
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                                    child: Row(
+                                      mainAxisAlignment: expanded ? MainAxisAlignment.start : MainAxisAlignment.center,
+                                      children: [
+                                        const AppIcon('database', color: Colors.white, size: 18),
+                                        if (expanded) ...[
+                                          const SizedBox(width: 12),
+                                          const Expanded(child: Text('Backup & Restore', style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600))),
+                                        ],
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
                         if (user.can('settings'))
                           Padding(
                             padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
