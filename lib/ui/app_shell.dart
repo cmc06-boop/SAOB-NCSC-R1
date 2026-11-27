@@ -261,7 +261,7 @@ class _AppShellState extends State<AppShell> {
                                 child: InkWell(
                                   key: const ValueKey('nav-backup'),
                                   borderRadius: BorderRadius.circular(12),
-                                  hoverColor: Colors.transparent,
+                                  hoverColor: Colors.white.withValues(alpha: 0.22),
                                   onTap: openBackup,
                                   child: Padding(
                                     padding: EdgeInsets.symmetric(horizontal: expanded ? 12 : 0, vertical: 13),
