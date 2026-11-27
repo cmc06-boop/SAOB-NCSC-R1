@@ -990,7 +990,7 @@ class _BudgetTableState extends State<BudgetTable> {
                         child: bodyTable,
                       ),
                     ),
-                    if (totalTable != null) totalTable,
+                    ?totalTable,
                   ],
                 ),
               ),
