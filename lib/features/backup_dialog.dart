@@ -81,7 +81,9 @@ class _BackupDialogState extends State<BackupDialog> {
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                AppIcon(icon, color: blue, size: 25),
+                icon == 'backup'
+                    ? const Icon(Icons.backup_outlined, color: blue, size: 25)
+                    : AppIcon(icon, color: blue, size: 25),
                 const SizedBox(width: 12),
                 Expanded(child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -143,7 +145,7 @@ class _BackupDialogState extends State<BackupDialog> {
                   ]),
                 ),
                 const SizedBox(height: 12),
-                _section('database', 'Create Backup',
+                _section('backup', 'Create Backup',
                   'Save a complete database copy to an office-approved secure drive or folder.',
                   HoverScaleButton(
                     enabled: !_busy,
