@@ -1246,7 +1246,7 @@ class _UtilizationPainter extends CustomPainter {
           if (height >= 1) {
             final rect = Rect.fromLTWH(x, plot.bottom - height, barWidth, height);
             final base = colors[b];
-            final radius = Radius.circular(math.min(5.0, math.min(barWidth / 2, height)));
+            final radius = Radius.circular(math.min(5.0, math.min(barWidth / 2, height / 2)));
             final gradient = LinearGradient(
               begin: Alignment.bottomCenter,
               end: Alignment.topCenter,
@@ -1256,11 +1256,7 @@ class _UtilizationPainter extends CustomPainter {
               ],
             );
             canvas.drawRRect(
-              RRect.fromRectAndCorners(
-                rect,
-                topLeft: radius,
-                topRight: radius,
-              ),
+              RRect.fromRectAndRadius(rect, radius),
               Paint()..shader = gradient.createShader(rect),
             );
           }
