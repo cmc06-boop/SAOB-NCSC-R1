@@ -116,6 +116,7 @@ class _AuditPageState extends State<AuditPage> {
           ),
           const SizedBox(height: 22),
           Flexible(
+            fit: rows.isEmpty ? FlexFit.tight : FlexFit.loose,
             child: Panel(padding: 0, child: _AuditTable(rows: rows)),
           ),
         ],
