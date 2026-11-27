@@ -17,6 +17,10 @@ const chartColors = [
   red,
   Color(0xff527dcc),
   Color(0xff6878b2),
+  Color(0xffa82947),
+  Color(0xff3695cf),
+  Color(0xffb85b72),
+  Color(0xff344f96),
 ];
 
 class DashboardPage extends StatefulWidget {
@@ -85,7 +89,7 @@ class _DashboardPageState extends State<DashboardPage> {
     }).toList();
   }
 
-  Widget _programDonut(Map<String, int> shares, int allotment, double size, int annualAllotment) {
+  Widget _programDonut(Map<String, int> shares, int allotment, double size, int annualAllotment, {String? selectedKey}) {
     return SizedBox(
       width: size,
       height: size,
@@ -96,7 +100,11 @@ class _DashboardPageState extends State<DashboardPage> {
           children: [
             Positioned.fill(
               child: CustomPaint(
-                painter: _DonutPainter(shares.values.toList(), annualAllotment),
+                painter: _DonutPainter(
+                  shares.values.toList(),
+                  annualAllotment,
+                  selectedKey == null ? -1 : shares.keys.toList().indexOf(selectedKey),
+                ),
               ),
             ),
             SizedBox(
@@ -269,6 +277,7 @@ class _DashboardPageState extends State<DashboardPage> {
                                 allotment,
                                 donutSize,
                                 annualAllotment,
+                                selectedKey: selectedKey,
                               ),
                             ),
                             const SizedBox(height: 22),
@@ -425,13 +434,8 @@ class _DashboardPageState extends State<DashboardPage> {
     }
     final chartBase = itemMode ? Totals(all).allotment : annualAllotment;
     final chartLegend = itemMode ? itemShares : annualShares;
-    // Use exactly the legend order in the painter so segment colors agree.
-    final chartShares = <String, int>{
-      for (final entry in chartLegend.entries)
-        entry.key: itemMode
-            ? (entry.key == selectedItemLabel ? t.allotment : 0)
-            : (shares[entry.key] ?? 0),
-    };
+    // Keep every segment and its original proportion when filtering.
+    final chartShares = chartLegend;
     final chartTitle = itemMode ? 'Allotment by Item' : 'Utilization by Program';
     final selectedLegendKey = itemMode
         ? selectedItemLabel
@@ -537,6 +541,7 @@ class _DashboardPageState extends State<DashboardPage> {
                           t.allotment,
                           previewDonutSize,
                           chartBase,
+                          selectedKey: selectedLegendKey,
                         ),
                       ),
                       const SizedBox(width: 20),
@@ -1210,35 +1215,66 @@ class _Rate extends StatelessWidget {
 }
 
 class _DonutPainter extends CustomPainter {
-  _DonutPainter(this.amounts, this.annualAllotment);
+  _DonutPainter(this.amounts, this.annualAllotment, this.selectedIndex);
   final List<int> amounts;
   final int annualAllotment;
+  final int selectedIndex;
+
   @override
   void paint(Canvas canvas, Size size) {
     final diameter = math.min(size.width, size.height);
     if (diameter < 12) return;
+    final center = size.center(Offset.zero);
     final stroke = math.min(diameter / 4, diameter <= 170 ? 20.0 : 24.0);
-    final rect = Rect.fromCircle(
-      center: size.center(Offset.zero),
-      radius: diameter / 2 - stroke / 2 - 2,
-    );
+    final radius = diameter / 2 - stroke / 2 - 6;
+    final rect = Rect.fromCircle(center: center, radius: radius);
     final paint = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = stroke;
-    canvas.drawOval(rect, paint..color = line);
-    final selectedTotal = amounts.fold<int>(0, (a, b) => a + math.max(0, b));
-    if (annualAllotment <= 0 || selectedTotal > annualAllotment || amounts.any((a) => a < 0)) return;
+    final total = amounts.fold<int>(0, (a, b) => a + math.max(0, b));
+    if (annualAllotment <= 0 || total <= 0 || total > annualAllotment ||
+        amounts.any((a) => a < 0)) {
+      canvas.drawOval(rect, paint..color = line);
+      return;
+    }
     var start = -math.pi / 2;
+    final positiveCount = amounts.where((a) => a > 0).length;
     for (var i = 0; i < amounts.length; i++) {
-      final sweep = math.max(0, amounts[i]) / annualAllotment * math.pi * 2;
-      if (sweep > 0) {
-        canvas.drawArc(
-          rect,
-          start,
-          sweep >= 2 * math.pi - 0.001 ? sweep : math.max(0, sweep - 0.012),
-          false,
-          paint..color = chartColors[i % chartColors.length],
-        );
+      final sweep = amounts[i] / annualAllotment * math.pi * 2;
+      if (sweep <= 0) continue;
+      final active = i == selectedIndex;
+      final outer = radius + stroke / 2 + (active ? 4 : 0);
+      final inner = radius - stroke / 2;
+      final gap = positiveCount == 1 ? 0.0 : math.min(0.045, sweep * 0.25);
+      final angle = start + gap / 2;
+      final span = sweep - gap;
+      final color = chartColors[i % chartColors.length];
+      paint
+        ..color = selectedIndex < 0 || active ? color : color.withValues(alpha: .55)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 3
+        ..strokeJoin = StrokeJoin.round;
+      final corner = math.min(1.5, (span * inner * 0.15));
+      if (positiveCount == 1 && span >= 2 * math.pi - .001) {
+        paint.strokeWidth = outer - inner;
+        canvas.drawCircle(center, (outer + inner) / 2, paint);
+      } else if (corner > 0) {
+        // A thin rounded outline softens the four corners without pill caps.
+        final midOuter = outer - corner;
+        final midInner = inner + corner;
+        final trim = math.min(corner / midInner, span / 4);
+        final from = angle + trim;
+        final to = angle + span - trim;
+        final path = Path()
+          ..arcTo(Rect.fromCircle(center: center, radius: midOuter), from, to - from, true)
+          ..arcTo(Rect.fromCircle(center: center, radius: midInner), to, from - to, false)
+          ..close();
+        paint.style = PaintingStyle.fill;
+        canvas.drawPath(path, paint);
+        paint
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = corner * 2;
+        canvas.drawPath(path, paint);
       }
       start += sweep;
     }
