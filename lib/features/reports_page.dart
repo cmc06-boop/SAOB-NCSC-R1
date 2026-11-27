@@ -930,9 +930,11 @@ class _UtilizationChartState extends State<_UtilizationChart> {
             builder: (context, limits) {
               final axisWidth = byRecord ? 72.0 : 128.0;
               final viewportWidth = math.max(0.0, limits.maxWidth - axisWidth);
-              final contentWidth = math.max(viewportWidth, entries.length * 100.0 + 6);
-              final needsScroll = contentWidth > viewportWidth + 1;
-              final height = math.max(0.0, limits.maxHeight - (needsScroll ? 12 : 0));
+              // Keep the normal chart unscrollable while three bars fit per group.
+              final minimumWidth = entries.length * 76.0 + 6;
+              final needsScroll = entries.length > 1 && minimumWidth > viewportWidth + 1;
+              final contentWidth = needsScroll ? minimumWidth : viewportWidth;
+              final height = math.max(0.0, limits.maxHeight - (needsScroll ? 16 : 0));
               final painter = _UtilizationPainter(entries, byRecord: byRecord, paintAxis: false);
               final plotSize = Size(contentWidth, height);
               final bars = MouseRegion(
@@ -1011,20 +1013,33 @@ class _UtilizationChartState extends State<_UtilizationChart> {
                     ),
                   ),
                   Expanded(
-                    child: Scrollbar(
-                      controller: _chartScroll,
-                      thumbVisibility: needsScroll,
-                      child: SingleChildScrollView(
-                        controller: _chartScroll,
-                        scrollDirection: Axis.horizontal,
-                        primary: false,
-                        child: SizedBox(
-                          width: contentWidth,
-                          height: height,
-                          child: bars,
-                        ),
-                      ),
-                    ),
+                    child: needsScroll
+                        ? ScrollConfiguration(
+                            behavior: ScrollConfiguration.of(context).copyWith(scrollbars: false),
+                            child: Scrollbar(
+                              controller: _chartScroll,
+                              thumbVisibility: true,
+                              thickness: 4,
+                              radius: const Radius.circular(4),
+                              scrollbarOrientation: ScrollbarOrientation.bottom,
+                              child: SingleChildScrollView(
+                                controller: _chartScroll,
+                                scrollDirection: Axis.horizontal,
+                                primary: false,
+                                child: SizedBox(
+                                  width: contentWidth,
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      SizedBox(height: height, child: bars),
+                                      const SizedBox(height: 16),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          )
+                        : SizedBox(height: height, child: bars),
                   ),
                 ],
               );
