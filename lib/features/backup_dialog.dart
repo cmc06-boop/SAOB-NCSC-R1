@@ -107,8 +107,23 @@ class _BackupDialogState extends State<BackupDialog> {
       child: AlertDialog(
         backgroundColor: Colors.white,
         surfaceTintColor: Colors.transparent,
-        title: const Text('Backup & Restore', textAlign: TextAlign.center,
-          style: TextStyle(fontWeight: FontWeight.w700, color: ink, fontSize: 20)),
+        title: Row(
+          children: [
+            const SizedBox(width: 40),
+            const Expanded(
+              child: Text('Backup & Restore', textAlign: TextAlign.center,
+                style: TextStyle(fontWeight: FontWeight.w700, color: ink, fontSize: 20)),
+            ),
+            SizedBox(
+              width: 40,
+              child: IconButton(
+                tooltip: 'Close',
+                onPressed: _busy ? null : () => Navigator.of(context).pop(),
+                icon: const Icon(Icons.close, size: 20, color: muted),
+              ),
+            ),
+          ],
+        ),
         content: SizedBox(
           width: 440,
           child: SingleChildScrollView(
@@ -158,7 +173,17 @@ class _BackupDialogState extends State<BackupDialog> {
           ),
         ),
         actions: [
-          TextButton(onPressed: _busy ? null : () => Navigator.of(context).pop(), child: const Text('Close')),
+          SizedBox(
+            height: 40,
+            child: HoverScaleButton(
+              enabled: !_busy,
+              child: TextButton(
+                style: dialogCancelStyle(),
+                onPressed: _busy ? null : () => Navigator.of(context).pop(),
+                child: const Text('Close'),
+              ),
+            ),
+          ),
         ],
       ),
     );
