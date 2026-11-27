@@ -12,6 +12,7 @@ Future<Uint8List> pdfAllProgramsReport(
   List<BudgetRecord> records, {
   required int year,
   PdfPageFormat pageFormat = PdfPageFormat.a4,
+  bool landscape = true,
 }) async {
   final assets = await _loadAssets();
   final doc = pw.Document();
@@ -26,7 +27,7 @@ Future<Uint8List> pdfAllProgramsReport(
     final programRows = groups[program]!;
     doc.addPage(
       pw.MultiPage(
-        pageFormat: pageFormat.landscape,
+        pageFormat: landscape ? pageFormat.landscape : pageFormat.portrait,
         margin: const pw.EdgeInsets.all(24),
         maxPages: 2000,
         theme: pw.ThemeData.withFont(base: assets.$1, bold: assets.$2),
@@ -50,12 +51,13 @@ Future<Uint8List> pdfSaobSummaryReport(
   List<BudgetRecord> records, {
   required int year,
   PdfPageFormat pageFormat = PdfPageFormat.a4,
+  bool landscape = true,
 }) async {
   final assets = await _loadAssets();
   final doc = pw.Document();
   doc.addPage(
     pw.MultiPage(
-      pageFormat: pageFormat.landscape,
+      pageFormat: landscape ? pageFormat.landscape : pageFormat.portrait,
       margin: const pw.EdgeInsets.all(24),
       maxPages: 2000,
       theme: pw.ThemeData.withFont(base: assets.$1, bold: assets.$2),
