@@ -11,16 +11,16 @@ import '../ui/app_icon.dart';
 import '../ui/theme.dart';
 
 const chartColors = [
-  Color(0xff3975d3),
-  Color(0xffe05263),
-  Color(0xffe9b544),
-  Color(0xff42a99b),
-  Color(0xff8971cc),
-  Color(0xff65a9df),
-  Color(0xffe68a52),
-  Color(0xff536bc1),
-  Color(0xffc66da4),
-  Color(0xff7ca65a),
+  Color(0xff245cb6),
+  Color(0xffd42035),
+  Color(0xffeab308),
+  Color(0xff60a5fa),
+  Color(0xff1e3a8a),
+  Color(0xffe66b79),
+  Color(0xfff5cf65),
+  Color(0xff2875c7),
+  Color(0xffa82947),
+  Color(0xff80a6e1),
 ];
 
 class DashboardPage extends StatefulWidget {
