@@ -1,9 +1,20 @@
 cmake_minimum_required(VERSION 3.14)
 project(runner LANGUAGES CXX)
 
-# Use the checked-in SAOB Windows icon independently of UI branding.
-set(NCSC_APP_ICON "${CMAKE_CURRENT_SOURCE_DIR}/resources/app_icon.ico")
-set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${NCSC_APP_ICON}")
+# Generate a valid Windows ICO from the dedicated SAOB PNG.
+set(SAOB_LOGO "${CMAKE_CURRENT_SOURCE_DIR}/resources/SAOB Finance Growth Badge.png")
+set(SAOB_ICON_GENERATOR "${CMAKE_CURRENT_SOURCE_DIR}/resources/generate_ncsc_icon.ps1")
+set(NCSC_APP_ICON "${CMAKE_CURRENT_BINARY_DIR}/saob_app_icon.ico")
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
+  "${SAOB_LOGO}" "${SAOB_ICON_GENERATOR}")
+execute_process(
+  COMMAND powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass
+    -File "${SAOB_ICON_GENERATOR}" -Source "${SAOB_LOGO}" -Destination "${NCSC_APP_ICON}"
+  RESULT_VARIABLE SAOB_ICON_RESULT
+)
+if(NOT SAOB_ICON_RESULT STREQUAL "0" OR NOT EXISTS "${NCSC_APP_ICON}")
+  message(FATAL_ERROR "Failed to generate the SAOB Windows application icon.")
+endif()
 
 # Keep the resource script in source control and configure only a build copy.
 configure_file("Runner.rc" "${CMAKE_CURRENT_BINARY_DIR}/Runner.rc" @ONLY)
