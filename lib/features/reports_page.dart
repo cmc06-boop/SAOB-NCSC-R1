@@ -201,6 +201,49 @@ class _ReportsPageState extends State<ReportsPage> {
     }
   }
 
+  Future<void> _printReport() async {
+    if (busy) return;
+    final selectedYear = year;
+    final selectedProgram = program;
+    final isSummary = selectedProgram == summarySelection;
+    final rows = widget.store.records(
+      selectedYear, program: isSummary ? '' : selectedProgram,
+    );
+    if (rows.isEmpty) {
+      showMessage(context, 'There are no records for this report.');
+      return;
+    }
+    setState(() => busy = true);
+    try {
+      final bytes = isSummary
+          ? await pdfSaobSummaryReport(rows, year: selectedYear)
+          : await pdfAllProgramsReport(rows, year: selectedYear);
+      if (bytes.isEmpty) {
+        throw const FinanceError('The report could not be prepared for printing.');
+      }
+      final label = isSummary ? 'Summary'
+          : selectedProgram.isEmpty ? 'All' : selectedProgram;
+      final submitted = await Printing.layoutPdf(
+        name: 'NCSC-R1-$selectedYear-$label',
+        onLayout: (_) async => bytes,
+        dynamicLayout: false,
+      );
+      if (submitted && mounted) {
+        showMessage(context, 'Report sent for printing.');
+      }
+    } catch (e) {
+      if (mounted) {
+        showMessage(context,
+          e is FinanceError ? e.message
+              : 'Unable to print the report. Check your printer and try again.',
+          error: true,
+        );
+      }
+    } finally {
+      if (mounted) setState(() => busy = false);
+    }
+  }
+
   Future<void> generate(String fmt) async {
     if (busy) return;
     final selectedYear = year, selectedProgram = program;
@@ -572,6 +615,8 @@ class _ReportsPageState extends State<ReportsPage> {
             ),
           ),
           const SizedBox(height: 32),
+          _printButton(records),
+          const SizedBox(height: 10),
           _exportButton(records),
         ],
         ),
@@ -622,6 +667,26 @@ class _ReportsPageState extends State<ReportsPage> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _printButton(List<BudgetRecord> records) {
+    return HoverScaleButton(
+      enabled: !busy && records.isNotEmpty,
+      child: OutlinedButton.icon(
+        key: const ValueKey('reports-print'),
+        onPressed: busy || records.isEmpty ? null : _printReport,
+        style: OutlinedButton.styleFrom(
+          foregroundColor: const Color(0xff1e3a8a),
+          side: const BorderSide(color: Color(0xff1e3a8a)),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          visualDensity: VisualDensity.compact,
+        ),
+        icon: const Icon(Icons.print_outlined, size: 18),
+        label: const Text('Print'),
       ),
     );
   }
