@@ -30,6 +30,7 @@ class AppShell extends StatefulWidget {
 
 class _AppShellState extends State<AppShell> {
   bool _logoutHovered = false;
+  bool _backupOpen = false;
   String selected = 'dashboard';
 
   Future<void> openAccount() async {
@@ -42,11 +43,18 @@ class _AppShellState extends State<AppShell> {
 
   Future<void> openBackup() async {
     if (!widget.store.user!.can('settings')) return;
-    final safety = await showDialog<String>(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => BackupDialog(store: widget.store),
-    );
+    if (_backupOpen) return;
+    setState(() => _backupOpen = true);
+    String? safety;
+    try {
+      safety = await showDialog<String>(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => BackupDialog(store: widget.store),
+      );
+    } finally {
+      if (mounted) setState(() => _backupOpen = false);
+    }
     if (safety != null && mounted) {
       showMessage(context, 'Backup restored. Sign in using the restored account.');
       widget.store.signOut();
@@ -246,12 +254,14 @@ class _AppShellState extends State<AppShell> {
                             child: Tooltip(
                               message: 'Backup & Restore',
                               child: Material(
-                                color: Colors.white.withValues(alpha: .08),
+                                color: _backupOpen
+                                    ? Colors.white.withValues(alpha: .14)
+                                    : Colors.transparent,
                                 borderRadius: BorderRadius.circular(12),
                                 child: InkWell(
                                   key: const ValueKey('nav-backup'),
                                   borderRadius: BorderRadius.circular(12),
-                                  hoverColor: Colors.white.withValues(alpha: .22),
+                                  hoverColor: Colors.transparent,
                                   onTap: openBackup,
                                   child: Padding(
                                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
@@ -269,6 +279,12 @@ class _AppShellState extends State<AppShell> {
                                 ),
                               ),
                             ),
+                          ),
+                        if (user.can('settings'))
+                          Container(
+                            height: 1,
+                            margin: const EdgeInsets.fromLTRB(12, 16, 12, 4),
+                            color: Colors.white12,
                           ),
                         if (user.can('settings'))
                           Padding(
