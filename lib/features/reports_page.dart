@@ -1552,7 +1552,9 @@ class _HistoryCardState extends State<_HistoryCard> {
   Widget build(BuildContext context) {
     return Panel(
       padding: 0,
-      child: Column(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(minHeight: 204),
+        child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           const Padding(
@@ -1572,7 +1574,7 @@ class _HistoryCardState extends State<_HistoryCard> {
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
             child: widget.history.isEmpty
                 ? const SizedBox(
-                    height: 100,
+                    height: 5 * _rowHeight,
                     child: Center(child: Text('No reports found for the selected filters.',
                       textAlign: TextAlign.center,
                       style: TextStyle(fontSize: 13, color: muted),
@@ -1633,6 +1635,7 @@ class _HistoryCardState extends State<_HistoryCard> {
             ),
           ),
         ],
+        ),
       ),
     );
   }
