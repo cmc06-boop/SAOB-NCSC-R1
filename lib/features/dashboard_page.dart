@@ -154,75 +154,60 @@ class _DashboardPageState extends State<DashboardPage> {
             ? [...entries.where((e) => (selectedShares?[e.key] ?? 0) != 0), ...entries.where((e) => (selectedShares?[e.key] ?? 0) == 0)]
             : entries;
     final shown = limit == null ? ordered : ordered.take(limit).toList();
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        const gap = 12.0;
-        final width = math.max(0.0, constraints.maxWidth - 12);
-        final columns = width >= 220 ? 2 : 1;
-        final cellWidth = (width - (columns - 1) * gap) / columns;
-        return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 6),
-          child: Wrap(
-            spacing: gap,
-            runSpacing: 7,
-            children: [
-              for (final entry in shown)
-                SizedBox(
-                  width: cellWidth,
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.only(top: 4),
-                        child: Container(
-                          width: 10,
-                          height: 10,
-                          decoration: BoxDecoration(
-                            color: chartColors[entries.indexOf(entry) % chartColors.length],
-                            borderRadius: BorderRadius.circular(3),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 6),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          for (final entry in shown)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 3),
+              child: Row(
+                children: [
+                  Container(
+                    width: 10,
+                    height: 10,
+                    decoration: BoxDecoration(
+                      color: chartColors[entries.indexOf(entry) % chartColors.length],
+                      borderRadius: BorderRadius.circular(3),
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Tooltip(
+                      message: entry.key,
+                      child: Text(
+                        entry.key,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Flexible(
+                    child: Tooltip(
+                      message: '${money(entry.value)} (${rate(entry.value, allotment)})',
+                      child: Align(
+                        alignment: Alignment.centerRight,
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: Alignment.centerRight,
+                          child: Text(
+                            '${money(entry.value)} (${rate(entry.value, allotment)})',
+                            maxLines: 1,
+                            textAlign: TextAlign.right,
+                            style: const TextStyle(fontSize: 12, color: muted),
                           ),
                         ),
                       ),
-                      const SizedBox(width: 6),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Tooltip(
-                              message: entry.key,
-                              child: Text(
-                                entry.key,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Tooltip(
-                              message: '${money(entry.value)} (${rate(entry.value, allotment)})',
-                              child: FittedBox(
-                                fit: BoxFit.scaleDown,
-                                alignment: Alignment.centerLeft,
-                                child: Text(
-                                  '${money(entry.value)} (${rate(entry.value, allotment)})',
-                                  maxLines: 1,
-                                  style: const TextStyle(fontSize: 12, color: muted),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
-                ),
-            ],
-          ),
-        );
-      },
+                ],
+              ),
+            ),
+        ],
+      ),
     );
   }
 
@@ -232,8 +217,7 @@ class _DashboardPageState extends State<DashboardPage> {
       builder: (dialogContext) {
         final screen = MediaQuery.sizeOf(dialogContext);
         final width = math.min(480.0, screen.width - 48);
-        final columns = width >= 340 ? 2 : 1;
-        final legendHeight = math.max(48.0, (annualShares.length / columns).ceil() * 48.0);
+        final legendHeight = math.max(48.0, annualShares.length * 26.0);
         final desiredHeight = math.min(490.0, 260.0 + legendHeight);
         final height = math.min(desiredHeight, screen.height - 64);
         return Dialog(
@@ -297,80 +281,10 @@ class _DashboardPageState extends State<DashboardPage> {
                                     )
                                   : SingleChildScrollView(
                                       primary: false,
-                                      child: LayoutBuilder(
-                                        builder: (context, legendConstraints) {
-                                          final entries = annualShares.entries.toList();
-                                          final ordered = selectedKey == null
-                                              ? entries
-                                              : [
-                                                  ...entries.where((e) => e.key == selectedKey),
-                                                  ...entries.where((e) => e.key != selectedKey),
-                                                ];
-                                          final count = legendConstraints.maxWidth >= 308 ? 2 : 1;
-                                          const gap = 42.0;
-                                          final groupWidth = math.min(404.0, legendConstraints.maxWidth);
-                                          final cellWidth = (groupWidth - (count - 1) * gap) / count;
-                                          return Align(
-                                            alignment: Alignment.topCenter,
-                                            child: SizedBox(
-                                              width: groupWidth,
-                                              child: Wrap(
-                                            alignment: WrapAlignment.center,
-                                            spacing: gap,
-                                            runSpacing: 10,
-                                            children: [
-                                              for (final entry in ordered)
-                                                SizedBox(
-                                                  width: cellWidth,
-                                                  child: Row(
-                                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                                    children: [
-                                                      Padding(
-                                                        padding: const EdgeInsets.only(top: 4),
-                                                        child: Container(
-                                                          width: 10,
-                                                          height: 10,
-                                                          decoration: BoxDecoration(
-                                                            color: chartColors[entries.indexOf(entry) % chartColors.length],
-                                                            borderRadius: BorderRadius.circular(3),
-                                                          ),
-                                                        ),
-                                                      ),
-                                                      const SizedBox(width: 8),
-                                                      Expanded(
-                                                        child: Column(
-                                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                                          children: [
-                                                            Tooltip(
-                                                              message: entry.key,
-                                                              child: Text(
-                                                                entry.key,
-                                                                maxLines: 1,
-                                                                overflow: TextOverflow.ellipsis,
-                                                                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-                                                              ),
-                                                            ),
-                                                            const SizedBox(height: 3),
-                                                            Tooltip(
-                                                              message: '${money(entry.value)} (${rate(entry.value, annualAllotment)})',
-                                                              child: Text(
-                                                                '${money(entry.value)} (${rate(entry.value, annualAllotment)})',
-                                                                maxLines: 1,
-                                                                overflow: TextOverflow.ellipsis,
-                                                                style: const TextStyle(fontSize: 12, color: muted),
-                                                              ),
-                                                            ),
-                                                          ],
-                                                        ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                ),
-                                            ],
-                                              ),
-                                            ),
-                                          );
-                                        },
+                                      child: _programLegend(
+                                        annualShares,
+                                        annualAllotment,
+                                        selectedKey: selectedKey,
                                       ),
                                     ),
                             ),
