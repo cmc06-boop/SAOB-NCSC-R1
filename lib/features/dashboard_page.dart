@@ -11,16 +11,16 @@ import '../ui/app_icon.dart';
 import '../ui/theme.dart';
 
 const chartColors = [
-  blue,
-  Color(0xff80a6e1),
-  navy,
-  red,
-  Color(0xff527dcc),
-  Color(0xff6878b2),
-  Color(0xffa82947),
-  Color(0xff3695cf),
-  Color(0xffb85b72),
-  Color(0xff344f96),
+  Color(0xff3975d3),
+  Color(0xffe05263),
+  Color(0xffe9b544),
+  Color(0xff42a99b),
+  Color(0xff8971cc),
+  Color(0xff65a9df),
+  Color(0xffe68a52),
+  Color(0xff536bc1),
+  Color(0xffc66da4),
+  Color(0xff7ca65a),
 ];
 
 class DashboardPage extends StatefulWidget {
@@ -1230,7 +1230,8 @@ class _DonutPainter extends CustomPainter {
     final rect = Rect.fromCircle(center: center, radius: radius);
     final paint = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = stroke;
+      ..strokeWidth = stroke
+      ..strokeCap = StrokeCap.butt;
     final total = amounts.fold<int>(0, (a, b) => a + math.max(0, b));
     if (annualAllotment <= 0 || total <= 0 || total > annualAllotment ||
         amounts.any((a) => a < 0)) {
@@ -1238,44 +1239,22 @@ class _DonutPainter extends CustomPainter {
       return;
     }
     var start = -math.pi / 2;
-    final positiveCount = amounts.where((a) => a > 0).length;
     for (var i = 0; i < amounts.length; i++) {
       final sweep = amounts[i] / annualAllotment * math.pi * 2;
       if (sweep <= 0) continue;
       final active = i == selectedIndex;
-      final outer = radius + stroke / 2 + (active ? 4 : 0);
-      final inner = radius - stroke / 2;
-      final gap = positiveCount == 1 ? 0.0 : math.min(0.045, sweep * 0.25);
-      final angle = start + gap / 2;
-      final span = sweep - gap;
+      final extra = active ? 4.0 : 0.0;
       final color = chartColors[i % chartColors.length];
       paint
-        ..color = selectedIndex < 0 || active ? color : color.withValues(alpha: .55)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 3
-        ..strokeJoin = StrokeJoin.round;
-      final corner = math.min(1.5, (span * inner * 0.15));
-      if (positiveCount == 1 && span >= 2 * math.pi - .001) {
-        paint.strokeWidth = outer - inner;
-        canvas.drawCircle(center, (outer + inner) / 2, paint);
-      } else if (corner > 0) {
-        // A thin rounded outline softens the four corners without pill caps.
-        final midOuter = outer - corner;
-        final midInner = inner + corner;
-        final trim = math.min(corner / midInner, span / 4);
-        final from = angle + trim;
-        final to = angle + span - trim;
-        final path = Path()
-          ..arcTo(Rect.fromCircle(center: center, radius: midOuter), from, to - from, true)
-          ..arcTo(Rect.fromCircle(center: center, radius: midInner), to, from - to, false)
-          ..close();
-        paint.style = PaintingStyle.fill;
-        canvas.drawPath(path, paint);
-        paint
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = corner * 2;
-        canvas.drawPath(path, paint);
-      }
+        ..color = color
+        ..strokeWidth = stroke + extra;
+      canvas.drawArc(
+        Rect.fromCircle(center: center, radius: radius + extra / 2),
+        start,
+        sweep,
+        false,
+        paint,
+      );
       start += sweep;
     }
   }
