@@ -91,9 +91,7 @@ class _ReferenceManagementPageState extends State<_ReferenceManagementPage> {
           ),
         ),
         children: [
-          Expanded(
-            // Same table surface as Budget Utilization: no extra
-            // 'Program Management' heading inside the table container.
+          Flexible(
             child: Panel(
               padding: 0,
               child: _SettingsTable(
@@ -164,9 +162,7 @@ class _ReferenceManagementPageState extends State<_ReferenceManagementPage> {
         ),
       ),
       children: [
-        Expanded(
-          // The table starts directly in the same full-height panel
-          // used by Budget Utilization, with no duplicate page heading.
+        Flexible(
           child: Panel(
             padding: 0,
             child: _SettingsTable(
@@ -311,18 +307,19 @@ class _SettingsTable extends StatelessWidget {
       ],
     );
     if (bodyTable == null) {
-      return const Center(child: Text('No records found.',
+      return const SizedBox(height: 120, child: Center(child: Text('No records found.',
         textAlign: TextAlign.center,
         style: TextStyle(fontSize: 13, color: muted),
-      ));
+      )));
     }
     return ClipRRect(
       borderRadius: BorderRadius.circular(12),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           headerTable,
-          Expanded(
+          Flexible(
             child: _SettingsScroller(child: bodyTable),
           ),
         ],
@@ -350,7 +347,7 @@ class _SettingsScrollerState extends State<_SettingsScroller> {
   @override
   Widget build(BuildContext context) => Scrollbar(
     controller: _scroll,
-    thumbVisibility: true,
+    thumbVisibility: false,
     child: SingleChildScrollView(
       controller: _scroll,
       child: widget.child,
