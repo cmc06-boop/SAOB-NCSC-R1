@@ -1244,13 +1244,24 @@ class _UtilizationPainter extends CustomPainter {
         if (value > 0) {
           final height = plot.height * (value / top).clamp(0.0, 1.0);
           if (height >= 1) {
+            final rect = Rect.fromLTWH(x, plot.bottom - height, barWidth, height);
+            final base = colors[b];
+            final radius = Radius.circular(math.min(5.0, math.min(barWidth / 2, height)));
+            final gradient = LinearGradient(
+              begin: Alignment.bottomCenter,
+              end: Alignment.topCenter,
+              colors: [
+                base,
+                Color.lerp(base, Colors.white, .20)!,
+              ],
+            );
             canvas.drawRRect(
               RRect.fromRectAndCorners(
-                Rect.fromLTWH(x, plot.bottom - height, barWidth, height),
-                topLeft: const Radius.circular(3),
-                topRight: const Radius.circular(3),
+                rect,
+                topLeft: radius,
+                topRight: radius,
               ),
-              Paint()..color = colors[b],
+              Paint()..shader = gradient.createShader(rect),
             );
           }
         }
