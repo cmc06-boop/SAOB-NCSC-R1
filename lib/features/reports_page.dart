@@ -901,6 +901,13 @@ class _UtilizationChart extends StatefulWidget {
 class _UtilizationChartState extends State<_UtilizationChart> {
   _BarHover? hovered;
   Offset? hoverPoint;
+  final _chartScroll = ScrollController();
+
+  @override
+  void dispose() {
+    _chartScroll.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -921,8 +928,14 @@ class _UtilizationChartState extends State<_UtilizationChart> {
           )
         : LayoutBuilder(
             builder: (context, limits) {
-              final painter = _UtilizationPainter(entries, byRecord: byRecord);
-              return MouseRegion(
+              final axisWidth = byRecord ? 72.0 : 128.0;
+              final viewportWidth = math.max(0.0, limits.maxWidth - axisWidth);
+              final contentWidth = math.max(viewportWidth, entries.length * 100.0 + 6);
+              final needsScroll = contentWidth > viewportWidth + 1;
+              final height = math.max(0.0, limits.maxHeight - (needsScroll ? 12 : 0));
+              final painter = _UtilizationPainter(entries, byRecord: byRecord, paintAxis: false);
+              final plotSize = Size(contentWidth, height);
+              final bars = MouseRegion(
                 onExit: (_) => setState(() {
                   hovered = null;
                   hoverPoint = null;
@@ -930,7 +943,7 @@ class _UtilizationChartState extends State<_UtilizationChart> {
                 onHover: (event) {
                   final next = painter.barAt(
                     event.localPosition,
-                    Size(limits.maxWidth, limits.maxHeight),
+                    plotSize,
                   );
                   if (next?.program == hovered?.program &&
                       next?.label == hovered?.label &&
@@ -949,10 +962,10 @@ class _UtilizationChartState extends State<_UtilizationChart> {
                     if (hovered != null && hoverPoint != null)
                       Positioned(
                         left: (hoverPoint!.dx + 12).clamp(
-                          0.0, math.max(0.0, limits.maxWidth - 215),
+                          0.0, math.max(0.0, contentWidth - 215),
                         ),
                         top: (hoverPoint!.dy - 78).clamp(
-                          0.0, math.max(0.0, limits.maxHeight - 78),
+                          0.0, math.max(0.0, height - 78),
                         ),
                         child: IgnorePointer(
                           child: Container(
@@ -986,6 +999,34 @@ class _UtilizationChartState extends State<_UtilizationChart> {
                       ),
                   ],
                 ),
+              );
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(
+                    width: axisWidth,
+                    height: height,
+                    child: CustomPaint(
+                      painter: _UtilizationPainter(entries, byRecord: byRecord, axisOnly: true),
+                    ),
+                  ),
+                  Expanded(
+                    child: Scrollbar(
+                      controller: _chartScroll,
+                      thumbVisibility: needsScroll,
+                      child: SingleChildScrollView(
+                        controller: _chartScroll,
+                        scrollDirection: Axis.horizontal,
+                        primary: false,
+                        child: SizedBox(
+                          width: contentWidth,
+                          height: height,
+                          child: bars,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               );
             },
           );
@@ -1030,7 +1071,8 @@ class _UtilizationChartState extends State<_UtilizationChart> {
 }
 
 class _UtilizationPainter extends CustomPainter {
-  _UtilizationPainter(this.groups, {required this.byRecord});
+  _UtilizationPainter(this.groups, {required this.byRecord, this.paintAxis = true, this.axisOnly = false});
+  final bool paintAxis, axisOnly;
   final List<MapEntry<String, Totals>> groups;
 
   /// All Programs: each bar is that program's own record
@@ -1074,7 +1116,7 @@ class _UtilizationPainter extends CustomPainter {
         ? percentTicks.last.toDouble()
         : math.max(1, pesoTicks.last).toDouble();
     final plot = Rect.fromLTRB(
-      byRecord ? 72.0 : 128.0,
+      paintAxis ? (byRecord ? 72.0 : 128.0) : 0.0,
       8.0,
       size.width - 6,
       size.height - 48,
@@ -1127,11 +1169,11 @@ class _UtilizationPainter extends CustomPainter {
     const pesoLeft = 128.0;
     const bottom = 48.0;
     const topPad = 8.0;
-    final axisLeft = byRecord ? left : pesoLeft;
+    final axisLeft = paintAxis ? (byRecord ? left : pesoLeft) : 0.0;
     final plot = Rect.fromLTRB(
       axisLeft,
       topPad,
-      size.width - 6,
+      axisOnly ? axisLeft + 1 : size.width - 6,
       size.height - bottom,
     );
     if (plot.width <= 0 || plot.height <= 0 || groups.isEmpty) return;
@@ -1149,7 +1191,8 @@ class _UtilizationPainter extends CustomPainter {
     for (var i = 0; i < tickCount; i++) {
       final tick = byRecord ? percentTicks[i].toDouble() : pesoTicks[i].toDouble();
       final y = plot.bottom - plot.height * (tick / top).clamp(0.0, 1.0);
-      canvas.drawLine(Offset(plot.left, y), Offset(plot.right, y), grid);
+      if (!axisOnly) canvas.drawLine(Offset(plot.left, y), Offset(plot.right, y), grid);
+      if (!paintAxis) continue;
       final label = TextPainter(
         text: TextSpan(
           text: byRecord ? '${tick.round()}%' : _axisMoney(pesoTicks[i]),
@@ -1164,6 +1207,7 @@ class _UtilizationPainter extends CustomPainter {
       );
     }
 
+    if (axisOnly) return;
     final slot = plot.width / groups.length;
     const colors = [_disbursed, _obligated, _balanceBar];
     for (var g = 0; g < groups.length; g++) {
@@ -1242,7 +1286,8 @@ class _UtilizationPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _UtilizationPainter oldDelegate) =>
-      oldDelegate.byRecord != byRecord || oldDelegate.groups != groups;
+      oldDelegate.byRecord != byRecord || oldDelegate.groups != groups ||
+      oldDelegate.paintAxis != paintAxis || oldDelegate.axisOnly != axisOnly;
 }
 
 List<int> _percentAxis(double peak) {
