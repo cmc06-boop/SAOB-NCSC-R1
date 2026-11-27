@@ -26,6 +26,35 @@ class FinanceStore extends ChangeNotifier {
       )
       .toList();
 
+  /// Persist chart assignments independently of record order and fiscal year.
+  Map<String, int> chartColorSlots(String scope, Iterable<String> keys) {
+    final prefix = 'chart_color:$scope:';
+    final saved = <String, int>{};
+    for (final row in db.rows(
+      'SELECT key,value FROM settings WHERE substr(key,1,?)=?',
+      [prefix.length, prefix],
+    )) {
+      final slot = int.tryParse(row['value'] as String);
+      if (slot != null && slot >= 0) {
+        saved[(row['key'] as String).substring(prefix.length)] = slot;
+      }
+    }
+    final missing = keys.toSet().where((key) => !saved.containsKey(key)).toList();
+    if (missing.isNotEmpty) {
+      db.transaction(() {
+        var next = saved.values.fold<int>(0, (n, slot) => slot >= n ? slot + 1 : n);
+        for (final key in missing) {
+          db.connection.execute(
+            'INSERT OR IGNORE INTO settings(key,value) VALUES (?,?)',
+            ['$prefix$key', '$next'],
+          );
+          saved[key] = next++;
+        }
+      });
+    }
+    return saved;
+  }
+
   Future<void> createOwner(
     String name,
     String username,
