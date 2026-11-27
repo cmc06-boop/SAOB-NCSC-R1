@@ -433,8 +433,8 @@ class _ReportsPageState extends State<ReportsPage> {
               // Keep the wide layout compact enough for desktop windows;
               // narrower or shorter viewports scroll the complete page.
               final panelHeight = c.maxWidth >= 900
-                  ? (viewport.maxHeight - 365).clamp(282.0, 335.0).toDouble()
-                  : 310.0;
+                  ? (viewport.maxHeight - (viewport.maxWidth >= 1036 ? 330 : 370)).clamp(282.0, 900.0).toDouble()
+                  : 350.0;
               final summary = _SummaryCard(
                 totals: totals,
                 expand: true,
@@ -1679,7 +1679,7 @@ class _HistoryCardState extends State<_HistoryCard> {
                   ],
                 ),
                 ConstrainedBox(
-                  constraints: const BoxConstraints(maxHeight: 4 * _rowHeight),
+                  constraints: const BoxConstraints(minHeight: 4 * _rowHeight, maxHeight: 4 * _rowHeight),
                   child: Scrollbar(
                     controller: _historyScroll,
                     thumbVisibility: widget.history.length >= 5,
