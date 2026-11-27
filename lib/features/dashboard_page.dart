@@ -1114,7 +1114,17 @@ class _DashboardMetricCard extends StatelessWidget {
   Widget build(BuildContext context) => Container(
     height: 126,
     decoration: BoxDecoration(
-      color: accent,
+      gradient: LinearGradient(
+        begin: Alignment.bottomLeft,
+        end: Alignment.topRight,
+        colors: switch (label) {
+          'Total Allotment' => const [Color(0xff2869bc), Color(0xff4b98df)],
+          'Total Obligation' => const [Color(0xff245cb6), Color(0xff5385d6)],
+          'Total Disbursement' => const [Color(0xff25458f), Color(0xff496db7)],
+          'Remaining Balance' => const [Color(0xffc52c43), Color(0xffe96070)],
+          _ => [accent, accent],
+        },
+      ),
       borderRadius: BorderRadius.circular(14),
       border: Border.all(color: Colors.white.withValues(alpha: .16)),
       boxShadow: const [
