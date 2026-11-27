@@ -145,11 +145,17 @@ class _BackupDialogState extends State<BackupDialog> {
                 const SizedBox(height: 12),
                 _section('database', 'Create Backup',
                   'Save a complete database copy to an office-approved secure drive or folder.',
-                  FilledButton(onPressed: _busy ? null : _create, child: const Text('Create Backup'))),
+                  HoverScaleButton(
+                    enabled: !_busy,
+                    child: FilledButton(onPressed: _busy ? null : _create, child: const Text('Create Backup')),
+                  )),
                 const SizedBox(height: 12),
                 _section('history', 'Restore Backup',
                   'Recover records from an existing backup file.',
-                  OutlinedButton(onPressed: _busy ? null : _chooseRestore, child: const Text('Select Backup File'))),
+                  HoverScaleButton(
+                    enabled: !_busy,
+                    child: OutlinedButton(onPressed: _busy ? null : _chooseRestore, child: const Text('Select Backup File')),
+                  )),
                 if (_source != null) ...[
                   const SizedBox(height: 14),
                   Text(p.basename(_source!), style: const TextStyle(fontWeight: FontWeight.w700)),
