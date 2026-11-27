@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 
 import '../core/format.dart';
 import 'database.dart';
+import 'finance_backup.dart';
 import 'models.dart';
 import 'passwords.dart';
 
@@ -101,6 +102,38 @@ class FinanceStore extends ChangeNotifier {
     }
     user = LocalUser.fromMap(matches.first);
     notifyListeners();
+  }
+
+  String? get lastBackup {
+    require('settings');
+    return FinanceBackup(db).lastBackup;
+  }
+
+  String createBackup(String folder) {
+    require('settings');
+    return FinanceBackup(db).create(folder);
+  }
+
+  Future<String> restoreBackup(String path, String password) async {
+    require('settings');
+    final account = user!;
+    final rows = db.rows(
+      "SELECT password_hash FROM users WHERE id=? AND active=1 AND role='Admin'",
+      [account.id],
+    );
+    if (rows.isEmpty || !await Passwords.verify(password, rows.single['password_hash'] as String)) {
+      throw const FinanceError('The current administrator password is incorrect.');
+    }
+    require('settings');
+    final fresh = db.rows(
+      "SELECT password_hash FROM users WHERE id=? AND active=1 AND role='Admin'",
+      [account.id],
+    );
+    if (user?.id != account.id || fresh.isEmpty ||
+        fresh.single['password_hash'] != rows.single['password_hash']) {
+      throw const FinanceError('Your account changed. Please sign in again.');
+    }
+    return FinanceBackup(db).restore(path);
   }
 
   void signOut() {
