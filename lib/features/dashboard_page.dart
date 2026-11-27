@@ -10,26 +10,30 @@ import '../ui/common.dart';
 import '../ui/app_icon.dart';
 import '../ui/theme.dart';
 
+// Brand-aligned categorical palette: blue, red and gold only.
 const chartColors = [
   Color(0xff245cb6),
-  Color(0xffc94c4c),
-  Color(0xffd9ad42),
-  Color(0xff6394d1),
-  Color(0xff41958c),
+  Color(0xffd42035),
+  Color(0xffeab308),
+  Color(0xff60a5fa),
   Color(0xff1e3a8a),
-  Color(0xffbd7890),
-  Color(0xffd88b4e),
-  Color(0xff8d9fc5),
-  Color(0xffa65454),
+  Color(0xffed7583),
+  Color(0xfff5cf65),
+  Color(0xff2875c7),
+  Color(0xffa82335),
+  Color(0xffe29a24),
 ];
 
 Color _chartColor(int slot) {
   if (slot < chartColors.length) return chartColors[slot];
-  // Golden-angle hue spacing with restrained saturation for extra entries.
+  // Extend only the three brand hue families, never unrelated hues.
   final extra = slot - chartColors.length;
+  const hues = [216.0, 353.0, 44.0];
+  final variant = extra ~/ hues.length;
   return HSLColor.fromAHSL(
-    1, (210 + extra * 137.508) % 360,
-    .42 + (extra % 3) * .07, .43 + (extra % 4) * .07,
+    1, hues[extra % hues.length],
+    .58 + (variant % 3) * .12,
+    .33 + ((variant ~/ 3) % 6) * .075,
   ).toColor();
 }
 
