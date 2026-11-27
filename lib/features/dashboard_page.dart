@@ -450,7 +450,30 @@ class _DashboardPageState extends State<DashboardPage> {
     final chartLegend = itemMode ? itemShares : annualShares;
     final colorKeys = {for (final key in chartLegend.keys) key: itemMode ? itemColorKeys[key]! : key};
     final slots = widget.store.chartColorSlots(itemMode ? 'item' : 'program', colorKeys.values);
-    _legendColors = {for (final entry in colorKeys.entries) entry.key: _chartColor(slots[entry.value]!)};
+    final colors = {
+      for (final entry in colorKeys.entries)
+        entry.key: _chartColor(slots[entry.value]!),
+    };
+    // Reserve the primary system blue for the largest positive allotment.
+    // Swap its original color with the existing blue entry, if present.
+    String? largestKey;
+    var largestAmount = 0;
+    for (final entry in chartLegend.entries) {
+      if (entry.value > largestAmount) {
+        largestAmount = entry.value;
+        largestKey = entry.key;
+      }
+    }
+    if (largestKey != null) {
+      final originalColor = colors[largestKey]!;
+      for (final key in colors.keys.toList()) {
+        if (key != largestKey && colors[key] == blue) {
+          colors[key] = originalColor;
+        }
+      }
+      colors[largestKey] = blue;
+    }
+    _legendColors = colors;
     // Keep every segment and its original proportion when filtering.
     final chartShares = chartLegend;
     final chartTitle = itemMode ? 'Allotment by Item' : 'Utilization by Program';
