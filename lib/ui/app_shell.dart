@@ -335,13 +335,6 @@ class _AppShellState extends State<AppShell> {
                                     child: AnimatedContainer(
                                       duration: const Duration(milliseconds: 140),
                                       padding: const EdgeInsets.only(bottom: 3),
-                                      decoration: BoxDecoration(
-                                        border: Border(
-                                          bottom: BorderSide(
-                                            color: _logoutHovered ? Colors.white : Colors.transparent,
-                                          ),
-                                        ),
-                                      ),
                                       child: Row(
                                         mainAxisSize: MainAxisSize.min,
                                         children: [
