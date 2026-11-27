@@ -191,17 +191,7 @@ class _AppShellState extends State<AppShell> {
                                                 ? MainAxisAlignment.start
                                                 : MainAxisAlignment.center,
                                             children: [
-                                              Container(
-                                                width: 3,
-                                                height: 18,
-                                                decoration: BoxDecoration(
-                                                  color: selected == m.$1
-                                                      ? const Color(0xff60a5fa)
-                                                      : Colors.transparent,
-                                                  borderRadius:
-                                                      BorderRadius.circular(3),
-                                                ),
-                                              ),
+                                              const SizedBox(width: 3),
                                               SizedBox(
                                                 width: expanded ? 10 : 0,
                                               ),
