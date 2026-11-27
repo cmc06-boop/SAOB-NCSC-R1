@@ -270,7 +270,7 @@ class _AppShellState extends State<AppShell> {
                                       children: [
                                         const SizedBox(width: 3),
                                         SizedBox(width: expanded ? 10 : 0),
-                                        const Icon(Icons.settings_backup_restore, color: Colors.white, size: 18),
+                                        const Icon(Icons.backup_outlined, color: Colors.white, size: 18),
                                         if (expanded) ...[
                                           const SizedBox(width: 12),
                                           Expanded(child: Text('Backup & Restore', style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: _backupOpen ? FontWeight.w700 : FontWeight.w500))),
@@ -285,7 +285,7 @@ class _AppShellState extends State<AppShell> {
                         if (user.can('settings'))
                           Container(
                             height: 1,
-                            margin: const EdgeInsets.fromLTRB(12, 16, 12, 4),
+                            margin: const EdgeInsets.fromLTRB(12, 8, 12, 4),
                             color: Colors.white12,
                           ),
                         if (user.can('settings'))
