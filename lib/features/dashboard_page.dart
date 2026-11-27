@@ -10,25 +10,24 @@ import '../ui/common.dart';
 import '../ui/app_icon.dart';
 import '../ui/theme.dart';
 
-// Brand-aligned categorical palette: blue, red and gold only.
+// Brand-aligned categorical palette: blue and red only.
 const chartColors = [
   Color(0xff245cb6),
   Color(0xffd42035),
-  Color(0xffeab308),
   Color(0xff60a5fa),
+  Color(0xffa82335),
   Color(0xff1e3a8a),
   Color(0xffed7583),
-  Color(0xfff5cf65),
   Color(0xff2875c7),
-  Color(0xffa82335),
-  Color(0xffe29a24),
+  Color(0xffb94b61),
+  Color(0xff80a6e1),
+  Color(0xff8c2038),
 ];
 
 Color _chartColor(int slot) {
   if (slot < chartColors.length) return chartColors[slot];
-  // Extend only the three brand hue families, never unrelated hues.
   final extra = slot - chartColors.length;
-  const hues = [216.0, 353.0, 44.0];
+  const hues = [216.0, 353.0];
   final variant = extra ~/ hues.length;
   return HSLColor.fromAHSL(
     1, hues[extra % hues.length],
