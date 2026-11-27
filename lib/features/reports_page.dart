@@ -433,7 +433,7 @@ class _ReportsPageState extends State<ReportsPage> {
               // Keep the wide layout compact enough for desktop windows;
               // narrower or shorter viewports scroll the complete page.
               final panelHeight = c.maxWidth >= 900
-                  ? (viewport.maxHeight - (viewport.maxWidth >= 1036 ? 330 : 370)).clamp(282.0, 900.0).toDouble()
+                  ? (viewport.maxHeight - (viewport.maxWidth >= 1036 ? 350 : 390)).clamp(282.0, 880.0).toDouble()
                   : 350.0;
               final summary = _SummaryCard(
                 totals: totals,
