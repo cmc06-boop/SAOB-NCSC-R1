@@ -92,6 +92,7 @@ class _ReferenceManagementPageState extends State<_ReferenceManagementPage> {
         ),
         children: [
           Flexible(
+            fit: programs.isEmpty ? FlexFit.tight : FlexFit.loose,
             child: Panel(
               padding: 0,
               child: _SettingsTable(
@@ -163,6 +164,7 @@ class _ReferenceManagementPageState extends State<_ReferenceManagementPage> {
       ),
       children: [
         Flexible(
+          fit: referenceRows.isEmpty ? FlexFit.tight : FlexFit.loose,
           child: Panel(
             padding: 0,
             child: _SettingsTable(
