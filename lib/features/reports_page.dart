@@ -1350,15 +1350,14 @@ class _UtilizationPainter extends CustomPainter {
             final rect = Rect.fromLTWH(
               x - (width - barWidth) / 2, plot.bottom - height, width, height,
             );
-            final opacity = hovered == null || active ? 1.0 : .32;
             final base = active && b == 2 ? const Color(0xff79b5ed) : colors[b];
             final radius = Radius.circular(math.min(5.0, math.min(width / 2, height / 2)));
             final gradient = LinearGradient(
               begin: Alignment.bottomCenter,
               end: Alignment.topCenter,
               colors: [
-                base.withValues(alpha: opacity),
-                Color.lerp(base, Colors.white, .20)!.withValues(alpha: opacity),
+                base,
+                Color.lerp(base, Colors.white, .20)!,
               ],
             );
             canvas.drawRRect(
