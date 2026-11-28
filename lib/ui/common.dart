@@ -1233,13 +1233,7 @@ class CompactConfirmationDialog extends StatelessWidget {
         height: 238,
         decoration: BoxDecoration(
           color: Colors.white,
-          gradient: destructive
-              ? null
-              : const LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [Colors.white, Color(0xffe5efff), Color(0xfff8fbff)],
-                ),
+
         ),
         child: Stack(
           children: [
