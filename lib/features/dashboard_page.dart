@@ -1111,7 +1111,8 @@ class _DashboardMetricCard extends StatelessWidget {
   final Color accent;
 
   @override
-  Widget build(BuildContext context) => Container(
+  Widget build(BuildContext context) => _MetricHoverScale(
+    child: Container(
     height: 126,
     decoration: BoxDecoration(
       gradient: LinearGradient(
@@ -1189,6 +1190,31 @@ class _DashboardMetricCard extends StatelessWidget {
           ),
         ],
       ),
+    ),
+    ),
+  );
+}
+
+class _MetricHoverScale extends StatefulWidget {
+  const _MetricHoverScale({required this.child});
+  final Widget child;
+
+  @override
+  State<_MetricHoverScale> createState() => _MetricHoverScaleState();
+}
+
+class _MetricHoverScaleState extends State<_MetricHoverScale> {
+  bool hovered = false;
+
+  @override
+  Widget build(BuildContext context) => MouseRegion(
+    onEnter: (_) => setState(() => hovered = true),
+    onExit: (_) => setState(() => hovered = false),
+    child: AnimatedScale(
+      scale: hovered ? 1.025 : 1.0,
+      duration: const Duration(milliseconds: 160),
+      curve: Curves.easeOutCubic,
+      child: widget.child,
     ),
   );
 }
