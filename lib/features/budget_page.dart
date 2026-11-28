@@ -252,7 +252,7 @@ class _InlineChoice<T> extends StatelessWidget {
 const _recordEditorLabelStyle = TextStyle(
   fontSize: 12,
   fontWeight: FontWeight.w700,
-  color: Colors.black,
+  color: ink,
 );
 
 class RecordEditor extends StatefulWidget {
