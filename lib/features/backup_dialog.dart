@@ -149,7 +149,14 @@ class _BackupDialogState extends State<BackupDialog> {
                   'Save a complete database copy to an office-approved secure drive or folder.',
                   HoverScaleButton(
                     enabled: !_busy,
-                    child: FilledButton(onPressed: _busy ? null : _create, child: const Text('Create Backup')),
+                    child: FilledButton(
+                      style: FilledButton.styleFrom(
+                        backgroundColor: const Color(0xff1e3a8a),
+                        foregroundColor: Colors.white,
+                      ),
+                      onPressed: _busy ? null : _create,
+                      child: const Text('Create Backup'),
+                    ),
                   )),
                 const SizedBox(height: 12),
                 _section('history', 'Restore Backup',
