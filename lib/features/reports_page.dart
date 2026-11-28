@@ -1023,7 +1023,7 @@ class _UtilizationChartState extends State<_UtilizationChart> {
               final needsScroll = entries.length > 1 && minimumWidth > viewportWidth + 1;
               final contentWidth = needsScroll ? minimumWidth : viewportWidth;
               final height = math.max(0.0, limits.maxHeight - (needsScroll ? 16 : 0));
-              final painter = _UtilizationPainter(entries, byRecord: byRecord, paintAxis: false);
+              final painter = _UtilizationPainter(entries, byRecord: byRecord, paintAxis: false, hovered: hovered);
               final plotSize = Size(contentWidth, height);
               final bars = MouseRegion(
                 onExit: (_) => setState(() {
@@ -1174,7 +1174,8 @@ class _UtilizationChartState extends State<_UtilizationChart> {
 }
 
 class _UtilizationPainter extends CustomPainter {
-  _UtilizationPainter(this.groups, {required this.byRecord, this.paintAxis = true, this.axisOnly = false});
+  _UtilizationPainter(this.groups, {required this.byRecord, this.paintAxis = true, this.axisOnly = false, this.hovered});
+  final _BarHover? hovered;
   final bool paintAxis, axisOnly;
   final List<MapEntry<String, Totals>> groups;
 
@@ -1342,15 +1343,22 @@ class _UtilizationPainter extends CustomPainter {
         if (value > 0) {
           final height = plot.height * (value / top).clamp(0.0, 1.0);
           if (height >= 1) {
-            final rect = Rect.fromLTWH(x, plot.bottom - height, barWidth, height);
+            final active = hovered?.program == programLabel(entry.key) &&
+                hovered?.label == const ['Disbursed', 'Obligated', 'Balance'][b];
+            // Widen the selected bar without changing its data-encoded height.
+            final width = active ? barWidth + math.min(3.0, gap * .75) : barWidth;
+            final rect = Rect.fromLTWH(
+              x - (width - barWidth) / 2, plot.bottom - height, width, height,
+            );
+            final opacity = hovered == null || active ? 1.0 : .32;
             final base = colors[b];
-            final radius = Radius.circular(math.min(5.0, math.min(barWidth / 2, height / 2)));
+            final radius = Radius.circular(math.min(5.0, math.min(width / 2, height / 2)));
             final gradient = LinearGradient(
               begin: Alignment.bottomCenter,
               end: Alignment.topCenter,
               colors: [
-                base,
-                Color.lerp(base, Colors.white, .20)!,
+                base.withValues(alpha: opacity),
+                Color.lerp(base, Colors.white, .20)!.withValues(alpha: opacity),
               ],
             );
             canvas.drawRRect(
@@ -1407,7 +1415,8 @@ class _UtilizationPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant _UtilizationPainter oldDelegate) =>
       oldDelegate.byRecord != byRecord || oldDelegate.groups != groups ||
-      oldDelegate.paintAxis != paintAxis || oldDelegate.axisOnly != axisOnly;
+      oldDelegate.paintAxis != paintAxis || oldDelegate.axisOnly != axisOnly ||
+      oldDelegate.hovered != hovered;
 }
 
 List<int> _percentAxis(double peak) {
