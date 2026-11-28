@@ -1351,7 +1351,7 @@ class _UtilizationPainter extends CustomPainter {
               x - (width - barWidth) / 2, plot.bottom - height, width, height,
             );
             final opacity = hovered == null || active ? 1.0 : .32;
-            final base = colors[b];
+            final base = active && b == 2 ? const Color(0xff79b5ed) : colors[b];
             final radius = Radius.circular(math.min(5.0, math.min(width / 2, height / 2)));
             final gradient = LinearGradient(
               begin: Alignment.bottomCenter,
